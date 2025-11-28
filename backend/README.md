@@ -1,0 +1,4 @@
+run the server
+`uv run manage.py runserver`
+
+url `http://127.0.0.1:8000/api/schema/swagger-ui/`

@@ -73,11 +73,11 @@ class Register(APIView):
         data = serializers.RegisterSerializer(data=request.data)
         if data.is_valid():
             data.save()
-            models.BdayaUser.objects.create(
-                username=data.validated_data["username"],
-                phone_number=data.validated_data["phone_number"],
-                email=data.validated_data["email"]
-            )
+            # models.BdayaUser.objects.create(
+            #     username=data.validated_data["username"],
+            #     phone_number=data.validated_data["phone_number"],
+            #     email=data.validated_data["email"]
+            # )
             return Response(data.data)
         else:
             return Response(data.errors, status=status.HTTP_400_BAD_REQUEST)
