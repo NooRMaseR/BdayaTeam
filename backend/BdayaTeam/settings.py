@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+import pymysql
+pymysql.install_as_MySQLdb()
 
 from django.utils.translation import gettext_lazy as _
 from dotenv import load_dotenv
@@ -54,11 +56,13 @@ INSTALLED_APPS = (
     "phonenumber_field",
     "core",
     "technical",
-    # "organizer",
+    "organizer",
     "member",
+    "debug_toolbar", #! remove in production
 )
 
 MIDDLEWARE = (
+    "debug_toolbar.middleware.DebugToolbarMiddleware", #! remove in production
     'django.middleware.security.SecurityMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -68,6 +72,10 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -97,7 +105,7 @@ AUTH_USER_MODEL = 'core.BdayaUser'
 TEMPLATES = (
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -119,6 +127,12 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        # 'ENGINE': 'django.db.backends.mysql',
+        # 'NAME': os.getenv("DB_NAME"),
+        # 'USER': os.getenv("DB_USER"),
+        # 'PASSWORD': os.getenv("DB_PASSWORD"),
+        # 'HOST': os.getenv("DB_HOST"),  # Or your database server's IP
+        # 'PORT': os.getenv("DB_PORT"),       # Default MySQL port
     }
 }
 
@@ -180,7 +194,7 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 UNFOLD = {
-    "SHOW_LANGUAGES": True,
+    # "SHOW_LANGUAGES": True,
 }
 
 # Default primary key field type

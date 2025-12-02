@@ -31,9 +31,15 @@ dependencies = [
     { name = "djangorestframework" },
     { name = "drf-spectacular", extra = ["sidecar"] },
     { name = "gunicorn" },
+    { name = "pymysql" },
     { name = "python-dotenv" },
     { name = "waitress" },
     { name = "whitenoise" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "django-debug-toolbar" },
 ]
 
 [package.metadata]
@@ -44,10 +50,14 @@ requires-dist = [
     { name = "djangorestframework", specifier = ">=3.16.1" },
     { name = "drf-spectacular", extras = ["sidecar"], specifier = ">=0.29.0" },
     { name = "gunicorn", specifier = ">=23.0.0" },
+    { name = "pymysql", specifier = ">=1.1.2" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "waitress", specifier = ">=3.0.2" },
     { name = "whitenoise", specifier = ">=6.11.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "django-debug-toolbar", specifier = ">=6.1.0" }]
 
 [[package]]
 name = "django"
@@ -61,6 +71,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/05/a2/933dbbb3dd9990494960f6e64aca2af4c0745b63b7113f59a822df92329e/django-5.2.8.tar.gz", hash = "sha256:23254866a5bb9a2cfa6004e8b809ec6246eba4b58a7589bc2772f1bcc8456c7f", size = 10849032, upload-time = "2025-11-05T14:07:32.778Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5e/3d/a035a4ee9b1d4d4beee2ae6e8e12fe6dee5514b21f62504e22efcbd9fb46/django-5.2.8-py3-none-any.whl", hash = "sha256:37e687f7bd73ddf043e2b6b97cfe02fcbb11f2dbb3adccc6a2b18c6daa054d7f", size = 8289692, upload-time = "2025-11-05T14:07:28.761Z" },
+]
+
+[[package]]
+name = "django-debug-toolbar"
+version = "6.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "sqlparse" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c0/50/acae2dd379164f6f4c6b6b36fd48a4d21b02095a03f4df7c30a8d1f1a62c/django_debug_toolbar-6.1.0.tar.gz", hash = "sha256:e962ec350c9be8bdba918138e975a9cdb193f60ec396af2bb71b769e8e165519", size = 309141, upload-time = "2025-10-30T19:50:39.458Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6d/72/685c978af45ad08257e2c69687a873eda6b6531c79b6e6091794c41c5ff6/django_debug_toolbar-6.1.0-py3-none-any.whl", hash = "sha256:e214dea4494087e7cebdcea84223819c5eb97f9de3110a3665ad673f0ba98413", size = 269069, upload-time = "2025-10-30T19:50:37.71Z" },
 ]
 
 [[package]]
@@ -202,6 +225,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e7/af/55068e9bc09acc1ada04cf9d872eff466ef77a6f634e00101a87eda46705/phonenumberslite-9.0.19.tar.gz", hash = "sha256:3794fcec9d2a6510a806187de750853c73ea5dabaac4ecd7fa36e79f869b3c2e", size = 2298398, upload-time = "2025-11-20T18:36:52.588Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ab/3e/7b8cef3b3bd8b0619f718dc6346b0558bd415f6fa81e8dfde806fb824d45/phonenumberslite-9.0.19-py2.py3-none-any.whl", hash = "sha256:92a2426808e7d40b4acf36c97dcc436747807419c5dbc035330df28c13d41c0f", size = 472573, upload-time = "2025-11-20T18:36:50.821Z" },
+]
+
+[[package]]
+name = "pymysql"
+version = "1.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/ae/1fe3fcd9f959efa0ebe200b8de88b5a5ce3e767e38c7ac32fb179f16a388/pymysql-1.1.2.tar.gz", hash = "sha256:4961d3e165614ae65014e361811a724e2044ad3ea3739de9903ae7c21f539f03", size = 48258, upload-time = "2025-08-24T12:55:55.146Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/4c/ad33b92b9864cbde84f259d5df035a6447f91891f5be77788e2a3892bce3/pymysql-1.1.2-py3-none-any.whl", hash = "sha256:e6b1d89711dd51f8f74b1631fe08f039e7d76cf67a42a323d3178f0f25762ed9", size = 45300, upload-time = "2025-08-24T12:55:53.394Z" },
 ]
 
 [[package]]

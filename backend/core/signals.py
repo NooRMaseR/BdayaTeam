@@ -1,5 +1,6 @@
 from rest_framework.authtoken.models import Token
 from member import models as member_models
+from technical.models import Technical
 from django.db.models import signals
 from django.dispatch import receiver
 from . import models as core_models
@@ -10,7 +11,23 @@ def create_user_role(sender, instance: core_models.BdayaUser, created: bool, **k
     if created:
         Token.objects.create(user=instance)
         
-    match instance.role:
-        case core_models.UserRole.MEMBER:
-            member_models.Member.objects.create()
+        if instance.is_technical:
+            Technical.objects.create(user=instance, track=instance.track)
+    
+
+@receiver(signals.post_save, sender=member_models.Member)
+def create_user_from_member(sender, instance: member_models.Member, created: bool, **kwargs):
+    if created:
+        GENERATED_PASSWORD = f"{instance.code}_{instance.collage_code}"
+        
+        user = core_models.BdayaUser(
+            username=instance.name,
+            phone_number=instance.phone_number,
+            email=instance.email,
+            role=core_models.UserRole.MEMBER,
+        )
+        user.set_password(GENERATED_PASSWORD)
+        user.save()
+        
+
             

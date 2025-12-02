@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"></html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Bdaya</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background-color: #007BFF;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .content p {
+            margin: 10px 0;
+        }
+        .content .highlight {
+            font-weight: bold;
+            color: #007BFF;
+        }
+        .footer {
+            background-color: #f4f4f9;
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #888888;
+        }
+        .content a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .content .button {
+            display: inline-block;
+            background-color: #007BFF;
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .center {
+            display: flex;
+            width: 100%;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>مرحباً بك فى Team Bdaya!</h1>
+        </div>
+        <div class="content">
+            <p>عزيزي/عزيزتي <span class="highlight">{{username}}</span>،</p>
+            <p>نحن سعداء بانضمامك إلى فريق بداية! فيما يلي تفاصيل حسابك:</p>
+            <p><strong>البريد الإلكتروني:</strong> {{email}}</p>
+            <p><strong>كلمة المرور:</strong> {{password}}</p>
+            <p><strong>الكود:</strong> {{code}}</p>
+            <div class="center">
+                <a href="https://www.bdayateam.com" target="_blank" class="button">تسحيل الدخول</a>
+            </div>
+            <p>يرجى الحفاظ على هذه المعلومات آمنة وعدم مشاركتها مع أي شخص.</p>
+            <p>نتطلع للعمل معك وتحقيق إنجازات رائعة معًا!</p>
+            <p>مع أطيب التحيات،</p>
+            <p dir="ltr">Team Bdaya</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2023 فريق بداية. جميع الحقوق محفوظة.</p>
+        </div>
+    </div>
+</body>
+</html>

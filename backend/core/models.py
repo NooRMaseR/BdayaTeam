@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from phonenumber_field.modelfields import PhoneNumberField
+from django.core.exceptions import ValidationError
 from django.db import models
 
 # Create your models here.
@@ -32,12 +33,21 @@ class UserRole(models.TextChoices):
     MEMBER = "member"
     TECHNICAL = "technical"
     ORGANIZER = "organizer"
+    
+
+class Track(models.Model):
+    track = models.CharField(max_length=40, unique=True)
+    prefix = models.CharField(max_length=2)
+
+    def __str__(self):
+        return self.track
 
 class BdayaUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=50)
     phone_number = PhoneNumberField(region="EG") # type: ignore
     role = models.CharField(max_length=15, choices=UserRole, default=UserRole.MEMBER)
+    track = models.ForeignKey(Track, on_delete=models.SET_NULL, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     joined_at = models.DateTimeField(auto_now_add=True)
@@ -46,17 +56,28 @@ class BdayaUser(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ["username", "phone_number", "role"]
+    
+    @property
+    def is_technical(self) -> bool:
+        return self.role == UserRole.TECHNICAL
+    
+    @property
+    def is_organizer(self) -> bool:
+        return self.role == UserRole.ORGANIZER
+    
+    @property
+    def is_member(self) -> bool:
+        return self.role == UserRole.MEMBER
+    
+    def clean(self) -> None:
+        if self.is_technical and self.track is None:
+            raise ValidationError("Track is requeired for technical role")
+        elif not self.is_technical and self.track:
+            raise ValidationError(f"{self.role} cannot have a track")
+        return super().clean()
 
     def __str__(self):
         return self.username
-
-
-class Track(models.Model):
-    track = models.CharField(max_length=40, unique=True)
-    prefix = models.CharField(max_length=2)
-
-    def __str__(self):
-        return self.track
 
 
 class Attendance(models.Model):
@@ -69,4 +90,4 @@ class Attendance(models.Model):
         ordering = ['-date']
 
     def __str__(self):
-        return f'{self.member.code} - {self.date}'
+        return f"{self.member} - {self.date}"

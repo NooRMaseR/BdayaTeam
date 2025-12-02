@@ -1,4 +1,3 @@
-from typing import Iterable
 from phonenumber_field.modelfields import PhoneNumberField
 from technical.models import Task
 from core.models import Track
@@ -8,11 +7,12 @@ from core import validators
 # Create your models here.
 
 class Member(models.Model):
-    name = models.CharField(max_length=200, unique=True)
+    code = models.CharField(max_length=6, primary_key=True, db_index=True, unique=True, blank=True, validators=[validators.validate_student_code])
+    name = models.CharField(max_length=200)
     email = models.EmailField(unique=True)
-    code = models.CharField(max_length=6, unique=True, blank=True, validators=[validators.validate_student_code])
-    collage_code = models.CharField(max_length=50, unique=True, validators=[validators.validate_collage_code])
+    collage_code = models.CharField(max_length=9, unique=True, validators=[validators.validate_collage_code])
     phone_number = PhoneNumberField(region="EG") # type: ignore
+    bonus = models.SmallIntegerField(default=0)
     track = models.ForeignKey(Track, on_delete=models.PROTECT, related_name='members')
 
     def __str__(self):
