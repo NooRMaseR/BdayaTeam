@@ -11,7 +11,13 @@ dependencies = [
     "djangorestframework>=3.16.1",
     "drf-spectacular[sidecar]>=0.29.0",
     "gunicorn>=23.0.0",
+    "pymysql>=1.1.2",
     "python-dotenv>=1.2.1",
     "waitress>=3.0.2",
     "whitenoise>=6.11.0",
+]
+
+[dependency-groups]
+dev = [
+    "django-debug-toolbar>=6.1.0",
 ]

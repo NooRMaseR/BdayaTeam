@@ -4,6 +4,7 @@ from django.forms import Form
 from django.http import HttpRequest
 from unfold.admin import ModelAdmin as UnfoldModelAdmin
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
+from unfold.contrib.filters.admin.choice_filters import ChoicesCheckboxFilter
 from django.contrib.auth.models import Group
 from django.contrib import admin
 from . import models
@@ -19,8 +20,12 @@ class GroupAdmin(BaseGroupAdmin, UnfoldModelAdmin):
 
 @admin.register(models.BdayaUser)
 class BdayaUserAdmin(UnfoldModelAdmin):
-    list_display = ("id", "username", "email", "phone_number", "is_active", "is_staff", "is_superuser", "joined_at")
+    list_display = ("id", "username", "email", "phone_number", "role", "is_active", "is_staff", "is_superuser", "joined_at")
     search_fields = ("username", "email", "phone_number")
+    list_filter = (
+        ("role", ChoicesCheckboxFilter),
+    )
+    list_filter_submit = True
     
     def save_model(self, request: HttpRequest, obj: Model, form: Form, change: Any) -> None:
         if "password" in form.changed_data:
