@@ -70,9 +70,9 @@ class BdayaUser(AbstractBaseUser, PermissionsMixin):
         return self.role == UserRole.MEMBER
     
     def clean(self) -> None:
-        if self.is_technical and self.track is None:
-            raise ValidationError("Track is requeired for technical role")
-        elif not self.is_technical and self.track:
+        if (self.is_technical or self.is_member) and self.track is None:
+            raise ValidationError(f"Track is requeired for {self.role} role")
+        elif self.is_organizer and self.track:
             raise ValidationError(f"{self.role} cannot have a track")
         return super().clean()
 

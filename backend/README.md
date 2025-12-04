@@ -29,16 +29,24 @@ then apply the migrations
 uv run manage.py migrate
 ```
 
+## creating an admin user
+
+to create an admin user run this command
+
+```bash
+uv run manage.py createsuperuser
+```
+
 ## Running the Server
 
 run the server by using this command
 
 ```bash
-uv run manage.py runserver
+uv run gunicorn BdayaTeam.wsgi:application --workers=4
 ```
 
-then head to this url to open `swagger-UI`
+to open `swagger-UI` open this url `http://127.0.0.1:8000/api/schema/swagger-ui/`
 
-`http://127.0.0.1:8000/api/schema/swagger-ui/`
+to open the `admin panel` open this url `http://127.0.0.1:8000/admin/`
 
 Enjoy

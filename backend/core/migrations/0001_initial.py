@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=200)),
-                ('code', models.CharField(max_length=6, unique=True, validators=[core.validators.validate_student_code])),
+                ('code', models.CharField(max_length=6, unique=True, validators=[core.validators.validate_member_code])),
                 ('collage_code', models.CharField(max_length=50, validators=[core.validators.validate_collage_code])),
                 ('phone_number', phonenumber_field.modelfields.PhoneNumberField(max_length=128, region='EG')),
             ],

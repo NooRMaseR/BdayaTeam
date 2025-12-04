@@ -19,3 +19,8 @@ class MemberAdmin(UnfoldModelAdmin):
 class RecivedTaskAdmin(UnfoldModelAdmin):
     list_display = ("task", "member", "track", "degree", "signed")
     list_display_links = ("task", "member")
+    
+@admin.register(models.ReciviedTaskFile)
+class RecivedTaskFileAdmin(UnfoldModelAdmin):
+    list_display = ("id", "recivied_task", "recivied_task__member__name", "recivied_task__member__code")
+    list_display_links = ("id", "recivied_task")

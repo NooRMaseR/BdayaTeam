@@ -1,19 +1,11 @@
-from rest_framework.authtoken.models import Token
+from django.template.loader import render_to_string
 from member import models as member_models
-from technical.models import Technical
+from django.core.mail import send_mail
 from django.db.models import signals
 from django.dispatch import receiver
 from . import models as core_models
 
 
-@receiver(signals.post_save, sender=core_models.BdayaUser)
-def create_user_role(sender, instance: core_models.BdayaUser, created: bool, **kwargs):
-    if created:
-        Token.objects.create(user=instance)
-        
-        if instance.is_technical:
-            Technical.objects.create(user=instance, track=instance.track)
-    
 
 @receiver(signals.post_save, sender=member_models.Member)
 def create_user_from_member(sender, instance: member_models.Member, created: bool, **kwargs):
@@ -28,6 +20,24 @@ def create_user_from_member(sender, instance: member_models.Member, created: boo
         )
         user.set_password(GENERATED_PASSWORD)
         user.save()
+        
+        template = render_to_string(
+            "register_email.html", 
+            {
+                "username": instance.name,
+                "email": instance.email,
+                "password": GENERATED_PASSWORD,
+                "code": instance.code,
+                "track": instance.track.track
+            }
+        )
+        send_mail(
+            "Team Bdaya Info",
+            "Welcome",
+            from_email=None,
+            recipient_list=[instance.email],
+            html_message=template
+        )
         
 
             

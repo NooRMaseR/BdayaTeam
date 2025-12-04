@@ -27,7 +27,8 @@ class InputRegisterSerializer(serializers.ModelSerializer):
         model = Member
         fields = '__all__'
         extra_kwargs = {
-            "code": {"read_only": True}
+            "code": {"read_only": True},
+            "bonus": {"read_only": True}
         }
         
     def create(self, validated_data):

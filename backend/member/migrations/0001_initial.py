@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Member',
             fields=[
-                ('code', models.CharField(blank=True, db_index=True, max_length=6, primary_key=True, serialize=False, unique=True, validators=[core.validators.validate_student_code])),
+                ('code', models.CharField(blank=True, db_index=True, max_length=6, primary_key=True, serialize=False, unique=True, validators=[core.validators.validate_member_code])),
                 ('name', models.CharField(max_length=200, unique=True)),
                 ('email', models.EmailField(max_length=254, unique=True)),
                 ('collage_code', models.CharField(max_length=9, unique=True, validators=[core.validators.validate_collage_code])),

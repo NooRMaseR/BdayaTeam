@@ -15,13 +15,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
-# from django.conf.urls.i18n import i18n_patterns
-from debug_toolbar.toolbar import debug_toolbar_urls
 from django.urls import path, include
 from django.contrib import admin
+from django.conf import settings
 
 urlpatterns = [
-    # path('i18n/', include('django.conf.urls.i18n')),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/schema/swagger-ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
@@ -30,5 +28,11 @@ urlpatterns = [
     path("member/", include("member.urls")),
     path('admin/', admin.site.urls),
     path("", include("core.urls"))
-]  + debug_toolbar_urls() #! remove in production
-# + i18n_patterns()
+]
+
+if settings.DEBUG:
+    from debug_toolbar.toolbar import debug_toolbar_urls
+    from django.conf.urls.static import static
+    
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += debug_toolbar_urls()

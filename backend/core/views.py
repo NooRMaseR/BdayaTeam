@@ -16,6 +16,9 @@ from . import models, serializers
 # Create your views here.
 
 @extend_schema(
+    tags=(
+        "Auth",
+    ),
     request=inline_serializer(
         "login",
         {
@@ -79,6 +82,9 @@ class Login(APIView):
         )
 
 @extend_schema(
+    tags=(
+        "Auth",
+    ),
     request=serializers.InputRegisterSerializer,
     responses={
         200: serializers.OutputRegisterSerializer,

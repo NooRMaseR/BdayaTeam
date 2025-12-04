@@ -10,6 +10,7 @@ class TaskSerializer(serializers.ModelSerializer):
         write_only=True
     )
     track = TrackSerializer(read_only=True)
+    expired = serializers.BooleanField(read_only=True)
     
     class Meta:
         model = models.Task

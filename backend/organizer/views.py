@@ -10,7 +10,6 @@ from member.models import Member
 # Create your views here.
 
 class Members(APIView):
-    
     serializer_class = MemberSerializer
     
     def get_permissions(self):

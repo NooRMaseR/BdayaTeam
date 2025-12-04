@@ -30,7 +30,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -58,11 +58,9 @@ INSTALLED_APPS = (
     "technical",
     "organizer",
     "member",
-    "debug_toolbar", #! remove in production
 )
 
 MIDDLEWARE = (
-    "debug_toolbar.middleware.DebugToolbarMiddleware", #! remove in production
     'django.middleware.security.SecurityMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -73,9 +71,13 @@ MIDDLEWARE = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
+if DEBUG:
+    INSTALLED_APPS = (*INSTALLED_APPS, "debug_toolbar")
+    MIDDLEWARE = (*MIDDLEWARE, "debug_toolbar.middleware.DebugToolbarMiddleware")
+
+    INTERNAL_IPS = (
+        "127.0.0.1",
+    )
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -92,6 +94,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "APIs for the frontend to work with",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    'COMPONENT_SPLIT_REQUEST': True,
     
     "SWAGGER_UI_DIST": "SIDECAR",
     "SWAGGER_UI_FAVICON_HREFF": "SIDECAR",
@@ -101,6 +104,14 @@ SPECTACULAR_SETTINGS = {
 
 ROOT_URLCONF = 'BdayaTeam.urls'
 AUTH_USER_MODEL = 'core.BdayaUser'
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = os.getenv("EMAIL_PORT")
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 TEMPLATES = (
     {
@@ -118,6 +129,7 @@ TEMPLATES = (
 )
 
 WSGI_APPLICATION = 'BdayaTeam.wsgi.application'
+ASGI_APPLICATION = 'BdayaTeam.asgi.application'
 
 
 # Database
@@ -137,7 +149,7 @@ DATABASES = {
 }
 
 STORAGES = {
-    "DEFAULT": {
+    "default": {
       "BACKEND": "django.core.files.storage.filesystem.FileSystemStorage"
     },
     "staticfiles": {
@@ -191,7 +203,7 @@ STATIC_ROOT = BASE_DIR / "static_files"
 
 
 MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = BASE_DIR / "media_files"
 
 UNFOLD = {
     # "SHOW_LANGUAGES": True,

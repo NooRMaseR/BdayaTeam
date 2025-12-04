@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.request import Request
@@ -7,6 +8,12 @@ from drf_spectacular.utils import extend_schema, inline_serializer
 from core.serializers import ForbiddenOnlyTechnical
 from core.permissions import IsTechnical
 from . import models, serializers
+
+from member.models import ReciviedTask
+from member.serializers import RecivedTaskSerializer
+
+from django.db.models import Q, ExpressionWrapper, BooleanField
+from django.utils import timezone
 
 # Create your views here.
 
@@ -26,7 +33,18 @@ class Tasks(APIView):
         },
     )
     def get(self, request: Request) -> Response:
-        data = models.Task.objects.select_related("track").defer("track__prefix").filter(track=request.user.technical_profile.track)
+        data = (
+            models.Task.objects
+            .select_related("track")
+            .defer("track__prefix")
+            .filter(track=request.user.track)
+            .annotate(
+                expired=ExpressionWrapper(
+                    Q(expires_at__lte=timezone.now()),
+                    output_field=BooleanField()
+                )
+            )
+        )
         return Response(serializers.TaskSerializer(data, many=True).data)
     
     @extend_schema(
@@ -50,3 +68,34 @@ class Tasks(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
+class TasksFromMembers(APIView):
+    serializer_class = RecivedTaskSerializer(many=True)
+    
+    def get_permissions(self):
+        perms = super().get_permissions()
+        perms.append(IsTechnical())
+        return perms
+    
+    def get(self, request: Request) -> Response:
+        tasks = ReciviedTask.objects.select_related("track", "task", "member").prefetch_related("files").filter(track=request.user.track)
+        serializer = RecivedTaskSerializer(tasks, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        request=inline_serializer(
+            name="TaskSigning",
+            fields={
+                "task_id": serializers.serializers.IntegerField(),
+                "degree": serializers.serializers.IntegerField()
+            }
+        ),
+        responses={
+            200: None
+        }
+    )
+    def post(self, request: Request) -> Response:
+        task = get_object_or_404(ReciviedTask, id=request.data.get("task_id"), track=request.user.track) # type: ignore
+        task.degree = request.data.get("degree") # type: ignore
+        task.signed = True
+        task.save()
+        return Response()

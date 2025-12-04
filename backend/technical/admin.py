@@ -1,20 +1,21 @@
-from unfold.admin import ModelAdmin as UnfoldModelAdmin, TabularInline
+from unfold.admin import ModelAdmin as UnfoldModelAdmin, TabularInline, StackedInline
+from core.models import BdayaUser, UserRole
 from django.contrib import admin
 from . import models
 
 
 # Register your models here.
 
-class TrackTechnichal(TabularInline):
-    model = models.Technical
-    tab = True
-    extra = 1
+class TrackTechnichal(StackedInline):
+    model = BdayaUser
+    fields = ("username", "email", "phone_number")
+    extra = 0
+    tab=True
+    collapsible=True
     
-@admin.register(models.Technical)
-class TechnicalAdmin(UnfoldModelAdmin):
-    list_display = ("id", "user", "track")
-    search_fields = ("track", )
-    
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(role=UserRole.TECHNICAL)
+  
 @admin.register(models.Track)
 class CourseAdmin(UnfoldModelAdmin):
     list_display = ("id", "track", "prefix")
@@ -23,6 +24,6 @@ class CourseAdmin(UnfoldModelAdmin):
 
 @admin.register(models.Task)
 class TaskAdmin(UnfoldModelAdmin):
-    list_display = ("id", "task_number", "track", "uploaded_at")
+    list_display = ("id", "task_number", "track", "created_at", "expires_at", "is_expired")
     search_fields = ("task_number",)
     
