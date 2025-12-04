@@ -7,15 +7,15 @@ from drf_spectacular.utils import extend_schema, inline_serializer
 
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Subquery, BooleanField, ExpressionWrapper, Q
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
+from django.db.models import Subquery, BooleanField, ExpressionWrapper, Q
 
 from core.permissions import IsMember
 
-from technical.serializers import TaskSerializer
-from technical.models import Task
 from . import serializers, models
+from technical.models import Task
+from technical.serializers import TaskSerializer
 
 
 # Create your views here.

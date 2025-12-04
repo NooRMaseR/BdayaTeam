@@ -11,6 +11,7 @@ dependencies = [
     "djangorestframework>=3.16.1",
     "drf-spectacular[sidecar]>=0.29.0",
     "gunicorn>=23.0.0",
+    "psycopg[binary]>=3.3.1",
     "pymysql>=1.1.2",
     "python-dotenv>=1.2.1",
     "uvicorn[standard]>=0.38.0",

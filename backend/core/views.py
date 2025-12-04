@@ -6,8 +6,10 @@ from rest_framework.permissions import AllowAny
 from rest_framework.generics import ListAPIView
 from rest_framework.authtoken.models import Token
 
+from django.contrib import auth
 from django.db import transaction
-from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from drf_spectacular.utils import extend_schema, inline_serializer
 
 from member.models import Member
@@ -50,12 +52,10 @@ class Login(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request: Request) -> Response:
-        email: str | None = request.data.get("email")  # type: ignore
-        password: str | None = request.data.get("password")  # type: ignore
+        user: models.BdayaUser | None = auth.authenticate(request._request, email=request.data.get("email"), password=request.data.get("password")) # type: ignore
         track = None
-        user = get_object_or_404(models.BdayaUser.objects.only("id", "username","role", "track").select_related("track"), email=email)
-
-        if not user.check_password(password): # type: ignore
+        
+        if not user:
             return Response(
                 {"details": "invalid email or password"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -121,3 +121,9 @@ class Tracks(ListAPIView):
     permission_classes = (AllowAny,)
     serializer_class = serializers.TrackSerializer
     queryset = models.Track.objects.all()
+    
+    @method_decorator(cache_page(60 * 3))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    
