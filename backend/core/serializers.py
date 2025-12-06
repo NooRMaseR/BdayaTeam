@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db import transaction
 from member.models import Member
 from . import models
 
@@ -13,16 +14,14 @@ class LoginSerializer(serializers.Serializer):
     token = serializers.CharField()
     track = TrackSerializer(allow_null=True)
 
-class OutputRegisterSerializer(serializers.ModelSerializer):
-    track = TrackSerializer()
-    class Meta:
-        model = Member
-        fields = '__all__'
-        extra_kwargs = {
-            "code": {"read_only": True}
-        }
-        
-class InputRegisterSerializer(serializers.ModelSerializer):
+
+class RegisterSerializer(serializers.ModelSerializer):
+    request_track_id = serializers.PrimaryKeyRelatedField(
+        source="track",
+        queryset=models.Track.objects.all(),
+        write_only=True
+    )
+    track = TrackSerializer(read_only=True)
     class Meta:
         model = Member
         fields = '__all__'
@@ -35,14 +34,15 @@ class InputRegisterSerializer(serializers.ModelSerializer):
         track: models.Track = validated_data["track"]
         prefix = track.prefix
         
-        last_member = Member.objects.filter(track=track).order_by("-code").first()
-        if last_member:
-            last_id = int(last_member.code.split("-")[1]) + 1
-        else:
-            last_id = 1
-        
-        validated_data["code"] = f"{prefix}-{last_id}"
-        return super().create(validated_data)
+        with transaction.atomic():
+            last_member = Member.objects.only("id", "code").filter(track=track).order_by("-code").first()
+            if last_member:
+                last_id = int(last_member.code.split("-")[1]) + 1
+            else:
+                last_id = 1
+            
+            validated_data["code"] = f"{prefix}-{last_id}"
+            return super().create(validated_data)
     
 class ForbiddenOnlyTechnical(serializers.Serializer):
     details = serializers.CharField(default="Only technicals Allowed")

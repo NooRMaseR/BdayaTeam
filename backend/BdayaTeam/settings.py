@@ -9,8 +9,6 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-import pymysql
-pymysql.install_as_MySQLdb()
 
 from django.utils.translation import gettext_lazy as _
 from dotenv import load_dotenv
@@ -38,7 +36,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = (
-    "unfold",  # before django.contrib.admin
+    "unfold",
     "unfold.contrib.filters",  # optional, if special filters are needed
     "unfold.contrib.forms",  # optional, if special form elements are needed
     "unfold.contrib.inlines",  # optional, if special inlines are needed
@@ -99,7 +97,6 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_DIST": "SIDECAR",
     "SWAGGER_UI_FAVICON_HREFF": "SIDECAR",
     "REDOC_DIST": "SIDECAR",
-    
 }
 
 ROOT_URLCONF = 'BdayaTeam.urls'
@@ -145,7 +142,14 @@ DATABASES = {
         'PASSWORD': os.getenv("DB_PASSWORD"),
         'HOST': os.getenv("DB_HOST"),
         'PORT': os.getenv("DB_PORT"),
-        'CONN_MAX_AGE': 300 # 5 minutes
+        # 'CONN_MAX_AGE': 300 # 5 minutes
+        'OPTIONS': {
+            "pool": {
+                "min_size": 2,
+                "max_size": 20,
+                "timeout": 10
+            }
+        }
     }
 }
 
@@ -185,7 +189,7 @@ LANGUAGE_CODE = 'en'
 
 TIME_ZONE = 'Africa/Cairo'
 
-USE_I18N = True
+USE_I18N = False
 
 USE_TZ = True
 
@@ -206,9 +210,9 @@ STATIC_ROOT = BASE_DIR / "static_files"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media_files"
 
-UNFOLD = {
+# UNFOLD = {
     # "SHOW_LANGUAGES": True,
-}
+# }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

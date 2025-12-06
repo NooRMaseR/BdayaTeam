@@ -1,12 +1,12 @@
-from typing import Any
-from django.db.models import Model
-from django.forms import Form
-from django.http import HttpRequest
-from unfold.admin import ModelAdmin as UnfoldModelAdmin
-from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from unfold.contrib.filters.admin.choice_filters import ChoicesCheckboxFilter
+from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
+from unfold.admin import ModelAdmin as UnfoldModelAdmin
 from django.contrib.auth.models import Group
+from django.http import HttpRequest
+from django.db.models import Model
 from django.contrib import admin
+from django.forms import Form
+from typing import Any
 from . import models
 
 # Register your models here.
@@ -33,14 +33,3 @@ class BdayaUserAdmin(UnfoldModelAdmin):
         
         return super().save_model(request, obj, form, change)
 
-
-@admin.register(models.Attendance)
-class AttendanceAdmin(UnfoldModelAdmin):
-    list_display = ("id", "member", "get_member_track", "date")
-    search_fields = ("member__name", "member__code")
-    
-    def get_member_track(self, obj: models.Attendance) -> models.Track:
-        return obj.member.track
-
-    get_member_track.short_description = "Track" # type: ignore
-    

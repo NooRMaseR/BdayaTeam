@@ -85,9 +85,9 @@ class Login(APIView):
     tags=(
         "Auth",
     ),
-    request=serializers.InputRegisterSerializer,
+    request=serializers.RegisterSerializer,
     responses={
-        200: serializers.OutputRegisterSerializer,
+        200: serializers.RegisterSerializer,
         400: inline_serializer(
             "bad-register",
             {
@@ -101,18 +101,11 @@ class Register(APIView):
     
     @transaction.atomic
     def post(self, request: Request) -> Response:
-        data = serializers.InputRegisterSerializer(data=request.data)
+        data = serializers.RegisterSerializer(data=request.data)
         
         if data.is_valid():
             data.save()
-
-            new_data = data.data
-            try:
-                new_data["track"] = serializers.TrackSerializer(models.Track.objects.get(id=new_data["track"])).data # type: ignore
-            except models.Track.DoesNotExist:
-                pass
-            
-            return Response(new_data)
+            return Response(data.data)
         else:
             return Response(data.errors, status=status.HTTP_400_BAD_REQUEST)
         
@@ -120,9 +113,9 @@ class Register(APIView):
 class Tracks(ListAPIView):
     permission_classes = (AllowAny,)
     serializer_class = serializers.TrackSerializer
-    queryset = models.Track.objects.all()
+    queryset = models.Track.objects.defer("prefix").all()
     
-    @method_decorator(cache_page(60 * 3))
+    @method_decorator(cache_page(60 * 3)) # 3 minutes
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 

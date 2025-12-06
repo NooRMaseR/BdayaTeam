@@ -78,16 +78,3 @@ class BdayaUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.username
-
-
-class Attendance(models.Model):
-    from member.models import Member
-    
-    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='attendances')
-    date = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-date']
-
-    def __str__(self):
-        return f"{self.member} - {self.date}"

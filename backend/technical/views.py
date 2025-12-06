@@ -1,4 +1,3 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.request import Request
@@ -94,8 +93,5 @@ class TasksFromMembers(APIView):
         }
     )
     def post(self, request: Request) -> Response:
-        task = get_object_or_404(ReciviedTask, id=request.data.get("task_id"), track=request.user.track) # type: ignore
-        task.degree = request.data.get("degree") # type: ignore
-        task.signed = True
-        task.save()
+        ReciviedTask.objects.filter(id=request.data.get("task_id"), track=request.user.track).update(degree=request.data.get("degree"), signed=True) # type: ignore
         return Response()

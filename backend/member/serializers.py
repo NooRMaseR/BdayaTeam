@@ -1,9 +1,13 @@
 from technical.serializers import TaskSerializer, TrackSerializer
+from organizer.serializers import AttendenceSmallSerializer
 from rest_framework import serializers
 from . import models
 
+
 class MemberSerializer(serializers.ModelSerializer):
     track = TrackSerializer(read_only=True)
+    attendances = AttendenceSmallSerializer(read_only=True, many=True)
+    
     class Meta:
         model = models.Member
         fields = '__all__'
@@ -18,14 +22,12 @@ class RecivedTaskSerializer(serializers.ModelSerializer):
     task = TaskSerializer(read_only=True)
     member = MemberSerializer(read_only=True)
     
-    # 1. WRITE ONLY: Used for uploading files
     files = serializers.ListField(
         child=serializers.FileField(),
         required=False,
-        write_only=True  # Hides this field from the output to prevent the crash
+        write_only=True
     )
 
-    # 2. READ ONLY: Used for displaying file URLs in the response
     files_url = serializers.SerializerMethodField()
     
     class Meta:
