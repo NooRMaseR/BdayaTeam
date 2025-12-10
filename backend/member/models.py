@@ -24,7 +24,7 @@ def task_upload_path(instance: ReciviedTaskFile, filename: str):
 
 class ReciviedTask(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="recivied")
-    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="tasks_sent")
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
     notes = models.TextField(null=True, blank=True)
     degree = models.PositiveSmallIntegerField(null=True, blank=True)

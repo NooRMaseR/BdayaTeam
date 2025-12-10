@@ -9,9 +9,11 @@ from django.db import transaction
 from django.utils import timezone
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
-from django.db.models import Subquery, BooleanField, ExpressionWrapper, Q
+from django.db.models import Subquery, BooleanField, PositiveSmallIntegerField, ExpressionWrapper, Q, Count, F
 
+from core.models import UserRole
 from core.permissions import IsMember
+from organizer.models import AttendanceStatus
 
 from . import serializers, models
 from technical.models import Task
@@ -80,8 +82,8 @@ class Tasks(APIView):
         }
     )
     def post(self, request: Request) -> Response:
-        member = get_object_or_404(models.Member, email=request.user.email)
-        task = get_object_or_404(models.Task, id=request.data.get("task_id")) # type: ignore
+        member = get_object_or_404(models.Member.objects.only("code"), email=request.user.email)
+        task = get_object_or_404(models.Task.objects.only("id", "created_at", "expires_at"), id=request.data.get("task_id")) # type: ignore
         
         if task.is_expired:
             return Response({"details": "task is expired"}, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -104,4 +106,73 @@ class Tasks(APIView):
         except Exception as e:
             print(repr(e))
             return Response({"details": "somthing went wrong, please try again"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MemberProfile(APIView):
+    serializer_class = serializers.MemberProfileSerializer
+    
+    def get(self, request: Request, member_code: str) -> Response:
+        match request.user.role:
+            case UserRole.MEMBER:
+                user = get_object_or_404(
+                    models.Member.objects
+                    .select_related("track")
+                    .only(
+                        "name",
+                        "code",
+                        "track__id",
+                        "track__track",
+                    )
+                    .annotate(
+                        absents=Count(
+                            "attendances",
+                            filter=(
+                                Q(attendances__status=AttendanceStatus.ABSENT) | 
+                                Q(attendances__status=AttendanceStatus.EXCUSED)
+                            ),
+                            distinct=True
+                        ),
+                        total_tasks=Count("track__tasks", distinct=True),
+                        total_tasks_sent=Count("tasks_sent", distinct=True),
+                    )
+                    .annotate(
+                        missing_tasks=ExpressionWrapper(
+                            F("total_tasks") - F("total_tasks_sent"),
+                            PositiveSmallIntegerField()
+                        )
+                    ),
+                    email=request.user.email
+                )
+            case _:
+                user = get_object_or_404(
+                    models.Member.objects
+                    .select_related("track")
+                    .only(
+                        "name",
+                        "code",
+                        "track__id",
+                        "track__track",
+                    )
+                    .annotate(
+                        absents=Count(
+                            "attendances",
+                            filter=(
+                                Q(attendances__status=AttendanceStatus.ABSENT) | 
+                                Q(attendances__status=AttendanceStatus.EXCUSED)
+                            )
+                        ),
+                        total_tasks=Count("track__tasks"),
+                        total_tasks_sent=Count("tasks_sent"),
+                    )
+                    .annotate(
+                        missing_tasks=ExpressionWrapper(
+                            F("total_tasks") - F("total_tasks_sent"),
+                            PositiveSmallIntegerField()
+                        )
+                    ),
+                    code=member_code
+                )
+                
+        serializer = serializers.MemberProfileSerializer(user)
+        return Response(serializer.data)
         

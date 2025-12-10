@@ -11,8 +11,8 @@ from . import models, serializers
 from member.models import ReciviedTask
 from member.serializers import RecivedTaskSerializer
 
-from django.db.models import Q, ExpressionWrapper, BooleanField
 from django.utils import timezone
+from django.db.models import Q, ExpressionWrapper, BooleanField
 
 # Create your views here.
 

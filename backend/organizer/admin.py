@@ -9,6 +9,7 @@ from unfold.admin import ModelAdmin as UnfoldModelAdmin
 @admin.register(models.Attendance)
 class AttendanceAdmin(UnfoldModelAdmin):
     list_display = ("id", "member", "get_member_track", "date", "status")
+    list_display_links = ("id", "member")
     search_fields = ("member__name", "member__code")
     
     def get_member_track(self, obj: models.Attendance) -> Track:

@@ -90,7 +90,7 @@ class Members(APIView):
         }
     )
     def put(self, request: Request, track_name: str) -> Response:
-        attendence = get_object_or_404(Attendance, member_id=request.data.get("member_code"), date=timezone.now().date()) # type: ignore
+        attendence = get_object_or_404(Attendance, member_id=request.data.get("member_code"), track__track=track_name, date=timezone.now().date()) # type: ignore
         try:
             new_status = AttendanceStatus(request.data.get("status")) # type: ignore
         except ValueError:

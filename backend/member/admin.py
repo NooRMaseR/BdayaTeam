@@ -1,6 +1,5 @@
-from unfold.admin import ModelAdmin as UnfoldModelAdmin
 from unfold.contrib.filters.admin.dropdown_filters import ChoicesDropdownFilter
-from unfold.contrib.filters.admin.choice_filters import CheckboxFilter, RadioFilter, BooleanRadioFilter
+from unfold.admin import ModelAdmin as UnfoldModelAdmin
 from django.contrib import admin
 from . import models
 
@@ -23,4 +22,4 @@ class RecivedTaskAdmin(UnfoldModelAdmin):
 @admin.register(models.ReciviedTaskFile)
 class RecivedTaskFileAdmin(UnfoldModelAdmin):
     list_display = ("id", "recivied_task", "recivied_task__member__name", "recivied_task__member__code")
-    list_display_links = ("id", "recivied_task")
+    list_display_links = ("id", "recivied_task", "recivied_task__member__name")

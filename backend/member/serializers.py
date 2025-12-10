@@ -46,3 +46,19 @@ class RecivedTaskSerializer(serializers.ModelSerializer):
         return recive_task
 
 
+class MemberProfileSerializer(serializers.ModelSerializer):
+    absents = serializers.IntegerField(read_only=True)
+    track = TrackSerializer(read_only=True)
+    total_tasks_sent = serializers.IntegerField()
+    missing_tasks = serializers.IntegerField()
+    
+    class Meta:
+        model = models.Member
+        fields = (
+            "name",
+            "code",
+            "track",
+            "absents",
+            "total_tasks_sent",
+            "missing_tasks"
+        )

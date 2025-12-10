@@ -21,6 +21,7 @@ class GroupAdmin(BaseGroupAdmin, UnfoldModelAdmin):
 @admin.register(models.BdayaUser)
 class BdayaUserAdmin(UnfoldModelAdmin):
     list_display = ("id", "username", "email", "phone_number", "role", "is_active", "is_staff", "is_superuser", "joined_at")
+    list_display_links = ("id", "username", "email")
     search_fields = ("username", "email", "phone_number")
     list_filter = (
         ("role", ChoicesCheckboxFilter),
