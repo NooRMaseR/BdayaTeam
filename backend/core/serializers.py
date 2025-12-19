@@ -24,10 +24,9 @@ class RegisterSerializer(serializers.ModelSerializer):
     track = TrackSerializer(read_only=True)
     class Meta:
         model = Member
-        fields = '__all__'
+        exclude = ("bonus",)
         extra_kwargs = {
             "code": {"read_only": True},
-            "bonus": {"read_only": True}
         }
         
     def create(self, validated_data):
@@ -35,7 +34,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         prefix = track.prefix
         
         with transaction.atomic():
-            last_member = Member.objects.only("id", "code").filter(track=track).order_by("-code").first()
+            last_member = Member.objects.only("code").filter(track=track).order_by("-code").first()
             if last_member:
                 last_id = int(last_member.code.split("-")[1]) + 1
             else:

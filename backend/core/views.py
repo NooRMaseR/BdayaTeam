@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.request import Request
@@ -8,6 +9,7 @@ from rest_framework.authtoken.models import Token
 
 from django.contrib import auth
 from django.db import transaction
+from django.middleware import csrf
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -72,14 +74,57 @@ class Login(APIView):
             except Member.DoesNotExist:
                 pass
         
-        return Response(
+        response = Response(
             {
                 "username": user.username,
                 "role": user.role,
-                "token": token_obj.key,
                 "track": track
             }
         )
+        response.set_cookie(
+            key="auth_token",
+            value=token_obj.key
+        )
+        
+        csrf.get_token(request._request)
+        return response
+    
+
+@extend_schema(
+    tags=("Auth",)
+)
+class TestAuthCredentials(APIView):
+    def get(self, request: Request) -> Response:
+        track = None
+        
+        if request.user.is_technical:
+            track = serializers.TrackSerializer(request.user.track).data
+        elif request.user.is_member:
+            try:
+                member = Member.objects.only("code", "track").select_related("track").get(email=request.user.email)
+                track = serializers.TrackSerializer(member.track).data # type: ignore
+            except Member.DoesNotExist:
+                pass
+        
+        return Response(
+            {
+                "username": request.user.username,
+                "role": request.user.role,
+                "track": track
+            }
+        )
+
+@extend_schema(
+    tags=("Auth",)
+)
+class Logout(APIView):
+    
+    def get(self, request: Request) -> Response:
+        response = Response()
+        response.delete_cookie("auth_token")
+        response.delete_cookie("csrftoken")
+        return response
+
 
 @extend_schema(
     tags=(
@@ -105,7 +150,15 @@ class Register(APIView):
         
         if data.is_valid():
             data.save()
-            return Response(data.data)
+            user = get_object_or_404(models.BdayaUser, email=data.validated_data.get("email")) # type: ignore
+            token_obj, _ = Token.objects.get_or_create(user=user)
+            response = Response(data.data)
+            response.set_cookie(
+                key="auth_token",
+                value=token_obj.key
+            )
+            csrf.get_token(request._request)
+            return response
         else:
             return Response(data.errors, status=status.HTTP_400_BAD_REQUEST)
         
