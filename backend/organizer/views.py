@@ -113,6 +113,7 @@ class Members(APIView):
             
         
 class MemberBonus(APIView):
+    serializer_class = None
     
     def get_permissions(self):
         perms = super().get_permissions()

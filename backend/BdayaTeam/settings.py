@@ -59,6 +59,7 @@ INSTALLED_APPS = (
 )
 
 MIDDLEWARE = (
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -218,3 +219,23 @@ MEDIA_ROOT = BASE_DIR / "media_files"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# security settings
+
+
+CORS_ALLOW_CREDENTIALS = True 
+
+CORS_ALLOWED_ORIGINS = (
+    "http://localhost:3000",
+)
+
+CSRF_TRUSTED_ORIGINS = (
+    "http://localhost:3000",
+)
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = False #! True in production
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = False #! True in production
