@@ -17,4 +17,4 @@ schema.yml
 static_files/
 media_files/
 celerybeat-schedule*
-localhost*
+localhost*.pem
