@@ -30,6 +30,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         exclude = ("bonus",)
+        exclude = ("bonus",)
         extra_kwargs = {
             "code": {"read_only": True},
         }
