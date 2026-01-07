@@ -37,7 +37,7 @@ class UserRole(models.TextChoices):
 
 class Track(models.Model):
     track = models.CharField(max_length=40, unique=True)
-    prefix = models.CharField(max_length=2)
+    prefix = models.CharField(max_length=3, unique=True)
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):

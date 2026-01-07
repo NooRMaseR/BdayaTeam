@@ -6,6 +6,11 @@ from core import validators
 
 # Create your models here.
 
+class MemberStatus(models.TextChoices):
+    NORMAL = "normal"
+    WARNING = "warning"
+    FIRED = "fired"
+
 class Member(models.Model):
     code = models.CharField(max_length=6, primary_key=True, db_index=True, unique=True, blank=True, validators=[validators.validate_member_code])
     name = models.CharField(max_length=200)
@@ -14,13 +19,18 @@ class Member(models.Model):
     phone_number = PhoneNumberField(region="EG") # type: ignore
     bonus = models.SmallIntegerField(default=0)
     track = models.ForeignKey(Track, on_delete=models.PROTECT, related_name='members')
+    joined_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=MemberStatus, default=MemberStatus.NORMAL)
 
+    class Meta:
+        ordering = ("-track", "-joined_at")
+        
     def __str__(self):
         return f'{self.name} - {self.code}'
 
 
 def task_upload_path(instance: ReciviedTaskFile, filename: str):
-    return f"tasks/{instance.recivied_task.member.name}/{instance.recivied_task.task.task_number}/{filename}"
+    return f"protected/tasks/{instance.recivied_task.member.code}/{instance.recivied_task.task.task_number}/{filename}"
 
 class ReciviedTask(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="recivied")

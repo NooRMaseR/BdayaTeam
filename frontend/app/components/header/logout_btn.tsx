@@ -1,9 +1,9 @@
 "use client";
 
 import { Button } from '@mui/material';
-import serverApi from '@/app/utils/api';
 import { logout } from '@/app/utils/states';
 import { useRouter } from 'next/navigation';
+import { API } from '@/app/utils/api.client';
 import { useAppDispatch } from '@/app/utils/hooks';
 
 export default function LogoutBtn() {
@@ -12,8 +12,8 @@ export default function LogoutBtn() {
   const dispatch = useAppDispatch();
 
   const logoutF = async () => {
-    const res = await serverApi("GET", "/logout/");
-    if (res.success) {
+    const {response} = await API.GET("/logout/");
+    if (response.ok) {
       dispatch(logout());
       router.replace("/login");
     }

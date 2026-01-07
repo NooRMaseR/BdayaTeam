@@ -1,18 +1,40 @@
 import Image from 'next/image';
-import serverApi from './utils/api';
-import { Track } from './utils/api_types_helper';
-import NavButtons from './components/home/nav_buttons';
+import { Metadata } from 'next';
+import { API } from './utils/api.server';
+import TrackCard from './components/track_card';
+import NavButtons from './components/nav_buttons';
+import NormalAnimation from './components/animations';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import { Button, Container, Typography, Card, CardContent, Chip } from '@mui/material';
+import { Button, Container, Typography, Chip } from '@mui/material';
+
+
+export const metadata: Metadata = {
+  title: "Team Bdaya Home",
+  description: "Welcome To Team Bdaya, A Place where you can build skills and get courses for free",
+  keywords: "Join, Team, Bdaya, free, Tracks",
+  openGraph: {
+    title: `Team Bdaya Home`,
+    description: `Welcome To Team Bdaya, A Place where you can build skills and get courses for free`,
+    images: [`/bdaya_black.png`],
+  },
+}
 
 export default async function HomePage() {
   const years = new Date().getFullYear() - 2015;
-  const res = await serverApi<Track[]>("GET", "/tracks/");
+  const { data } = await API.GET("/tracks/");
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+      <NormalAnimation
+        component='section'
+        className='relative bg-sky-500 py-24 overflow-hidden h-120'
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ease: 'easeOut' }}>
+        <Image src={"/hero_section.jpg"} alt='Team pic' fill priority style={{ objectFit: "cover" }} />
+      </NormalAnimation>
 
-      <section className="relative bg-linear-to-br from-blue-700 to-indigo-900 text-white py-24 px-4 overflow-hidden">
+      <section className={`relative bg-blue-700 text-white py-8 px-4 overflow-hidden`}>
         <Container maxWidth="lg" className="relative z-10 text-center">
           <Chip
             label={`${years} Years of Excellence`}
@@ -22,11 +44,11 @@ export default async function HomePage() {
           />
 
           <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
-            Empowering the Next Generation of <br />
+            the Next Generation of <br />
             <span className="text-blue-300">Team Bdaya</span>
           </h1>
 
-          <p className="text-lg md:text-xl text-blue-100 max-w-2xl mx-auto mb-10">
+          <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10">
             Join <strong>Team Bdaya</strong>. We provide premium, free education in programming and design.
             Start your journey today and master the skills of tomorrow.
           </p>
@@ -59,7 +81,7 @@ export default async function HomePage() {
           </div>
 
           <div className="flex justify-center flex-wrap gap-6">
-            {res.data?.map((track) => (
+            {data?.map((track) => (
               <TrackCard
                 title={track.track}
                 desc={track.description || ""}
@@ -120,18 +142,5 @@ function StatItem({ number, label }: { number: string, label: string }) {
       <div className="text-3xl md:text-4xl font-bold text-blue-600 mb-1">{number}</div>
       <div className="text-sm text-gray-500 uppercase tracking-wide font-medium">{label}</div>
     </div>
-  )
-}
-
-function TrackCard({ title, desc }: { title: string, desc: string }) {
-  return (
-    <Card className="hover:shadow-xl transition-shadow duration-300 border-t-4 border-transparent hover:border-blue-500 hover:scale-110 cursor-default" sx={{ transition: "scale ease-out 300ms, border-color ease-out 300ms;", width: "20rem", height: "10rem" }}>
-      <CardContent className="flex flex-col items-center text-center p-8">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
-        <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 overflow-hidden">
-          {desc}
-        </p>
-      </CardContent>
-    </Card>
   )
 }

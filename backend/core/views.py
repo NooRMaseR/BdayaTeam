@@ -1,15 +1,15 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from rest_framework.generics import ListAPIView
 from rest_framework.authtoken.models import Token
+from rest_framework.generics import ListCreateAPIView
 
 from django.contrib import auth
 from django.db import transaction
 from django.middleware import csrf
+from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -19,40 +19,49 @@ from . import models, serializers
 
 # Create your views here.
 
-@extend_schema(
-    tags=(
-        "Auth",
-    ),
-    request=inline_serializer(
-        "login",
-        {
-            "email": serializers.serializers.EmailField(),
-            "password": serializers.serializers.CharField(),
-        },
-    ),
-    responses={
-        200: serializers.LoginSerializer,
-        404: inline_serializer(
-            "email-is-incorrect",
-            {
-                "details": serializers.serializers.CharField(
-                    default="No BdayaUser matches the given query"
-                )
-            },
-        ),
-        400: inline_serializer(
-            "password-is-incorrect",
-            {
-                "details": serializers.serializers.CharField(
-                    default="invalid email or password"
-                )
-            },
-        ),
-    },
-)
+TOKEN_COOKIE_SETTINGS = {
+    "key": "auth_token",
+    "samesite": 'Lax',
+    "httponly": True,
+    "secure": False, #! True in production
+    "max_age": 60*60*24*7, # 7 days
+}
+
 class Login(APIView):
     permission_classes = (AllowAny,)
+    authentication_classes = []
 
+    @extend_schema(
+        tags=(
+            "Auth",
+        ),
+        request=inline_serializer(
+            "login",
+            {
+                "email": serializers.serializers.EmailField(),
+                "password": serializers.serializers.CharField(),
+            },
+        ),
+        responses={
+            200: serializers.LoginSerializer,
+            404: inline_serializer(
+                "email-is-incorrect",
+                {
+                    "details": serializers.serializers.CharField(
+                        default="No BdayaUser matches the given query"
+                    )
+                },
+            ),
+            400: inline_serializer(
+                "password-is-incorrect",
+                {
+                    "details": serializers.serializers.CharField(
+                        default="invalid email or password"
+                    )
+                },
+            ),
+        },
+    )
     def post(self, request: Request) -> Response:
         user: models.BdayaUser | None = auth.authenticate(request._request, email=request.data.get("email"), password=request.data.get("password")) # type: ignore
         track = None
@@ -82,18 +91,27 @@ class Login(APIView):
             }
         )
         response.set_cookie(
-            key="auth_token",
-            value=token_obj.key
+            value=token_obj.key,
+            **TOKEN_COOKIE_SETTINGS
         )
         
         csrf.get_token(request._request)
         return response
     
-
-@extend_schema(
-    tags=("Auth",)
-)
 class TestAuthCredentials(APIView):
+    serializer_class = inline_serializer(
+        name="test_auth",
+        fields={
+            "username": serializers.serializers.CharField(),
+            "role": serializers.serializers.ChoiceField(models.UserRole),
+            "track": serializers.TrackSerializer()
+        }
+    )
+    
+
+    @extend_schema(
+        tags=("Auth",)
+    )
     def get(self, request: Request) -> Response:
         track = None
         
@@ -118,11 +136,11 @@ class TestAuthCredentials(APIView):
     tags=("Auth",)
 )
 class Logout(APIView):
+    serializer_class = None
     
     def get(self, request: Request) -> Response:
         response = Response()
-        response.delete_cookie("auth_token")
-        response.delete_cookie("csrftoken")
+        response.delete_cookie(TOKEN_COOKIE_SETTINGS["key"])
         return response
 
 
@@ -152,24 +170,21 @@ class Register(APIView):
             data.save()
             user = get_object_or_404(models.BdayaUser, email=data.validated_data.get("email")) # type: ignore
             token_obj, _ = Token.objects.get_or_create(user=user)
-            response = Response(data.data)
+            response = Response(data.data, status=status.HTTP_201_CREATED)
             response.set_cookie(
-                key="auth_token",
-                value=token_obj.key
+                value=token_obj.key,
+                **TOKEN_COOKIE_SETTINGS
             )
-            csrf.get_token(request._request)
             return response
         else:
             return Response(data.errors, status=status.HTTP_400_BAD_REQUEST)
         
 
-class Tracks(ListAPIView):
+class Tracks(ListCreateAPIView):
     permission_classes = (AllowAny,)
     serializer_class = serializers.TrackSerializer
-    queryset = models.Track.objects.defer("prefix").all()
+    queryset = models.Track.objects.defer("prefix")
     
     @method_decorator(cache_page(60 * 3)) # 3 minutes
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-
-    

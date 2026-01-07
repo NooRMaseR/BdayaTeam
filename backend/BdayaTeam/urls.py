@@ -15,9 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+# from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from graphene_django.views import GraphQLView
 from django.urls import path, include
+# from django.conf import settings
 from django.contrib import admin
-from django.conf import settings
+
+from core.middleware import GraphQLTokenAuthMiddleware
 
 urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
@@ -27,12 +32,13 @@ urlpatterns = [
     path("technical/", include("technical.urls")),
     path("member/", include("member.urls")),
     path('admin/', admin.site.urls),
-    path("", include("core.urls"))
+    path("", include("core.urls")),
+    path("graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True, middleware=[GraphQLTokenAuthMiddleware()]))),
 ]
 
-if settings.DEBUG:
-    from debug_toolbar.toolbar import debug_toolbar_urls
-    from django.conf.urls.static import static
+# if settings.DEBUG:
+#     from debug_toolbar.toolbar import debug_toolbar_urls
+#     from django.conf.urls.static import static
     
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += debug_toolbar_urls()
+#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+#     urlpatterns += debug_toolbar_urls()

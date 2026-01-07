@@ -7,18 +7,34 @@ from drf_spectacular.utils import extend_schema, inline_serializer
 
 from django.db import transaction
 from django.utils import timezone
+from django.core.cache import cache
+from django.http import HttpResponse
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
-from django.db.models import Subquery, BooleanField, PositiveSmallIntegerField, ExpressionWrapper, Q, Count, F
+# from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.views.decorators.clickjacking import xframe_options_exempt
+from django.db.models.functions import Coalesce
+from django.db.models import (
+    PositiveSmallIntegerField, 
+    ExpressionWrapper, 
+    BooleanField, 
+    Subquery, 
+    OuterRef,
+    Count, 
+    Q, 
+    F, 
+)
 
 from core.models import UserRole
 from core.permissions import IsMember
-from organizer.models import AttendanceStatus
+from member.auth import CookieTokenAuthentication
+from organizer.models import Attendance, AttendanceStatus
 
-from . import serializers, models
-from technical.models import Task
 from technical.serializers import TaskSerializer
-
+from technical.models import Task
+from . import serializers, models
+import mimetypes, os
 
 # Create your views here.
 class Tasks(APIView):
@@ -31,6 +47,10 @@ class Tasks(APIView):
         return perms
     
     def get(self, request: Request) -> Response:
+        CACHE_KEY = f"member_tasks_{request.user.email}"
+        if (data:=cache.get(CACHE_KEY)):
+            return Response(data)
+        
         tasks = (
             Task.objects
             .select_related("track")
@@ -50,8 +70,9 @@ class Tasks(APIView):
                 )
             )
         )
-        serializer = TaskSerializer(tasks, many=True)
-        return Response(serializer.data)
+        data = TaskSerializer(tasks, many=True).data
+        cache.set(CACHE_KEY, data, 300)
+        return Response(data)
     
     @extend_schema(
         request=inline_serializer(
@@ -98,6 +119,7 @@ class Tasks(APIView):
                 )
                 oc_files = (models.ReciviedTaskFile(recivied_task=rec_task, file=f) for f in request.data.getlist("file")) # type: ignore
                 models.ReciviedTaskFile.objects.bulk_create(oc_files)
+            cache.delete(f"member_profile_{member.code}")
             return Response(status=status.HTTP_201_CREATED)
         
         except IntegrityError:
@@ -108,71 +130,81 @@ class Tasks(APIView):
             return Response({"details": "somthing went wrong, please try again"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@method_decorator(xframe_options_exempt, name='dispatch')
+class ProtectedTask(APIView):
+    authentication_classes = (CookieTokenAuthentication,)
+    
+    def get(self, request: Request, task_id: int) -> HttpResponse:
+        document = get_object_or_404(models.ReciviedTaskFile.objects.only("id", 'file', "recivied_task__member__email").select_related('recivied_task__member'), id=task_id)
+        
+        # check if it's an organizer or technical to get the file or check if the user is a member and it's the same member that uplouded this task
+        if (not request.user.role in (UserRole.ORGANIZER, UserRole.TECHNICAL) and document.recivied_task.member.email != request.user.email):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        content_type, _ = mimetypes.guess_type(document.file.url)
+        
+        return Response(
+            headers={
+                "X-Accel-Redirect": document.file.url,
+                'Content-Disposition': f'inline; filename="{os.path.basename(document.file.name)}"'
+            },
+            content_type=content_type or 'application/octet-stream'
+        )
+
 class MemberProfile(APIView):
     serializer_class = serializers.MemberProfileSerializer
     
+    def get_sub_querys(self):
+        absents_subquery = Subquery(
+            Attendance.objects.filter(
+                member=OuterRef('pk'),
+                status__in=(AttendanceStatus.ABSENT, AttendanceStatus.EXCUSED)
+            )
+            .values('member')
+            .annotate(cnt=Count('id'))
+            .values('cnt')
+        )
+
+        tasks_sent_subquery = Subquery(
+            models.ReciviedTask.objects.filter(
+                member=OuterRef('pk')
+            )
+            .values('member')
+            .annotate(cnt=Count('id'))
+            .values('cnt')
+        )
+
+        return models.Member.objects.select_related("track").annotate(
+            absents=Coalesce(absents_subquery, 0),
+            total_tasks_sent=Coalesce(tasks_sent_subquery, 0),
+            total_tasks=Count("track__tasks")
+        ).annotate(
+            missing_tasks=ExpressionWrapper(
+                F("total_tasks") - F("total_tasks_sent"),
+                output_field=PositiveSmallIntegerField()
+            )
+        )
+    
     def get(self, request: Request, member_code: str) -> Response:
+        CACHE_KEY = f"member_profile_{member_code}"
+        if (data:=cache.get(CACHE_KEY)):
+            return Response(data)
+        
+        query = self.get_sub_querys()
+        
         match request.user.role:
             case UserRole.MEMBER:
                 user = get_object_or_404(
-                    models.Member.objects
-                    .select_related("track")
-                    .only(
-                        "name",
-                        "code",
-                        "track__id",
-                        "track__track",
-                    )
-                    .annotate(
-                        absents=Count(
-                            "attendances",
-                            filter=(
-                                Q(attendances__status=AttendanceStatus.ABSENT) | 
-                                Q(attendances__status=AttendanceStatus.EXCUSED)
-                            ),
-                            distinct=True
-                        ),
-                        total_tasks=Count("track__tasks", distinct=True),
-                        total_tasks_sent=Count("tasks_sent", distinct=True),
-                    )
-                    .annotate(
-                        missing_tasks=ExpressionWrapper(
-                            F("total_tasks") - F("total_tasks_sent"),
-                            PositiveSmallIntegerField()
-                        )
-                    ),
+                    query,
                     email=request.user.email
                 )
             case _:
                 user = get_object_or_404(
-                    models.Member.objects
-                    .select_related("track")
-                    .only(
-                        "name",
-                        "code",
-                        "track__id",
-                        "track__track",
-                    )
-                    .annotate(
-                        absents=Count(
-                            "attendances",
-                            filter=(
-                                Q(attendances__status=AttendanceStatus.ABSENT) | 
-                                Q(attendances__status=AttendanceStatus.EXCUSED)
-                            )
-                        ),
-                        total_tasks=Count("track__tasks"),
-                        total_tasks_sent=Count("tasks_sent"),
-                    )
-                    .annotate(
-                        missing_tasks=ExpressionWrapper(
-                            F("total_tasks") - F("total_tasks_sent"),
-                            PositiveSmallIntegerField()
-                        )
-                    ),
+                    query,
                     code=member_code
                 )
                 
-        serializer = serializers.MemberProfileSerializer(user)
-        return Response(serializer.data)
+        data = serializers.MemberProfileSerializer(user).data
+        cache.set(CACHE_KEY, data, 300)
+        return Response(data)
         

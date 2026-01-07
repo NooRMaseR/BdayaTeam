@@ -1,11 +1,10 @@
 'use client';
 
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { UserRole } from '@/app/utils/api_types_helper';
-import { Box, Button, Skeleton } from '@mui/material'
+import { Box, Button, Skeleton } from '@mui/material';
 import { useAppSelector } from '@/app/utils/hooks';
-import { motion } from "motion/react";
-import Link from 'next/link'
+import NormalAnimation from './animations';
+import Link from 'next/link';
 
 export default function NavButtons() {
     const { isLoading, isAuthed, user } = useAppSelector(state => state.auth);
@@ -20,8 +19,8 @@ export default function NavButtons() {
 
     if (isAuthed) {
         return (
-            <motion.div initial={{opacity: 0, y: 50}} animate={{opacity: 1, y: 0}}>
-                <Link href={user?.role == UserRole.MEMBER ? `/${user?.role}/${user?.track?.track}` : `/${user?.role}`}>
+            <NormalAnimation component='div' initial={{opacity: 0, y: 50}} animate={{opacity: 1, y: 0}}>
+                <Link href={user?.role == "member" ? `/${user?.role}/${user?.track?.track}` : `/${user?.role}`}>
                     <Button
                         variant="outlined"
                         size="large"
@@ -30,7 +29,7 @@ export default function NavButtons() {
                         Home Page
                     </Button>
                 </Link>
-            </motion.div>
+            </NormalAnimation>
         );
     };
     return (

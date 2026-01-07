@@ -1,18 +1,43 @@
-import serverApi from "../utils/api";
-import { Track } from "../utils/api_types_helper";
+import TrackCard from "../components/track_card";
+import { API } from "../utils/api.server";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Organizer Team Bdaya",
+    description: "Organizer Team Bdaya, Come and manage your everything",
+    keywords: "Organizer,organizer,Track,Settings",
+    openGraph: {
+        title: `Organizer Team Dbaya`,
+        description: `Manage tracks members and attendance.`,
+        images: [`/bdaya_black.png`],
+    },
+}
 
 export default async function OrganizerPage() {
-    const res = await serverApi<Track[]>("GET", "/tracks/");
-    if (!res.success) {
-        console.warn(res.status);
-        console.warn(res.data);
-        return null;
-    }
+    const { data } = await API.GET("/tracks/", { next: { revalidate: 300 } });
 
     return (
         <>
-            <h1>OrganizerPage</h1>
-            {res?.data?.map((track) => <p key={track.id}>{track.track}</p>)}
+            <div className="flex justify-center flex-wrap w-full h-[85svh] gap-10">
+                {data?.map((track) => (
+                    <TrackCard
+                        url={`organizer/${track.track}`}
+                        title={track.track}
+                        desc={track.description ?? ""}
+                        key={track.id}
+                    />
+                ))}
+                <TrackCard
+                    url="organizer/add-track"
+                    title="Add Track"
+                    desc="Add Track"
+                />
+                <TrackCard
+                    url="organizer/settings"
+                    title="Site Settings"
+                    desc="Edit or view Site settings"
+                />
+            </div>
         </>
     )
 }

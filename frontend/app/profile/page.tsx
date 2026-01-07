@@ -1,6 +1,5 @@
-import serverApi from '../utils/api'
+import { API } from '../utils/api.server';
 import { Box, Chip } from '@mui/material';
-import type { UserProfile } from '../utils/api_types_helper'
 
 function Stat({ label, value }: { label: string; value: number | string }) {
     return (
@@ -12,8 +11,8 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 }
 
 export default async function ProfilePage() {
-    const res = await serverApi<UserProfile>("GET", "/member/profile/p-1/");
-    const user = res.success && res.data ? res.data : null;
+    const {response, data} = await API.GET("/member/profile/{member_code}/", {params: {path: {member_code: "p-1"}}});
+    const user = response.ok && data ? data : null;
 
     if (!user) {
         return (

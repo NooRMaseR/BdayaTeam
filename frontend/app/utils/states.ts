@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { GetLogIn } from './api_types_helper';
+import type { GetLogIn } from './api_types_helper';
 
 export type UserAuth = {
     isLoading: boolean,
@@ -28,7 +28,8 @@ const authSlice = createSlice({
             state.user = null;
         }
     }
-})
+});
 
 export const { setCredentials, logout } = authSlice.actions;
 export const authReducer = authSlice.reducer;
+

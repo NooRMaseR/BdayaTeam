@@ -6,13 +6,18 @@ from . import models
 class TrackSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Track
-        exclude = ("prefix",)
+        fields = '__all__'
+        extra_kwargs = {"prefix": {"write_only": True}}
+
+class TrackNoDescSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Track
+        exclude = ("prefix", "description")
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     role = serializers.ChoiceField(models.UserRole)
-    token = serializers.CharField()
-    track = TrackSerializer(allow_null=True)
+    track = TrackNoDescSerializer(allow_null=True)
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -21,7 +26,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         queryset=models.Track.objects.all(),
         write_only=True
     )
-    track = TrackSerializer(read_only=True)
+    track = TrackNoDescSerializer(read_only=True)
     class Meta:
         model = Member
         exclude = ("bonus",)
@@ -34,7 +39,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         prefix = track.prefix
         
         with transaction.atomic():
-            last_member = Member.objects.only("code").filter(track=track).order_by("-code").first()
+            last_member = Member.objects.only("code").filter(track=track).order_by("-joined_at").first()
             if last_member:
                 last_id = int(last_member.code.split("-")[1]) + 1
             else:

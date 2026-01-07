@@ -1,44 +1,53 @@
 
 export type Track = {
-    readonly id: number,
-    readonly track: string
-    readonly description: string | null
+    readonly id: number;
+    readonly track: string;
+    readonly description?: string | null;
 }
+
+export type CreateTrack = Omit<Track, "id"> & {
+    readonly prefix: string;
+};
 
 export type SendLogIn = {
-    readonly email: string,
-    readonly password: string,
-}
-
-export enum UserRole {
-    MEMBER = "member",
-    TECHNICAL = "technical",
-    ORGANIZER = "organizer"
+    readonly email: string;
+    readonly password: string;
 }
 
 export type GetLogIn = {
-    readonly username: string,
-    readonly role: UserRole,
-    readonly track: Track | null
+    readonly username: string;
+    readonly role: "member" | "technical" | "organizer";
+    readonly track: Omit<Track, "description"> | null;
 }
 
 export type SendRegister = {
-    readonly request_track_id: number,
-    readonly name: string,
-    readonly email: string,
-    readonly collage_code: string,
+    readonly request_track_id: number;
+    readonly name: string;
+    readonly email: string;
+    readonly collage_code: string;
     readonly phone_number: string
 }
 
-export type GetRegister = Omit<SendRegister, "request_track_id"> & {
-    readonly code: string
+export enum MemberStatus {
+    NORMAL = "normal",
+    WARNING = "warning",
+    FIRED = "fired",
 }
 
-export type UserProfile = {
-    readonly name: string,
-    readonly code: string,
-    readonly track: Track,
-    readonly absents: number,
-    readonly total_tasks_sent: number,
-    readonly missing_tasks: number
+export enum AttendanceStatus {
+    PRESENT = "present",
+    ABSENT = "absent",
+    EXCUSED = "excused",
+}
+
+export type AttendanceDay = {
+    readonly id: number;
+    readonly day: string;
+    readonly track: Omit<Track, 'description'>;
+}
+
+export type Settings = {
+    isRegisterEnabled: boolean;
+    organizerCanEdit: string[];
+    siteImage: string | null;
 }

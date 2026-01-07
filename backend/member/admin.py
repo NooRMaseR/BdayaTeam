@@ -6,9 +6,11 @@ from . import models
 # Register your models here.
 @admin.register(models.Member)
 class MemberAdmin(UnfoldModelAdmin):
-    list_display = ("code", "name", "email", "track", "collage_code", "phone_number")
+    list_display = ("code", "name", "email", "track", "status", "collage_code", "phone_number", "joined_at")
     search_fields = ("name", "code", "collage_code", "phone_number")
     list_display_links = ("name", "code", "email")
+    list_per_page = 20
+    ordering = ("track", "-joined_at")
     list_filter = (
         ("track", ChoicesDropdownFilter),
     )

@@ -1,11 +1,12 @@
 from technical.serializers import TaskSerializer, TrackSerializer
 from organizer.serializers import AttendenceSmallSerializer
+from core.serializers import TrackNoDescSerializer
 from rest_framework import serializers
 from . import models
 
 
 class MemberSerializer(serializers.ModelSerializer):
-    track = TrackSerializer(read_only=True)
+    track = TrackNoDescSerializer(read_only=True)
     attendances = AttendenceSmallSerializer(read_only=True, many=True)
     
     class Meta:

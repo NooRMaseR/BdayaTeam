@@ -1,5 +1,17 @@
 import { Card, CardActionArea, CardContent } from "@mui/material";
+import { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Technical Team Bdaya",
+  description: "Technical Team Bdaya, Come and manage your members tasks and create some tasks for them",
+  keywords: "Technical,technical,Tasks,Members,Profile",
+  openGraph: {
+    title: `Technical Team Bdaya:`,
+    description: 'Technical Team Bdaya, Come and manage your members tasks and create some tasks for them',
+    images: [`/bdaya_black.png`], 
+  },
+}
 
 export default function TechnicalPage() {
   const cards = [

@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;
@@ -9,6 +9,7 @@ export function proxy(request: NextRequest) {
     pathname.startsWith('/profile')
     || pathname.startsWith('/technical')
     || pathname.startsWith('/member')
+    || pathname.startsWith('/organizer')
   );
   
   const isAuthRoute = pathname === '/login' || pathname === '/register';
@@ -25,5 +26,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/profile/:path*', '/technical/:path*', '/member/:path*', '/login', '/register'],
+  matcher: ['/profile/:path*', '/technical/:path*', '/member/:path*','/organizer/:path*', '/login', '/register'],
 };

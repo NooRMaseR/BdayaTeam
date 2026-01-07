@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from django.utils.translation import gettext_lazy as _
+from celery.schedules import crontab
 from dotenv import load_dotenv
 from pathlib import Path
 import os
@@ -37,16 +38,19 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = (
     "unfold",
-    "unfold.contrib.filters",  # optional, if special filters are needed
-    "unfold.contrib.forms",  # optional, if special form elements are needed
-    "unfold.contrib.inlines",  # optional, if special inlines are needed
+    "unfold.contrib.filters",
+    "unfold.contrib.forms",
+    "unfold.contrib.inlines",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    "whitenoise.runserver_nostatic",
+    # "whitenoise.runserver_nostatic",
     'django.contrib.staticfiles',
+    # "django_er_diagram", #! debug only
+    "graphene_django",
+    'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
     'drf_spectacular',
@@ -56,27 +60,29 @@ INSTALLED_APPS = (
     "technical",
     "organizer",
     "member",
+    'solo',
 )
 
 MIDDLEWARE = (
-    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "core.middleware.CookieToTokenMiddleware",
     'django.middleware.common.CommonMiddleware',
+    # "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-if DEBUG:
-    INSTALLED_APPS = (*INSTALLED_APPS, "debug_toolbar")
-    MIDDLEWARE = (*MIDDLEWARE, "debug_toolbar.middleware.DebugToolbarMiddleware")
+# if DEBUG:
+#     INSTALLED_APPS = (*INSTALLED_APPS, "debug_toolbar")
+#     MIDDLEWARE = (*MIDDLEWARE, "debug_toolbar.middleware.DebugToolbarMiddleware")
 
-    INTERNAL_IPS = (
-        "127.0.0.1",
-    )
+#     INTERNAL_IPS = (
+#         "127.0.0.1",
+#     )
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -100,16 +106,36 @@ SPECTACULAR_SETTINGS = {
     "REDOC_DIST": "SIDECAR",
 }
 
+GRAPHENE = {
+    "SCHEMA": "organizer.schema.schema",
+    "MIDDLWERE": [
+        'django.contrib.auth.middleware.AuthenticationMiddleware'
+    ]
+}
+
 ROOT_URLCONF = 'BdayaTeam.urls'
 AUTH_USER_MODEL = 'core.BdayaUser'
 
-
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' #! set to smtp in production
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_BEAT_SCHEDULE = {
+    'mark-absents-daily': {
+        'task': 'organizer.tasks.make_rest_members_absents',
+        'schedule': crontab(hour=21, minute=0), 
+    },
+    'delete-fired-members': {
+        'task': 'organizer.tasks.delete_fired_members',
+        'schedule': crontab(day_of_month=6), 
+    },
+}
 
 TEMPLATES = (
     {
@@ -127,7 +153,6 @@ TEMPLATES = (
 )
 
 WSGI_APPLICATION = 'BdayaTeam.wsgi.application'
-ASGI_APPLICATION = 'BdayaTeam.asgi.application'
 
 
 # Database
@@ -147,21 +172,32 @@ DATABASES = {
         'OPTIONS': {
             "pool": {
                 "min_size": 2,
-                "max_size": 20,
-                "timeout": 10
+                "max_size": 10,
+                "timeout": 30
             }
         }
     }
 }
 
-STORAGES = {
+CHACHES = {
     "default": {
-      "BACKEND": "django.core.files.storage.filesystem.FileSystemStorage"
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "TIMEOUT": 604800,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+        }
+    }
 }
+
+# STORAGES = {
+#     "default": {
+#       "BACKEND": "django.core.files.storage.filesystem.FileSystemStorage"
+#     },
+#     "staticfiles": {
+#         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+#     },
+# }
 
 
 # Password validation
@@ -222,20 +258,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # security settings
 
-
 CORS_ALLOW_CREDENTIALS = True 
-
 CORS_ALLOWED_ORIGINS = (
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
 )
 
 CSRF_TRUSTED_ORIGINS = (
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
 )
-CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SECURE = False #! True in production
+CSRF_COOKIE_SECURE = False #! True in production (HTTPS)
 
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SECURE = False #! True in production
+SESSION_COOKIE_SECURE = False #! True in production (HTTPS)
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO","https")
