@@ -31,8 +31,7 @@ export type SendRegister = {
 }
 
 export type GetRegister = Omit<SendRegister, "request_track_id"> & {
-    readonly code: string,
-    readonly track: Track,
+    readonly code: string
 }
 
 export type UserProfile = {

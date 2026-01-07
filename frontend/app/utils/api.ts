@@ -47,7 +47,7 @@ function parseCookie(cookie: string) {
     return cookieOptions;
 }
 
-export default async function serverApi<T>(method: "GET" | "POST" | "PUT" | "DELETE", url: string, data: any = null): Promise<ApiResponse<T>> {
+export default async function serverApi<T>(method: "GET" | "POST" | "PUT" | "DELETE" = "GET", url: string, data: any = null): Promise<ApiResponse<T>> {
     const cookies_data = await cookies();
     const authToken = cookies_data.get("auth_token");
     const csrfToken = cookies_data.get("csrftoken");

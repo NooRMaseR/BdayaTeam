@@ -1,8 +1,6 @@
 import Image from 'next/image';
 import serverApi from './utils/api';
 import { Track } from './utils/api_types_helper';
-import heroImage from "./static/hero_section.jpg";
-import NormalAnimation from './components/animations';
 import NavButtons from './components/home/nav_buttons';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import { Button, Container, Typography, Card, CardContent, Chip } from '@mui/material';
@@ -13,16 +11,8 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <NormalAnimation
-        component='section'
-        className='relative bg-sky-500 py-24 overflow-hidden h-120'
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ease: 'easeOut'}}>
-        <Image src={heroImage} alt='Team pic' fill priority style={{objectFit: "cover"}} />
-      </NormalAnimation>
-      
-      <section className={`relative bg-blue-700 text-white py-8 px-4 overflow-hidden`}>
+
+      <section className="relative bg-linear-to-br from-blue-700 to-indigo-900 text-white py-24 px-4 overflow-hidden">
         <Container maxWidth="lg" className="relative z-10 text-center">
           <Chip
             label={`${years} Years of Excellence`}
@@ -32,11 +22,11 @@ export default async function HomePage() {
           />
 
           <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
-            the Next Generation of <br />
+            Empowering the Next Generation of <br />
             <span className="text-blue-300">Team Bdaya</span>
           </h1>
 
-          <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10">
+          <p className="text-lg md:text-xl text-blue-100 max-w-2xl mx-auto mb-10">
             Join <strong>Team Bdaya</strong>. We provide premium, free education in programming and design.
             Start your journey today and master the skills of tomorrow.
           </p>

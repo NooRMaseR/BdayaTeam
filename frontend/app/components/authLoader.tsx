@@ -1,10 +1,10 @@
 "use client";
 
-import React from 'react';
+import React from 'react'
 import serverApi from '../utils/api';
 import { useDispatch } from 'react-redux';
-import { GetLogIn } from '../utils/api_types_helper';
 import { logout, setCredentials } from '../utils/states';
+import { GetLogIn } from '../utils/api_types_helper';
 
 export default function AuthLoader({ children }: { children: React.ReactNode }) {
     const dispatch = useDispatch();
@@ -20,6 +20,7 @@ export default function AuthLoader({ children }: { children: React.ReactNode }) 
         }
         req();
     }, [dispatch]);
-
-    return children;
+    return (
+        <>{children}</>
+    )
 }
