@@ -4,14 +4,15 @@ import { GetAllSettingsQuery, UpdateSettingsMutation } from '@/app/generated/gra
 import { Button, CircularProgress, FormControlLabel, Switch } from '@mui/material';
 import type { Settings } from '@/app/utils/api_types_helper';
 import { serverGraphQL } from '@/app/utils/api_utils';
+import FilePicker from '@/app/components/file_picker';
 import { gql } from 'graphql-tag';
 import { print } from "graphql";
 import { toast } from 'sonner';
 import React from 'react';
 
 const UPDATE_SETTINGS = gql`
-    mutation UpdateSettings($isRegisterEnabled: Boolean, $organizerCanEdit: [String]) {
-        updateSettings(isRegisterEnabled: $isRegisterEnabled, organizerCanEdit: $organizerCanEdit) {
+    mutation UpdateSettings($isRegisterEnabled: Boolean, $organizerCanEdit: [String], $siteImage: Upload) {
+        updateSettings(isRegisterEnabled: $isRegisterEnabled, organizerCanEdit: $organizerCanEdit, siteImage: $siteImage) {
             success
         }
     }
@@ -29,6 +30,7 @@ const GET_ALL_SETTINGS = gql`
 
 export default function SettingsPage() {
     const [settings, setSettings] = React.useState<Settings>({ isRegisterEnabled: false, organizerCanEdit: [], siteImage: '' });
+    const [siteImage, setSiteImage] = React.useState<File | null>(null);
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
     const handelEditFieldsChange = (field: string, checked: boolean) => {
@@ -54,11 +56,23 @@ export default function SettingsPage() {
         });
     }
 
+    const handelImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+        console.info(e.target.files);
+        if (e.target.files && e.target.files[0]) {
+            setSiteImage(e.target.files[0]);
+        }
+    }
+
     const saveSettings = () => {
+        const data = {
+            ...settings,
+            siteImage: siteImage || settings.siteImage
+        }
         toast.promise(async () => {
             const res = await serverGraphQL<UpdateSettingsMutation>(
                 print(UPDATE_SETTINGS),
-                settings,
+                data,
+                true,
                 true
             );
             
@@ -111,7 +125,7 @@ export default function SettingsPage() {
             <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("email")} onChange={(e) => handelEditFieldsChange("email", e.target.checked)} />} label={"email"} sx={{width: "fit-content"}} />
             <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("phone")} onChange={(e) => handelEditFieldsChange("phone", e.target.checked)} />} label={"phone"} sx={{width: "fit-content"}} />
             <hr />
-            <input type='image' />
+            <FilePicker accept='image/png,image/jpg,image/jpeg,image/ico,image/webp' onChange={handelImage} />
             <Button onClick={saveSettings} variant='contained'>Save</Button>
         </div>
     )

@@ -15,9 +15,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
-from core.middleware import GraphQLAuthMiddleware
+from graphene_file_upload.django import FileUploadGraphQLView
 from django.views.decorators.csrf import csrf_exempt
-from graphene_django.views import GraphQLView
+from core.middleware import GraphQLAuthMiddleware
+# from graphene_django.views import GraphQLView
 from django.urls import path, include
 # from django.conf import settings
 from django.contrib import admin
@@ -32,7 +33,7 @@ urlpatterns = (
     path("api/member/", include("member.urls")),
     path('api/admin/', admin.site.urls),
     path("api/", include("core.urls")),
-    path("api/graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True, middleware=[GraphQLAuthMiddleware()]))),
+    path("api/graphql/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True, middleware=[GraphQLAuthMiddleware()]))),
 )
 
 # if settings.DEBUG:

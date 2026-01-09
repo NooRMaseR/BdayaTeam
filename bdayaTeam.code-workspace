@@ -8,6 +8,25 @@
 		}
 	],
 	"settings": {
-		"liveServer.settings.multiRootWorkspaceName": "backend"
+		"liveServer.settings.multiRootWorkspaceName": "backend",
+		"runTerminalCommand.commands": [
+			{
+				"group": "Nginx",
+				"name": "Start nginx",
+				"command": "sudo systemctl start nginx",
+				"auto": true
+			},
+			{
+				"group": "Nginx",
+				"name": "Restart nginx",
+				"command": "sudo nginx -s reload",
+				"auto": true
+			},
+			{
+				"group": "Nginx",
+				"name": "Edit nginx",
+				"command": "sudo nano /etc/nginx/sites-available/django.conf"
+			},
+		]
 	}
 }

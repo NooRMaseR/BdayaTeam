@@ -18,7 +18,7 @@ export default async function OrganizerPage() {
 
     return (
         <>
-            <div className="flex justify-center flex-wrap w-full h-[85svh] gap-10">
+            <div className="flex justify-center flex-wrap w-full gap-10">
                 {data?.map((track) => (
                     <TrackCard
                         url={`organizer/${track.track}`}

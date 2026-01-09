@@ -1,6 +1,7 @@
 'use server';
 
-import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
+import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { createUploadLink } from "apollo-upload-client";
 import { BASE_API_URL } from "./api.client";
 import { cookies } from "next/headers";
 import { gql } from "graphql-tag";
@@ -94,37 +95,49 @@ export const fetchWithCookies: typeof fetch = async (url, options) => {
 type GraphResponse<T> = {
     data: T;
     error?: any;
-    success: boolean
+    success: boolean;
 }
 
-export async function serverGraphQL<T>(query: string, variables: Record<string, any> = {}, mutate: boolean = false): Promise<GraphResponse<T>> {
+export async function serverGraphQL<T>(query: string, variables: Record<string, any> = {}, mutate: boolean = false, useForm: boolean = false): Promise<GraphResponse<T>> {
     const { token, csrf } = await getAuthCookies();
 
+    const headers: HeadersInit = {
+        Authorization: token ? `Token ${token}` : "",
+        "X-CSRFToken": csrf || ""
+    };
+
+    if (!useForm) {
+        headers["Content-Type"] = "application/json";
+    }
+
+    const uploadLink = createUploadLink({
+        uri: `${BASE_API_URL}graphql/`,
+        headers: headers,
+        credentials: "include"
+    });
+
     const ap = new ApolloClient({
-        link: new HttpLink({
-            uri: `${BASE_API_URL}graphql/`,
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: token ? `Token ${token}` : "",
-                "X-CSRFToken": csrf || ""
-            },
-            credentials: "include"
-        }),
+        link: uploadLink,
         cache: new InMemoryCache(),
     });
 
     const newQuery = gql`${query}`;
 
-    const { data, error } = mutate ? await ap.mutate({ mutation: newQuery, variables }) : await ap.query({ query: newQuery, variables });
+    try {
+        const { data } = mutate 
+            ? await ap.mutate({ mutation: newQuery, variables }) 
+            : await ap.query({ query: newQuery, variables });
 
-    if (error) {
-        console.error(error);
+        return {
+            data: data as T,
+            success: true
+        };
+    } catch (error) {
+        console.error("GraphQL Error:", error);
+        return {
+            data: {} as T,
+            error: error,
+            success: false
+        };
     }
-
-    return {
-        data: data as T,
-        error: error,
-        success: !error
-    };
-
 }
