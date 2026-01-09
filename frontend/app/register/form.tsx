@@ -19,10 +19,10 @@ import Link from 'next/link';
 
 type RegisterFormProps = {
   tracks: Track[];
-  canRegister: boolean
+  canRegister?: boolean | null
 }
 
-export default function RegisterForm({ tracks, canRegister }: RegisterFormProps) {
+export default function RegisterForm({ tracks, canRegister = false }: RegisterFormProps) {
   const { handleSubmit, register, formState: { errors } } = useForm<SendRegister>();
   const dispatch = useDispatch();
   const router = useRouter();

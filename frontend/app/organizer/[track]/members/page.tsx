@@ -75,13 +75,13 @@ export default async function OrganizerMembersPage({ params }: Props) {
     const tracksArray: string[] = tracksRes.data?.map((track) => track.track) || [];
 
     const columns: GridColDef[] = [
-        { align: "center", headerAlign: "center", field: "code", headerName: "Code", editable: editableFields.allSettings?.organizerCanEdit.includes("code") },
-        { field: "name", headerName: "name", width: 200, editable: editableFields.allSettings?.organizerCanEdit.includes("name") },
-        { align: "center", headerAlign: "center", field: "status", headerName: "Status", width: 100, editable: editableFields.allSettings?.organizerCanEdit.includes("status"), type: 'singleSelect', valueOptions: Object.values(MemberStatus) },
-        { align: "center", headerAlign: "center", field: "bonus", headerName: "bonus", editable: editableFields.allSettings?.organizerCanEdit.includes("bonus"), type: "number" },
-        { align: "center", headerAlign: "center", field: "track", headerName: "track name", editable: editableFields.allSettings?.organizerCanEdit.includes("track"), type: "singleSelect", valueOptions: tracksArray },
-        { field: "phone", headerName: "phone number", width: 200, editable: editableFields.allSettings?.organizerCanEdit.includes("phone") },
-        { field: "email", headerName: "email", width: 200, editable: editableFields.allSettings?.organizerCanEdit.includes("email") },
+        { align: "center", headerAlign: "center", field: "code", headerName: "Code", editable: editableFields.data.allSettings?.organizerCanEdit.includes("code") },
+        { field: "name", headerName: "name", width: 200, editable: editableFields.data.allSettings?.organizerCanEdit.includes("name") },
+        { align: "center", headerAlign: "center", field: "status", headerName: "Status", width: 100, editable: editableFields.data.allSettings?.organizerCanEdit.includes("status"), type: 'singleSelect', valueOptions: Object.values(MemberStatus) },
+        { align: "center", headerAlign: "center", field: "bonus", headerName: "bonus", editable: editableFields.data.allSettings?.organizerCanEdit.includes("bonus"), type: "number" },
+        { align: "center", headerAlign: "center", field: "track", headerName: "track name", editable: editableFields.data.allSettings?.organizerCanEdit.includes("track"), type: "singleSelect", valueOptions: tracksArray },
+        { field: "phone", headerName: "phone number", width: 200, editable: editableFields.data.allSettings?.organizerCanEdit.includes("phone") },
+        { field: "email", headerName: "email", width: 200, editable: editableFields.data.allSettings?.organizerCanEdit.includes("email") },
         ...(daysRes.data?.flatMap<GridColDef>((day) => {
             const dayName = new Date(day.day).toDateString();
             colorize.push(day.day);

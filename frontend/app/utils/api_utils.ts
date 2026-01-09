@@ -1,8 +1,20 @@
 'use server';
 
 import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
+import { BASE_API_URL } from "./api.client";
 import { cookies } from "next/headers";
 import { gql } from "graphql-tag";
+
+export async function getAuthCookies() {
+    const cookieStore = await cookies();
+    const auth_token = cookieStore.get("auth_token")?.value;
+    const csrfToken = cookieStore.get("csrftoken")?.value;
+
+    return {
+        "token": auth_token,
+        "csrf": csrfToken
+    }
+}
 
 function parseCookie(cookie: string) {
     const splited = cookie.split(";").map((value) => value.trim());
@@ -43,16 +55,21 @@ function parseCookie(cookie: string) {
 
 export const fetchWithCookies: typeof fetch = async (url, options) => {
     const cookieStore = await cookies();
-    const auth_token = cookieStore.get("auth_token")?.value;
+    const { token, csrf } = await getAuthCookies();
 
     const headers = new Headers(options?.headers);
     if (!headers.get("Content-Type")) {
         headers.set("Content-Type", "application/json");
     }
 
-    if (auth_token) {
-        headers.set("Authorization", `Token ${auth_token}`);
+    if (token) {
+        headers.set("Authorization", `Token ${token}`);
     }
+    
+    if (csrf) {
+        headers.set("X-CSRFToken", csrf);
+    }
+
 
     const response = await fetch(url, {
         ...options,
@@ -61,9 +78,9 @@ export const fetchWithCookies: typeof fetch = async (url, options) => {
     });
 
 
-    const setCookieHeader = response.headers.getSetCookie();
-    if (setCookieHeader && setCookieHeader.length > 0) {
-        setCookieHeader.forEach((cookieStr) => {
+    const setCookieHeaders = response.headers.getSetCookie();
+    if (setCookieHeaders && setCookieHeaders.length > 0) {
+        setCookieHeaders.forEach((cookieStr) => {
             const parsed = parseCookie(cookieStr);
             if (parsed) {
                 cookieStore.set(parsed.name, parsed.value, parsed);
@@ -74,18 +91,22 @@ export const fetchWithCookies: typeof fetch = async (url, options) => {
     return response;
 };
 
-export async function serverGraphQL<T>(query: string, variables: Record<string, any> = {}, mutate: boolean = false): Promise<T> {
-    const cookieStore = await cookies();
-    const authToken = cookieStore.get("auth_token");
-    const csrfToken = cookieStore.get("csrftoken");
+type GraphResponse<T> = {
+    data: T;
+    error?: any;
+    success: boolean
+}
+
+export async function serverGraphQL<T>(query: string, variables: Record<string, any> = {}, mutate: boolean = false): Promise<GraphResponse<T>> {
+    const { token, csrf } = await getAuthCookies();
 
     const ap = new ApolloClient({
         link: new HttpLink({
-            uri: "http://localhost/graphql/",
+            uri: `${BASE_API_URL}graphql/`,
             headers: {
                 "Content-Type": "application/json",
-                Authorization: authToken ? `Token ${authToken.value}` : "",
-                "X-CSRFToken": csrfToken?.value || ""
+                Authorization: token ? `Token ${token}` : "",
+                "X-CSRFToken": csrf || ""
             },
             credentials: "include"
         }),
@@ -98,8 +119,12 @@ export async function serverGraphQL<T>(query: string, variables: Record<string, 
 
     if (error) {
         console.error(error);
-        throw new Error(error.message);
     }
-    return data as T;
+
+    return {
+        data: data as T,
+        error: error,
+        success: !error
+    };
 
 }

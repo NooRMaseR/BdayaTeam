@@ -135,7 +135,6 @@ EMAIL_HOST=<host>
 EMAIL_PORT=<port>
 EMAIL_HOST_USER=<email>
 EMAIL_HOST_PASSWORD=<app-password>
-PYTHON_JIT=1 # test first for a better performance
 ```
 
 # Redis
@@ -305,32 +304,38 @@ you can check the status after that
 sudo systemctl status gunicorn
 ```
 
-then create a file called `django.conf` in this location like this
+then create a file called `bdaya.conf` in this location like this
 
 ```bash
-sudo nano /etc/nginx/sites-available/django.conf
+sudo nano /etc/nginx/sites-available/bdaya.conf
 ```
 
-then add these configs
+this will be our proxy to serve the backend and the frontend, now, add these configs **edit based on your paths**
 
 ```nginx
 server {
-#    listen 80;
-#    server_name localhost;
-#    return 301 http://$server_name$request_uri; # redirect to https
-#}
+    listen 80;
+    server_name localhost;
+    return 301 https://$server_name$request_uri; # redirect to https
+}
 
 server {
-#    listen 443 ssl;
-#    http2 on;
-     listen 80 default_server;
-     listen [::]:80;
-     server_name localhost;
-     server_tokens off;
-     client_max_body_size 10M;
+    listen 443 ssl default_server;
+    http2 on;
+  #  listen 80 default_server;
+  #  listen [::]:80;
+    server_name localhost;
+    server_tokens off;
+    client_max_body_size 10M;
 
-#    ssl_certificate /home/kali/programming/backend/localhost+2.pem;
-#    ssl_certificate_key /home/kali/programming/backend/localhost+2-key.pem;
+    ssl_certificate /home/kali/programming/backend/localhost+1.pem;
+    ssl_certificate_key /home/kali/programming/backend/localhost+1-key.pem;
+
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
     # --- server static files ---
     location /static/ {
@@ -351,22 +356,55 @@ server {
     location /media/protected/ {
         internal;
         alias /home/kali/programming/backend/media_files/protected/;
-        expires 3d;
+        expires 2d;
 
         add_header Cache-Control "public";
         add_header Access-Control-Allow-Origin http://localhost:3000 always;
         add_header Access-Control-Allow-Credentials true always;
-        add_header Access-Control-Allow-Headers Authorization,Content-Type always;
+        add_header Access-Control-Allow-Headers Authorization,Content-Type,X-CSRFToken always;
         add_header Access-Control-Allow-Methods GET,OPTIONS always;
     }
 
     # --- server Gunicorn ---
-    location / {
+    location /api {
         include proxy_params;
         proxy_pass http://unix:/run/gunicorn.sock;
+
+        proxy_redirect off;
         proxy_send_timeout 30s;
         proxy_read_timeout 30s;
         proxy_connect_timeout 30s;
+
+        proxy_hide_header X-Frame-Options;
+        proxy_hide_header X-Content-Type-Options;
+        proxy_hide_header X-XSS-Protection;
+    }
+
+    # --- server NextJS ---
+    location / {
+        include proxy_params;
+        proxy_pass http://localhost:3000;
+        proxy_send_timeout 30s;
+        proxy_read_timeout 30s;
+        proxy_connect_timeout 30s;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    # --- media cache ---
+    location ~* \.(ico|png|jpg|jpeg|svg|webp)$ {
+        expires 1M;
+        add_header Cache-Control "public, must-revalidate, proxy-revalidate";
+        access_log off;
+    }
+
+    location /_next/static/ {
+        alias /home/kali/programming/frontend/.next/static/;
+        expires 3d;
+        access_log off;
+        add_header Cache-Control "public, max-age=31536000, immutable";
     }
 }
 ```
@@ -386,7 +424,7 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 then create a link inside the `sites-enabled` like this
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/django.conf /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/bdaya.conf /etc/nginx/sites-enabled/
 ```
 
 then restart nginx

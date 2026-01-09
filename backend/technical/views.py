@@ -6,11 +6,11 @@ from drf_spectacular.utils import extend_schema, inline_serializer
 
 from core.serializers import ForbiddenOnlyTechnical
 from core.permissions import IsTechnical
-from . import models, serializers
 
 from member.models import ReciviedTask
 from member.serializers import RecivedTaskSerializer
 
+from . import models, serializers
 from django.utils import timezone
 from django.db.models import Q, ExpressionWrapper, BooleanField
 

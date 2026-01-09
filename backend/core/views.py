@@ -1,4 +1,3 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.request import Request
@@ -24,7 +23,7 @@ TOKEN_COOKIE_SETTINGS = {
     "key": "auth_token",
     "samesite": 'Lax',
     "httponly": True,
-    "secure": False, #! True in production
+    "secure": True, #! True in production
     "max_age": 60*60*24*7, # 7 days
 }
 
@@ -74,6 +73,7 @@ class Login(APIView):
             )
 
         token_obj, _ = Token.objects.get_or_create(user=user)
+        auth.login(request._request, user)
         
         if user.is_technical:
             track = serializers.TrackSerializer(user.track).data
@@ -141,7 +141,9 @@ class Logout(APIView):
     
     def get(self, request: Request) -> Response:
         response = Response()
+        auth.logout(request._request)
         response.delete_cookie(TOKEN_COOKIE_SETTINGS["key"])
+        response.delete_cookie("csrftoken")
         return response
 
 

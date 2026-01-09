@@ -31,7 +31,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ('localhost', '127.0.0.1')
 
 
 # Application definition
@@ -46,7 +46,6 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    # "whitenoise.runserver_nostatic",
     'django.contrib.staticfiles',
     # "django_er_diagram", #! debug only
     "graphene_django",
@@ -68,9 +67,7 @@ MIDDLEWARE = (
     'django.middleware.security.SecurityMiddleware',
     "corsheaders.middleware.CorsMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
-    "core.middleware.CookieToTokenMiddleware",
     'django.middleware.common.CommonMiddleware',
-    # "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -87,7 +84,8 @@ MIDDLEWARE = (
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication'
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated'
@@ -141,7 +139,7 @@ CELERY_BEAT_SCHEDULE = {
 TEMPLATES = (
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "templates"],
+        'DIRS': (BASE_DIR / "templates",),
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -180,13 +178,14 @@ DATABASES = {
     }
 }
 
-CHACHES = {
+CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/1",
         "TIMEOUT": 604800,
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
         }
     }
 }
@@ -261,20 +260,27 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_CREDENTIALS = True 
 CORS_ALLOWED_ORIGINS = (
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "https://localhost",
+    "https://localhost:3000",
 )
 
 CSRF_TRUSTED_ORIGINS = (
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "https://localhost",
+    "https://localhost:3000",
 )
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = False #! True in production (HTTPS)
+CSRF_COOKIE_DOMAIN = 'localhost'
 
+SESSION_COOKIE_DOMAIN = 'localhost'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = False #! True in production (HTTPS)
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO","https")
+# SECURE_BROWSER_XSS_FILTER = False
+# SECURE_CONTENT_TYPE_NOSNIFF = False
+X_FRAME_OPTIONS = 'SAMEORIGIN'

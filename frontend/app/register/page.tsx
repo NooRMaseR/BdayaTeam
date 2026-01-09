@@ -26,7 +26,7 @@ export default async function RegisterPage() {
   );
 
   if (resTracks.status === "fulfilled" && resTracks.value.response.ok && canRegister.status === "fulfilled") {
-    return <RegisterForm tracks={resTracks.value.data || []} canRegister={canRegister.value.canRegister || true} />
+    return <RegisterForm tracks={resTracks.value.data || []} canRegister={canRegister.value.data.canRegister} />
   }
   return <RegisterForm tracks={[]} canRegister={false} />
 }

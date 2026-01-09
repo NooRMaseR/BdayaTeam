@@ -46,6 +46,7 @@ export default function SettingsPage() {
     }
 
     const handelRegister = (e: React.ChangeEvent<HTMLInputElement>) => {
+        console.info(e.target.checked);
         setSettings({
             isRegisterEnabled: e.target.checked,
             siteImage: settings.siteImage,
@@ -61,7 +62,7 @@ export default function SettingsPage() {
                 true
             );
             
-            if (res.updateSettings?.success) {
+            if (res.data.updateSettings?.success) {
                 return await Promise.resolve();
             }
             return await Promise.reject();
@@ -79,7 +80,7 @@ export default function SettingsPage() {
             const res = await serverGraphQL<GetAllSettingsQuery>(
                 print(GET_ALL_SETTINGS)
             );
-            const setting = res.allSettings;
+            const setting = res.data.allSettings;
             if (setting) {
                 setSettings({
                     isRegisterEnabled: setting.isRegisterEnabled,
@@ -100,15 +101,15 @@ export default function SettingsPage() {
 
     return (
         <div className="w-full h-[85svh] flex flex-col p-4">
-            <FormControlLabel control={<Switch checked={settings.isRegisterEnabled} onChange={handelRegister} />} label="Member Can Register" />
+            <FormControlLabel control={<Switch checked={settings.isRegisterEnabled} onChange={handelRegister} />} label="Member Can Register" sx={{width: "fit-content"}} />
             <hr />
-            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("code")} onChange={(e) => handelEditFieldsChange("code", e.target.checked)} />} label={"code"} />
-            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("name")} onChange={(e) => handelEditFieldsChange("name", e.target.checked)} />} label={"name"} />
-            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("status")} onChange={(e) => handelEditFieldsChange("status", e.target.checked)} />} label={"status"} />
-            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("track")} onChange={(e) => handelEditFieldsChange("track", e.target.checked)} />} label={"track"} />
-            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("bonus")} onChange={(e) => handelEditFieldsChange("bonus", e.target.checked)} />} label={"bonus"} />
-            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("email")} onChange={(e) => handelEditFieldsChange("email", e.target.checked)} />} label={"email"} />
-            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("phone")} onChange={(e) => handelEditFieldsChange("phone", e.target.checked)} />} label={"phone"} />
+            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("code")} onChange={(e) => handelEditFieldsChange("code", e.target.checked)} />} label={"code"} sx={{width: "fit-content"}} />
+            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("name")} onChange={(e) => handelEditFieldsChange("name", e.target.checked)} />} label={"name"} sx={{width: "fit-content"}} />
+            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("status")} onChange={(e) => handelEditFieldsChange("status", e.target.checked)} />} label={"status"} sx={{width: "fit-content"}} />
+            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("track")} onChange={(e) => handelEditFieldsChange("track", e.target.checked)} />} label={"track"} sx={{width: "fit-content"}} />
+            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("bonus")} onChange={(e) => handelEditFieldsChange("bonus", e.target.checked)} />} label={"bonus"} sx={{width: "fit-content"}} />
+            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("email")} onChange={(e) => handelEditFieldsChange("email", e.target.checked)} />} label={"email"} sx={{width: "fit-content"}} />
+            <FormControlLabel control={<Switch checked={settings.organizerCanEdit.includes("phone")} onChange={(e) => handelEditFieldsChange("phone", e.target.checked)} />} label={"phone"} sx={{width: "fit-content"}} />
             <hr />
             <input type='image' />
             <Button onClick={saveSettings} variant='contained'>Save</Button>

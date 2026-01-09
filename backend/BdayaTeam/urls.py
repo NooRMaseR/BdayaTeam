@@ -15,26 +15,25 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
-# from django.contrib.auth.decorators import login_required
+from core.middleware import GraphQLAuthMiddleware
 from django.views.decorators.csrf import csrf_exempt
 from graphene_django.views import GraphQLView
 from django.urls import path, include
 # from django.conf import settings
 from django.contrib import admin
 
-from core.middleware import GraphQLTokenAuthMiddleware
 
-urlpatterns = [
+urlpatterns = (
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/schema/swagger-ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
-    path("organizer/", include("organizer.urls")),
-    path("technical/", include("technical.urls")),
-    path("member/", include("member.urls")),
-    path('admin/', admin.site.urls),
-    path("", include("core.urls")),
-    path("graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True, middleware=[GraphQLTokenAuthMiddleware()]))),
-]
+    path("api/organizer/", include("organizer.urls")),
+    path("api/technical/", include("technical.urls")),
+    path("api/member/", include("member.urls")),
+    path('api/admin/', admin.site.urls),
+    path("api/", include("core.urls")),
+    path("api/graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True, middleware=[GraphQLAuthMiddleware()]))),
+)
 
 # if settings.DEBUG:
 #     from debug_toolbar.toolbar import debug_toolbar_urls

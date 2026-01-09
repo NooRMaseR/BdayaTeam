@@ -3,23 +3,23 @@ from member.models import Member
 from rest_framework import status
 from rest_framework.test import APITestCase
 from core.models import Track, BdayaUser, UserRole
-from .models import Attendance, AttendanceStatus, AttendanceAllowedDay, MemberEditType
+from .models import Attendance, AttendanceStatus, AttendanceAllowedDay, MemberEditType, SiteSetting
 
 
 class OrganizerAPITests(APITestCase):
 
     def setUp(self):
-        # 1. Create a user and authenticate (ensure they pass IsOrganizer)
         self.user = BdayaUser(username="ahmed", role=UserRole.ORGANIZER, phone_number="+201088876690", email="ahmed@gmail.com")
         self.user.set_password("password")
         self.user.save()
-        # If IsOrganizer checks a specific attribute, set it here. 
-        # For example: self.user.is_staff = True; self.user.save()
-        self.client.force_authenticate(user=self.user)
-
-        # 2. Setup initial data
+        self.client.force_authenticate(user=self.user) # type: ignore
+        
         self.track_python = Track.objects.create(track="Python", prefix="p")
         self.track_java = Track.objects.create(track="Java", prefix="j")
+        
+        self.settings_data = SiteSetting.get_solo()
+        self.settings_data.organizer_can_edit = ["bonus", "track"]
+        self.settings_data.save()
         
         self.member = Member.objects.create(
             name="John Doe",
@@ -41,12 +41,12 @@ class OrganizerAPITests(APITestCase):
         url = reverse('members-list', kwargs={'track_name': 'Python'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['code'], "p-1")
+        self.assertEqual(len(response.data), 1) # type: ignore
+        self.assertEqual(response.data[0]['code'], "p-1") # type: ignore
 
     ## --- Tests for MemberEdit View --- ##
 
-    def test_update_member_bonus_data(self):
+    def test_update_valid_member_data(self):
         """Test updating a simple field via MemberEditType.DATA"""
         url = reverse('attendance-editor', kwargs={'track_name': 'Python'})
         data = {
@@ -60,6 +60,18 @@ class OrganizerAPITests(APITestCase):
         
         self.member.refresh_from_db()
         self.assertEqual(self.member.bonus, 5)
+    
+    def test_update_invalid_member_data(self):
+        """Test updating a simple field via MemberEditType.DATA"""
+        url = reverse('attendance-editor', kwargs={'track_name': 'Python'})
+        data = {
+            "code": "p-1",
+            "field": "name",
+            "value": "james",
+            "type": MemberEditType.DATA
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_create_attendance_record(self):
         """Test creating a new attendance record via MemberEditType.ATTENDANCE"""
@@ -83,8 +95,6 @@ class OrganizerAPITests(APITestCase):
             "value": "Java",
             "type": MemberEditType.DATA
         }
-        # Note: This test will fail if RegisterSerializer has required fields 
-        # not present in your Member model (like collage_code).
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
@@ -98,8 +108,8 @@ class OrganizerAPITests(APITestCase):
         url = reverse('attendance-days', kwargs={'track_name': 'Python'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['day'], "2026-02-02")
+        self.assertEqual(len(response.data), 1) # type: ignore
+        self.assertEqual(response.data[0]['day'], "2026-02-02") # type: ignore
 
     def test_create_attendance_day(self):
         url = reverse('attendance-days', kwargs={'track_name': 'Python'})
@@ -113,4 +123,5 @@ class OrganizerAPITests(APITestCase):
         data = {"day": "2026-02-02"} # Already exists in setUp
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("already exists", response.data['details'])
+        self.assertIn("already exists", response.data['details']) # type: ignore
+        
