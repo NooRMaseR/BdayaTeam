@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server';
 
-import { ApolloClient, InMemoryCache } from "@apollo/client";
-import { createUploadLink } from "apollo-upload-client";
+import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
 import { BASE_API_URL } from "./api.client";
 import { cookies } from "next/headers";
 import { gql } from "graphql-tag";
+
 
 export async function getAuthCookies() {
     const cookieStore = await cookies();
@@ -66,7 +67,7 @@ export const fetchWithCookies: typeof fetch = async (url, options) => {
     if (token) {
         headers.set("Authorization", `Token ${token}`);
     }
-    
+
     if (csrf) {
         headers.set("X-CSRFToken", csrf);
     }
@@ -110,22 +111,20 @@ export async function serverGraphQL<T>(query: string, variables: Record<string, 
         headers["Content-Type"] = "application/json";
     }
 
-    const uploadLink = createUploadLink({
-        uri: `${BASE_API_URL}graphql/`,
-        headers: headers,
-        credentials: "include"
-    });
-
     const ap = new ApolloClient({
-        link: uploadLink,
+        link: new HttpLink({
+            uri: `${BASE_API_URL}graphql/`,
+            headers: headers,
+            credentials: "include"
+        }),
         cache: new InMemoryCache(),
     });
 
     const newQuery = gql`${query}`;
 
     try {
-        const { data } = mutate 
-            ? await ap.mutate({ mutation: newQuery, variables }) 
+        const { data } = mutate
+            ? await ap.mutate({ mutation: newQuery, variables })
             : await ap.query({ query: newQuery, variables });
 
         return {

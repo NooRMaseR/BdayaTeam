@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from rest_framework.generics import ListCreateAPIView
+from drf_spectacular.utils import extend_schema, inline_serializer
 
 from django.contrib import auth
 from django.db import transaction
@@ -12,7 +13,6 @@ from django.middleware import csrf
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from drf_spectacular.utils import extend_schema, inline_serializer
 
 from member.models import Member
 from . import models, serializers

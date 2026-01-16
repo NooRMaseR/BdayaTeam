@@ -1,68 +1,17 @@
 # instructions for Backend
 
-## Setup uv
-
-in the `CMD` run this command
-
-```bash
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
-## install the requirements
-run 
-
-```bash
-uv sync --locked
-```
-
-## migrations to database
-
-create the migrations
-
-```bash
-uv run manage.py makemigrations
-```
-
-then apply the migrations
-
-```bash
-uv run manage.py migrate
-```
-
-## creating an admin user
-
-to create an admin user run this command
-
-```bash
-uv run manage.py createsuperuser
-```
-
-## Running the Server
-
-run the server by using this command
-
-```bash
-uv run gunicorn BdayaTeam.wsgi --workers 4 --max-requests 5 --max-requests-jitter 2 --worker-connections 100 --timeout 30 --keep-alive 3 --worker-class gevent
-```
-
-**`--worker`** how many wokrers would you need
-
-**`--max-requests`** how many requests to restart a worker after, this helps avoid memory leaks
-
-**`--max-requests-jitter`** adds a random number to each worker to they don't restart all workers at the same time
-
-**`--worker0connections`**
-
-to open `swagger-UI` open this url `http://127.0.0.1:8000/api/schema/swagger-ui/`
-
-to open the `admin panel` open this url `http://127.0.0.1:8000/admin/`
-
-# Postgresql
+## Postgresql
 
 to install postgresql run these commands in your terminal in order
 
 ```bash
 sudo apt install postgresql
+```
+
+then start `postgresql` server
+
+```bash
+sudo service postgresql start
 ```
 
 then start the `postgresql` session
@@ -75,18 +24,22 @@ now execute the following `sql` commands with your own data
 
 ```postgresql
 <!-- 1. Create the Database -->
-CREATE DATABASE TeamBdayaDB;
+CREATE DATABASE teambdayadb;
 
 <!-- 2. Create a user with passwor -->
 CREATE USER root WITH PASSWORD 'root123';
 
 <!-- 3. edit the user roles -->
 ALTER ROLE root SET client_encoding TO 'utf8';
-ALTER ROLE root SET default_transaction_isolation TO 'read commited';
+ALTER ROLE root SET default_transaction_isolation TO 'read committed';
 ALTER ROLE root SET timezone TO 'Africa/Cairo';
 
 <!-- 4. add the user permissions -->
-GRANT ALL PRIVILEGES ON DATABASE TeamBdayaDB TO root;
+GRANT ALL PRIVILEGES ON DATABASE teambdayadb TO root;
+
+<!-- 5. add the user permissions for public schema -->
+\c teambdayadb
+GRANT ALL PRIVILEGES ON SCHEMA public TO root;
 
 <!-- that's all, now exist -->
 \q
@@ -98,7 +51,6 @@ now you can start the `postgresql` like this
 sudo systemctl enable postgresql # only if you want it to start automaticlly after booting
 sudo systemctl start postgresql
 ```
-
 
 then in your `settings.py` database add the following
 
@@ -126,7 +78,7 @@ then in your `env` add these
 
 ```ini
 SECRET_KEY=<djang-secret>
-DB_NAME=TeamBdayaDB
+DB_NAME=teambdayadb
 DB_HOST=localhost
 DB_PORT=''
 DB_USER=root
@@ -137,7 +89,73 @@ EMAIL_HOST_USER=<email>
 EMAIL_HOST_PASSWORD=<app-password>
 ```
 
-# Redis
+## uv
+
+in the `CMD` run this command
+
+Windows
+
+```bash
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Linux
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### install the requirements
+
+run
+
+```bash
+uv sync --locked
+```
+
+### migrations to database
+
+create the migrations
+
+```bash
+uv run manage.py makemigrations
+```
+
+then apply the migrations
+
+```bash
+uv run manage.py migrate
+```
+
+### creating an admin user
+
+to create an admin user run this command
+
+```bash
+uv run manage.py createsuperuser
+```
+
+### Running the Server
+
+run the server by using this command
+
+```bash
+uv run gunicorn BdayaTeam.wsgi --workers 4 --max-requests 5 --max-requests-jitter 2 --worker-connections 100 --timeout 30 --keep-alive 3 --worker-class gevent
+```
+
+**`--worker`** how many wokrers would you need
+
+**`--max-requests`** how many requests to restart a worker after, this helps avoid memory leaks
+
+**`--max-requests-jitter`** adds a random number to each worker to they don't restart all workers at the same time
+
+**`--worker0connections`**
+
+to open `swagger-UI` open this url `http://127.0.0.1:8000/api/schema/swagger-ui/`
+
+to open the `admin panel` open this url `http://127.0.0.1:8000/admin/`
+
+## Redis
 
 to install redis on your linux run this command
 
@@ -155,7 +173,7 @@ sudo systemctl start redis-server
 then test it from this command
 
 ```bash
-redis-cli ping # your should get PONG
+redis-cli ping # you should get PONG
 ```
 
 add this line so the server don't crush when having low memory
@@ -164,7 +182,7 @@ add this line so the server don't crush when having low memory
 echo "vm.overcommit_memory = 1" | sudo tee -a /etc/sysctl.conf
 ```
 
-# Celery
+## Celery
 
 to start celery broker in another terminal **(after initializing `gunicorn`)** run
 
@@ -196,8 +214,8 @@ After=network.target redis-server.service
 [Service]
 User=kali
 Group=kali
-WorkingDirectory=/home/kali/programming/backend
-ExecStart=/home/kali/programming/backend/.venv/bin/celery -A BdayaTeam worker --loglevel info
+WorkingDirectory=/home/kali/BdayaTeam/backend
+ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/celery -A BdayaTeam worker --loglevel info
 Restart=always
 
 [Install]
@@ -228,8 +246,8 @@ After=network.target redis-server.service
 [Service]
 User=kali
 Group=kali
-WorkingDirectory=/home/kali/programming/backend
-ExecStart=/home/kali/programming/backend/.venv/bin/celery -A BdayaTeam beat --loglevel info
+WorkingDirectory=/home/kali/BdayaTeam/backend
+ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/celery -A BdayaTeam beat --loglevel info
 Restart=always
 
 [Install]
@@ -244,7 +262,7 @@ sudo systemctl enable celery-beat
 sudo systemctl start celery-beat
 ```
 
-# Nginx
+## Nginx
 
 to install `nginx` in your terminal run
 
@@ -284,8 +302,8 @@ After=network.target
 [Service]
 User=kali
 Group=www-data
-WorkingDirectory=/home/kali/programming/backend/
-ExecStart=/home/kali/programming/backend/.venv/bin/gunicorn BdayaTeam.wsgi --workers 4 --max-requests 1000 --max-requests-jitter 100 --worker-connections 2500 --timeout 30 --keep-alive 2 --worker-class gevent --bind unix:/run/gunicorn.sock
+WorkingDirectory=/home/kali/BdayaTeam/backend/
+ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/gunicorn BdayaTeam.wsgi --workers 4 --max-requests 1000 --max-requests-jitter 100 --worker-connections 2500 --timeout 30 --keep-alive 2 --worker-class gevent --bind unix:/run/gunicorn.sock
 
 [Install]
 WantedBy=multi-user.target
@@ -328,8 +346,8 @@ server {
     server_tokens off;
     client_max_body_size 10M;
 
-    ssl_certificate /home/kali/programming/backend/localhost+1.pem;
-    ssl_certificate_key /home/kali/programming/backend/localhost+1-key.pem;
+    ssl_certificate /home/kali/BdayaTeam/backend/localhost+1.pem;
+    ssl_certificate_key /home/kali/BdayaTeam/backend/localhost+1-key.pem;
 
 
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -339,7 +357,7 @@ server {
 
     # --- server static files ---
     location /static/ {
-        alias /home/kali/programming/backend/static_files/;
+        alias /home/kali/BdayaTeam/backend/static_files/;
         expires 30d;
         add_header Cache-Control "public, immutable";
         access_log off;
@@ -347,7 +365,7 @@ server {
 
     # --- server media files ---
     location /media/ {
-        alias /home/kali/programming/backend/media_files/public/;
+        alias /home/kali/BdayaTeam/backend/media_files/public/;
         expires 3d;
         add_header Cache-Control "public";
     }
@@ -355,7 +373,7 @@ server {
     # --- server private media files ---
     location /media/protected/ {
         internal;
-        alias /home/kali/programming/backend/media_files/protected/;
+        alias /home/kali/BdayaTeam/backend/media_files/protected/;
         expires 2d;
 
         add_header Cache-Control "public";
@@ -401,7 +419,7 @@ server {
     }
 
     location /_next/static/ {
-        alias /home/kali/programming/frontend/.next/static/;
+        alias /home/kali/BdayaTeam/frontend/.next/static/;
         expires 3d;
         access_log off;
         add_header Cache-Control "public, max-age=31536000, immutable";
@@ -414,6 +432,7 @@ then always test nginx when changing the configirations inside `sites-avilable` 
 ```bash
 sudo nginx -t
 ```
+
 you should get somthing like this
 
 ```bash
@@ -445,23 +464,24 @@ give the permissions like these **add your own folder path**
 
 ```bash
 setfacl -m u:www-data:x /home/kali/
-setfacl -m u:www-data:x /home/kali/programming/
-setfacl -m u:www-data:x /home/kali/programming/backend/
-setfacl -m u:www-data:x /home/kali/programming/backend/static_files/
-setfacl -m u:www-data:x /home/kali/programming/backend/media_files/
-setfacl -R -m u:www-data:rX /home/kali/programming/backend/static_files
-setfacl -R -m u:www-data:rX /home/kali/programming/backend/media_files
+setfacl -m u:www-data:x /home/kali/BdayaTeam/
+setfacl -m u:www-data:x /home/kali/BdayaTeam/backend/
+setfacl -m u:www-data:x /home/kali/BdayaTeam/backend/static_files/
+setfacl -m u:www-data:x /home/kali/BdayaTeam/backend/media_files/
+setfacl -R -m u:www-data:rX /home/kali/BdayaTeam/backend/static_files
+setfacl -R -m u:www-data:rX /home/kali/BdayaTeam/backend/media_files
 ```
 
 that's it
 
-# Formulas
+## Formulas
 
-## Gunicorn
+### Gunicorn
 
 `workers = (2 x CPU Cores) + 1`
 
 first we need to get the how many avilable cores, in the terminal run
+
 ```bash
 nproc
 ```
@@ -474,7 +494,7 @@ in the end the gunicorn configs should be like this
 uv run gunicorn BdayaTeam.wsgi:application --workers 5 --max-requests 1000 --max-requests-jitter 50
 ```
 
-## Database
+### Database
 
 `total connections = workers x max_size`
 
@@ -489,5 +509,4 @@ you may get `100` connections, so we should get `5 x 20 = 100 total connections`
 
 if we set the `max_size=10` then we get `5 x 10 = 50` witch we get like 50% avilable space for migratios or external database operations, usually a connections takes like 2 or 3 connection
 
-
-**Enjoy**
+## **Enjoy**

@@ -10,6 +10,7 @@ export default function AddTrackPage() {
     const { register, handleSubmit, reset, setError, formState: { errors } } = useForm<CreateTrack>();
     const validData = ["track", "description", "prefix"] as const;
     const onSubmit = async (data: CreateTrack) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         toast.promise<Track | any>(async () => {
             const {response, error, data: body} = await API.POST("/tracks/", {body: data});
             
