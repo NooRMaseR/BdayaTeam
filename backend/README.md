@@ -140,7 +140,7 @@ uv run manage.py createsuperuser
 run the server by using this command
 
 ```bash
-uv run gunicorn BdayaTeam.wsgi --workers 4 --max-requests 5 --max-requests-jitter 2 --worker-connections 100 --timeout 30 --keep-alive 3 --worker-class gevent
+uv run gunicorn BdayaTeam.wsgi --workers 4 --max-requests 1000 --max-requests-jitter 2500 --worker-connections 1000 --timeout 30 --keep-alive 2 --worker-class gevent
 ```
 
 **`--worker`** how many wokrers would you need
@@ -149,7 +149,7 @@ uv run gunicorn BdayaTeam.wsgi --workers 4 --max-requests 5 --max-requests-jitte
 
 **`--max-requests-jitter`** adds a random number to each worker to they don't restart all workers at the same time
 
-**`--worker0connections`**
+**`--worker-connections`** how many coonections to accept for each worker
 
 to open `swagger-UI` open this url `http://127.0.0.1:8000/api/schema/swagger-ui/`
 
@@ -182,18 +182,12 @@ add this line so the server don't crush when having low memory
 echo "vm.overcommit_memory = 1" | sudo tee -a /etc/sysctl.conf
 ```
 
-## Celery
+## Huey
 
-to start celery broker in another terminal **(after initializing `gunicorn`)** run
-
-```bash
-uv run celery -A BdayaTeam worker --loglevel info
-```
-
-to start celery beat in another terminal **(after initializing `gunicorn`)** run
+to start Huey broker in another terminal **(after initializing `gunicorn`)** run
 
 ```bash
-uv run celery -A BdayaTeam beat --loglevel info
+uv run manage.py run_huey
 ```
 
 **Important Note!**
@@ -201,22 +195,23 @@ uv run celery -A BdayaTeam beat --loglevel info
 so you don't start manully every time we start the machine, it's recommended to create a `systemd` for it like this
 
 ```bash
-sudo nano /etc/systemd/system/celery-worker.service
+sudo nano /etc/systemd/system/huey-worker.service
 ```
 
 then add these configurations
 
 ```ini
 [Unit]
-Description=Celery Worker
-After=network.target redis-server.service
+Description=huey Worker
+After=network.target redis-server.service gunicorn.service
 
 [Service]
 User=kali
 Group=kali
 WorkingDirectory=/home/kali/BdayaTeam/backend
-ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/celery -A BdayaTeam worker --loglevel info
+ExecStart=/home/kali/.local/bin/uv run manage.py run_huey
 Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
@@ -226,40 +221,8 @@ then run these commands
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable celery-worker
-sudo systemctl start celery-worker
-```
-
-we do the same for `celery beat` like this
-
-```bash
-sudo nano /etc/systemd/system/celery-beat.service
-```
-
-add these
-
-```ini
-[Unit]
-Description=celery beat
-After=network.target redis-server.service
-
-[Service]
-User=kali
-Group=kali
-WorkingDirectory=/home/kali/BdayaTeam/backend
-ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/celery -A BdayaTeam beat --loglevel info
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-then run these commands
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable celery-beat
-sudo systemctl start celery-beat
+sudo systemctl enable huey-worker
+sudo systemctl start huey-worker
 ```
 
 ## Nginx
@@ -356,7 +319,7 @@ server {
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
     # --- server static files ---
-    location /static/ {
+    location /api/static/ {
         alias /home/kali/BdayaTeam/backend/static_files/;
         expires 30d;
         add_header Cache-Control "public, immutable";
@@ -364,14 +327,14 @@ server {
     }
 
     # --- server media files ---
-    location /media/ {
+    location ^~ /api/media/public/ {
         alias /home/kali/BdayaTeam/backend/media_files/public/;
         expires 3d;
-        add_header Cache-Control "public";
+        add_header Cache-Control "public, must-revalidate, proxy-revalidate";
     }
 
     # --- server private media files ---
-    location /media/protected/ {
+    location /api/media/protected/ {
         internal;
         alias /home/kali/BdayaTeam/backend/media_files/protected/;
         expires 2d;
@@ -417,13 +380,22 @@ server {
         add_header Cache-Control "public, must-revalidate, proxy-revalidate";
         access_log off;
     }
+}
+```
 
-    location /_next/static/ {
-        alias /home/kali/BdayaTeam/frontend/.next/static/;
-        expires 3d;
-        access_log off;
-        add_header Cache-Control "public, max-age=31536000, immutable";
-    }
+then open `nginx.conf`
+
+```bash
+sudo nano /etc/nginx/nginx.conf
+```
+
+add these
+
+```conf
+worker_rlimit_nofile 5000; # Add this line at the top level
+
+events {
+    worker_connections 1500; # Increase this
 }
 ```
 
@@ -508,5 +480,33 @@ SHOW max_connections;
 you may get `100` connections, so we should get `5 x 20 = 100 total connections` and this is equal to `max_connections` witch is bad, we need like from 20% => 30% avilable space
 
 if we set the `max_size=10` then we get `5 x 10 = 50` witch we get like 50% avilable space for migratios or external database operations, usually a connections takes like 2 or 3 connection
+
+if you need more connections note that each connection depends on your `RAM`, each connection takes from `10MB -> 15MB`
+
+to edit, run this command to get the `conf` file location
+
+```bash
+sudo -u postgres psql -c "SHOW config_file";
+```
+
+you will get the location, add edit these lines based on your need
+
+```conf
+max_connections 200;
+shared_buffer 1GB
+```
+
+also you need to change how many connections for the system to open files like this
+
+```bash
+sudo nano /etc/security/limits.conf
+```
+
+add these line at the bottom
+
+```ini
+* soft nofile 5000
+* hard nofile 5000
+```
 
 ## **Enjoy**

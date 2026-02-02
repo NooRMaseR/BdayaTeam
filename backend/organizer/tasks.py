@@ -1,25 +1,25 @@
-from celery import shared_task
+from huey import crontab
 from django.utils import timezone
-
 from member.models import Member, MemberStatus
+from huey.contrib.djhuey import db_periodic_task
 from .models import Attendance, AttendanceAllowedDay, AttendanceStatus
 
-@shared_task
+@db_periodic_task(crontab(hour='22', minute='0'), retries=3, retry_delay=10)
 def make_rest_members_absents():
     today = timezone.now().date()
-    today_obj = AttendanceAllowedDay.objects.filter(day=today).values_list('id', flat=True)
+    today_obj = AttendanceAllowedDay.objects.filter(day=today).first()
     
-    if len(today_obj) == 0:
+    if not today_obj:
         return "no attendance today..."
     
-    atts = Attendance.objects.filter(date__in=today_obj).values_list("member__code", flat=True).iterator(500)
-    members_marked = Member.objects.only('code', 'name').exclude(code__in=atts).iterator(500)
+    members_without_attendance = Member.objects.only('code').exclude(attendances__date=today_obj).iterator(300)
     
-    marked_atts = (Attendance(date_id=today_obj, member=m, status=AttendanceStatus.ABSENT) for m in members_marked)
-    Attendance.objects.bulk_create(marked_atts)
+    marked_atts = [Attendance(date=today_obj, member=m, status=AttendanceStatus.ABSENT) for m in members_without_attendance]
+    Attendance.objects.bulk_create(marked_atts, batch_size=300, ignore_conflicts=True)
     
-    return "Done"
+    return f"{len(marked_atts)} Members has been marked as absent"
 
-@shared_task
+@db_periodic_task(crontab(day_of_week='5'),retries=3, retry_delay=10)
 def delete_fired_members():
-    Member.objects.filter(status=MemberStatus.FIRED).delete()
+    count, _ = Member.objects.filter(status=MemberStatus.FIRED).delete()
+    return f"{count} Members Deleted"

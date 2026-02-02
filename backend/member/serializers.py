@@ -1,65 +1,44 @@
-from technical.serializers import TaskSerializer, TrackSerializer
-from organizer.serializers import AttendenceSmallSerializer
-from core.serializers import TrackNoDescSerializer
-from rest_framework import serializers
-from . import models
+from organizer.serializers import AttendanceMSGSerializer
+from core.serializers import TrackNameOnlyMSGSerializer
+from technical.serializers import TaskMSGSerializer
+from datetime import datetime
+import msgspec
 
-
-class MemberSerializer(serializers.ModelSerializer):
-    track = TrackNoDescSerializer(read_only=True)
-    attendances = AttendenceSmallSerializer(read_only=True, many=True)
+class MemberMSGSerializer(msgspec.Struct):
+    code: str
+    name: str
+    email: str
+    collage_code: str
+    phone_number: str
+    bonus: int
+    track: TrackNameOnlyMSGSerializer
+    joined_at: datetime
+    status: str
+    attendances: list[AttendanceMSGSerializer] = []
     
-    class Meta:
-        model = models.Member
-        fields = '__all__'
-
-class RecivedTaskFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.ReciviedTaskFile
-        fields = ("id", "file")
-
-class RecivedTaskSerializer(serializers.ModelSerializer):
-    track = TrackSerializer(read_only=True)
-    task = TaskSerializer(read_only=True)
-    member = MemberSerializer(read_only=True)
+class MemberMSGSerializerForTask(msgspec.Struct):
+    code: str
+    name: str
     
-    files = serializers.ListField(
-        child=serializers.FileField(),
-        required=False,
-        write_only=True
-    )
+class RecivedFile(msgspec.Struct):
+    id: int
+    file_url: str
 
-    files_url = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = models.ReciviedTask
-        fields = '__all__'
-        
-    def get_files_url(self, obj) -> list[str]:
-        return [f.file.url for f in obj.files.all() if f.file]
-        
-    def create(self, validated_data):
-        files = validated_data.pop("files")
-        recive_task = models.ReciviedTask.objects.create(**validated_data)
-        oc_files = (models.ReciviedTaskFile(task=recive_task, file=f) for f in files)
-        
-        models.ReciviedTaskFile.objects.bulk_create(oc_files)
-        return recive_task
+class RecivedTaskMSGSerializer(msgspec.Struct):
+    id: int
+    task: TaskMSGSerializer
+    member: MemberMSGSerializerForTask
+    track: TrackNameOnlyMSGSerializer
+    files_url: list[RecivedFile]
+    notes: str | None
+    degree: int | None
+    signed: bool
+    recived_at: datetime
 
-
-class MemberProfileSerializer(serializers.ModelSerializer):
-    absents = serializers.IntegerField(read_only=True)
-    track = TrackSerializer(read_only=True)
-    total_tasks_sent = serializers.IntegerField()
-    missing_tasks = serializers.IntegerField()
-    
-    class Meta:
-        model = models.Member
-        fields = (
-            "name",
-            "code",
-            "track",
-            "absents",
-            "total_tasks_sent",
-            "missing_tasks"
-        )
+class MemberProfileMSGSerializer(msgspec.Struct):
+    absents: int
+    track: TrackNameOnlyMSGSerializer
+    total_tasks_sent: int
+    missing_tasks: int
+    name: str
+    code: str

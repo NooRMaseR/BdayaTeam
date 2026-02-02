@@ -2,7 +2,7 @@
 
 import { Button, Card, CardActions, CardContent, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton } from '@mui/material';
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import type { AttendanceDay } from '@/app/utils/api_types_helper';
+// import type { AttendanceDay } from '@/app/utils/api_types_helper';
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { DatePicker } from "@mui/x-date-pickers";
@@ -12,15 +12,23 @@ import { API } from '@/app/utils/api.client';
 import { toast } from 'sonner';
 import React from 'react';
 import dayjs from 'dayjs';
+import { components } from '../generated/api_types';
 
-function DayCard({ day, onDelete }: { day: AttendanceDay, onDelete: (date: string) => void }) {
+type AttendanceDay = components['schemas']['AttendanceDays'];
+type DayCardProps = {
+    day: AttendanceDay; 
+    onDelete: (date: string) => void;
+    track_name: string;
+}
+
+function DayCard({ day, onDelete, track_name }: DayCardProps) {
     const [dayState, setDayState] = React.useState<string>(day.day);
     const [dlgOpen, setDlgOpen] = React.useState<boolean>(false);
 
     const saveDay = () => {
         toast.promise<string | undefined>(async () => {
-            const { response } = await API.PUT(`/organizer/attendance/{track_name}/days/`, {
-                params: { path: { track_name: day.track.track } },
+            const { response } = await API.PUT(`/api/organizer/attendance/{track_name}/days/`, {
+                params: { path: { track_name } },
                 body: { oldDay: day.day, newDay: dayState }
             });
             if (response.ok) {
@@ -76,7 +84,7 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
 
     const saveDay = () => {
         toast.promise<string | undefined>(async () => {
-            const { response, data } = await API.POST(`/organizer/attendance/{track_name}/days/`, { params: { path: { track_name: track } }, body: { day: dlgDate.date } });
+            const { response, data } = await API.POST(`/api/organizer/attendance/{track_name}/days/`, { params: { path: { track_name: track } }, body: { day: dlgDate.date } });
             if (response.ok) {
                 setDlgDate(pre => ({ open: false, date: pre.date }));
                 setDays(pre => [...pre, data!])
@@ -95,7 +103,7 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
     const deleteDay = () => {
         toast.promise(async () => {
             const res = await API.DELETE(
-                `/organizer/attendance/{track_name}/days/`,
+                `/api/organizer/attendance/{track_name}/days/`,
                 {
                     params: {
                         path: { track_name: track },
@@ -141,7 +149,7 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
                     <Button onClick={() => setDlgDate(pre => ({ open: false, date: pre.date }))}>Cancle</Button>
                 </DialogActions>
             </Dialog>
-            {days?.map(day => <DayCard day={day} key={day?.id} onDelete={(e) => { setConfDlgOpen(true); setConfDlgDate(e); }} />)}
+            {days?.map(day => <DayCard track_name={ track } day={day} key={day?.id} onDelete={(e) => { setConfDlgOpen(true); setConfDlgDate(e); }} />)}
             <Button variant='contained' onClick={() => setDlgDate({ open: true, date: "" })}>
                 Add
                 <AddIcon />

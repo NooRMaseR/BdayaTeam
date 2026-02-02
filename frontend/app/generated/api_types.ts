@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/login/": {
+    "/api/login/": {
         parameters: {
             query?: never;
             header?: never;
@@ -20,7 +20,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/logout/": {
+    "/api/logout/": {
         parameters: {
             query?: never;
             header?: never;
@@ -36,7 +36,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/member/profile/{member_code}/": {
+    "/api/member/profile/{member_code}/": {
         parameters: {
             query?: never;
             header?: never;
@@ -52,7 +52,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/member/protected_media/tasks/{task_id}/": {
+    "/api/member/protected_media/tasks/{task_id}/": {
         parameters: {
             query?: never;
             header?: never;
@@ -68,14 +68,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/member/tasks/": {
+    "/api/member/tasks/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["member_tasks_retrieve"];
+        get: operations["member_tasks_list"];
         put?: never;
         post: operations["member_tasks_create"];
         delete?: never;
@@ -84,7 +84,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/organizer/attendance/{track_name}/days/": {
+    "/api/organizer/attendance/{track_name}/days/": {
         parameters: {
             query?: never;
             header?: never;
@@ -100,7 +100,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/organizer/attendance/{track_name}/editor/": {
+    "/api/organizer/attendance/{track_name}/editor/": {
         parameters: {
             query?: never;
             header?: never;
@@ -116,7 +116,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/organizer/members/{track_name}/": {
+    "/api/organizer/members/{track_name}/": {
         parameters: {
             query?: never;
             header?: never;
@@ -132,7 +132,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/organizer/settings/": {
+    "/api/organizer/settings/": {
         parameters: {
             query?: never;
             header?: never;
@@ -148,7 +148,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/register/": {
+    "/api/register/": {
         parameters: {
             query?: never;
             header?: never;
@@ -164,7 +164,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/technical/tasks/": {
+    "/api/reset/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Very Dangores, Deletes all tracks and members and tasks and technicals. */
+        delete: operations["reset_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/technical/tasks/": {
         parameters: {
             query?: never;
             header?: never;
@@ -181,7 +198,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/technical/tasks/recived/": {
+    "/api/technical/tasks/{task_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get the Tasks that are related to the technical track */
+        get: operations["technical_tasks_retrieve"];
+        put: operations["technical_tasks_update"];
+        post?: never;
+        delete: operations["technical_tasks_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/technical/tasks/recived/{task_id}/": {
         parameters: {
             query?: never;
             header?: never;
@@ -197,7 +231,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/test-auth/": {
+    "/api/test-auth/": {
         parameters: {
             query?: never;
             header?: never;
@@ -213,7 +247,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/tracks/": {
+    "/api/tracks/": {
         parameters: {
             query?: never;
             header?: never;
@@ -229,6 +263,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tracks/{track_name}/delete/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["tracks_delete_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -237,7 +287,6 @@ export interface components {
             readonly id: number;
             /** Format: date */
             day: string;
-            readonly track: components["schemas"]["TrackNoDesc"];
         };
         AttendanceDaysRequest: {
             /** Format: date */
@@ -267,11 +316,11 @@ export interface components {
         Login: {
             username: string;
             role: components["schemas"]["RoleEnum"];
-            track: components["schemas"]["TrackNoDesc"] | null;
+            track: components["schemas"]["TrackNameOnly"] | null;
         };
         Member: {
             code?: string;
-            readonly track: components["schemas"]["TrackNoDesc"];
+            readonly track: components["schemas"]["TrackNameOnly"];
             readonly attendances: components["schemas"]["AttendenceSmall"][];
             name: string;
             /** Format: email */
@@ -281,48 +330,56 @@ export interface components {
             bonus?: number;
             /** Format: date-time */
             readonly joined_at: string;
-            status?: components["schemas"]["Status27cEnum"];
+            status?: components["schemas"]["MemberStatusEnum"];
         };
         MemberProfile: {
             name: string;
             code?: string;
-            readonly track: components["schemas"]["Track"];
+            readonly track: components["schemas"]["TrackNameOnly"];
             readonly absents: number;
             total_tasks_sent: number;
             missing_tasks: number;
         };
+        MemberSerializerForTask: {
+            code?: string;
+            name: string;
+        };
+        /**
+         * @description * `normal` - Normal
+         *     * `warning` - Warning
+         *     * `fired` - Fired
+         * @enum {string}
+         */
+        MemberStatusEnum: "normal" | "warning" | "fired";
         RecivedTask: {
             readonly id: number;
-            readonly track: components["schemas"]["Track"];
-            readonly task: components["schemas"]["Task"];
-            readonly member: components["schemas"]["Member"];
-            readonly files_url: string[];
+            readonly task: components["schemas"]["TaskNoTrack"];
+            readonly member: components["schemas"]["MemberSerializerForTask"];
+            files_url: components["schemas"]["RecivedTaskFile"][];
             notes?: string | null;
             degree?: number | null;
             signed?: boolean;
             /** Format: date-time */
             readonly recived_at: string;
+            track: number;
         };
-        Register: {
+        RecivedTaskFile: {
+            readonly id: number;
+            /** Format: uri */
+            file?: string | null;
+        };
+        RegisterMember: {
             readonly code: string;
-            readonly track: components["schemas"]["TrackNoDesc"];
+            readonly track: components["schemas"]["TrackNameOnly"];
             name: string;
-            /** Format: email */
-            email: string;
-            collage_code: string;
-            phone_number: string;
-            /** Format: date-time */
-            readonly joined_at: string;
-            status?: components["schemas"]["Status27cEnum"];
         };
-        RegisterRequest: {
+        RegisterMemberRequest: {
             request_track_id: number;
             name: string;
             /** Format: email */
             email: string;
             collage_code: string;
             phone_number: string;
-            status?: components["schemas"]["Status27cEnum"];
         };
         /**
          * @description * `member` - member
@@ -337,23 +394,25 @@ export interface components {
             organizer_can_edit?: string[];
             /** Format: uri */
             site_image?: string | null;
+            /** Format: uri */
+            hero_image?: string | null;
+        };
+        SiteSettingsImages: {
+            /** Format: uri */
+            site_image?: string | null;
+            /** Format: uri */
+            hero_image?: string | null;
         };
         SiteSettingsRequest: {
             is_register_enabled?: boolean;
             organizer_can_edit?: string[];
             /** Format: binary */
             site_image?: string | null;
+            /** Format: binary */
+            hero_image?: string | null;
         };
-        /**
-         * @description * `normal` - Normal
-         *     * `warning` - Warning
-         *     * `fired` - Fired
-         * @enum {string}
-         */
-        Status27cEnum: "normal" | "warning" | "fired";
         Task: {
             readonly id: number;
-            readonly track: components["schemas"]["Track"];
             readonly expired: boolean;
             task_number: number;
             /** Format: date-time */
@@ -362,8 +421,18 @@ export interface components {
             expires_at: string;
             description: string;
         };
+        TaskNoTrack: {
+            readonly id: number;
+            readonly expired: boolean;
+            task_number: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            expires_at: string;
+            description: string;
+            track: number;
+        };
         TaskRequest: {
-            track_id: number;
             task_number: number;
             /** Format: date-time */
             expires_at: string;
@@ -377,18 +446,22 @@ export interface components {
             readonly id: number;
             track: string;
             description?: string | null;
+            /** Format: uri */
+            image?: string | null;
         };
-        TrackNoDesc: {
+        TrackNameOnly: {
             readonly id: number;
             track: string;
         };
-        TrackNoDescRequest: {
+        TrackNameOnlyRequest: {
             track: string;
         };
         TrackRequest: {
             track: string;
             prefix: string;
             description?: string | null;
+            /** Format: binary */
+            image?: string | null;
         };
         /**
          * @description * `attendance` - attendance
@@ -408,6 +481,14 @@ export interface components {
             /**
              * @default [
              *       "field error message"
+             *     ]
+             */
+            field: unknown[];
+        };
+        "bad-track": {
+            /**
+             * @default [
+             *       "an error with this field"
              *     ]
              */
             field: unknown[];
@@ -454,11 +535,18 @@ export interface components {
         test_auth: {
             username: string;
             role: components["schemas"]["RoleEnum"];
-            track: components["schemas"]["Track"];
+            track: components["schemas"]["TrackNameOnly"];
+            settings: components["schemas"]["SiteSettingsImages"];
         };
         updateDayRequest: {
             oldDay: string;
             newDay: string;
+        };
+        updateTaskRequest: {
+            task_number: number;
+            /** Format: date-time */
+            expires_at: string;
+            description: string;
         };
     };
     responses: never;
@@ -479,8 +567,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["loginRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["loginRequest"];
-                "multipart/form-data": components["schemas"]["loginRequest"];
             };
         };
         responses: {
@@ -569,7 +655,7 @@ export interface operations {
             };
         };
     };
-    member_tasks_retrieve: {
+    member_tasks_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -583,7 +669,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Task"];
+                    "application/json": components["schemas"]["Task"][];
                 };
             };
         };
@@ -660,8 +746,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["updateDayRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["updateDayRequest"];
-                "multipart/form-data": components["schemas"]["updateDayRequest"];
             };
         };
         responses: {
@@ -701,8 +785,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AttendanceDaysRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["AttendanceDaysRequest"];
-                "multipart/form-data": components["schemas"]["AttendanceDaysRequest"];
             };
         };
         responses: {
@@ -767,8 +849,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["patchMemberRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["patchMemberRequest"];
-                "multipart/form-data": components["schemas"]["patchMemberRequest"];
             };
         };
         responses: {
@@ -854,9 +934,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RegisterRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["RegisterRequest"];
-                "multipart/form-data": components["schemas"]["RegisterRequest"];
+                "application/json": components["schemas"]["RegisterMemberRequest"];
             };
         };
         responses: {
@@ -865,7 +943,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Register"];
+                    "application/json": components["schemas"]["RegisterMember"];
                 };
             };
             400: {
@@ -875,6 +953,24 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["bad-register"];
                 };
+            };
+        };
+    };
+    reset_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -915,8 +1011,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["TaskRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["TaskRequest"];
-                "multipart/form-data": components["schemas"]["TaskRequest"];
             };
         };
         responses: {
@@ -946,11 +1040,78 @@ export interface operations {
             };
         };
     };
+    technical_tasks_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
+                };
+            };
+        };
+    };
+    technical_tasks_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["updateTaskRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    technical_tasks_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     technical_tasks_recived_list: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                task_id: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -969,14 +1130,14 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                task_id: number;
+            };
             cookie?: never;
         };
         requestBody: {
             content: {
                 "application/json": components["schemas"]["TaskSigningRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["TaskSigningRequest"];
-                "multipart/form-data": components["schemas"]["TaskSigningRequest"];
             };
         };
         responses: {
@@ -1036,19 +1197,45 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TrackRequest"];
                 "application/x-www-form-urlencoded": components["schemas"]["TrackRequest"];
                 "multipart/form-data": components["schemas"]["TrackRequest"];
             };
         };
         responses: {
+            /** @description No response body */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Track"];
+                content?: never;
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
                 };
+                content: {
+                    "application/json": components["schemas"]["bad-track"];
+                };
+            };
+        };
+    };
+    tracks_delete_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

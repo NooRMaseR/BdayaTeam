@@ -12,10 +12,10 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'http',
+        protocol: 'https',
         hostname: 'localhost',
         port: '',
-        pathname: '/member/protected_media/**',
+        pathname: '/api/media/**',
       },
     ]
   },

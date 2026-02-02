@@ -1,30 +1,22 @@
-from core.serializers import TrackNoDescSerializer
-from rest_framework import serializers
-from . import models
+from datetime import date
+import msgspec
 
-class AttendanceSmallDaysSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.AttendanceAllowedDay
-        fields = ('id', "day")
+class AttendanceDayMSGSerializer(msgspec.Struct):
+    id: int
+    day: date
     
-
-class AttendanceDaysSerializer(serializers.ModelSerializer):
-    track = TrackNoDescSerializer(read_only=True)
-    class Meta:
-        model = models.AttendanceAllowedDay
-        fields = ('id', "day", "track")
+class AttendanceMSGSerializer(msgspec.Struct):
+    date: list[AttendanceDayMSGSerializer]
+    status: str
+    excuse_reason: str
     
-
-class AttendenceSmallSerializer(serializers.ModelSerializer):
-    date = AttendanceSmallDaysSerializer()
-    class Meta:
-        model = models.Attendance
-        fields = ("date", "status", "excuse_reason")
-        
-
-class SiteSettingsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.SiteSetting
-        fields = '__all__'
+class SiteSettingsImagesMSGSerializer(msgspec.Struct):
+    site_image: str
+    hero_image: str
     
-        
+class SiteSettingsMSGSerializer(msgspec.Struct):
+    site_image: str
+    hero_image: str
+    is_register_enabled: bool
+    organizer_can_edit: list[str] = []
+    

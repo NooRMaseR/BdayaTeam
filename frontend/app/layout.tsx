@@ -3,7 +3,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import StoreProvider from "./StoreProvider";
 import LoadingProvider from "./loadingProvider";
-import Header from "./components/header/header";
+import Header from "./components/header";
 import AuthLoader from "./components/authLoader";
 import { Toaster } from "@/components/ui/sonner";
 

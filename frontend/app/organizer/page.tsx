@@ -1,42 +1,59 @@
-import TrackCard from "../components/track_card";
+import type { SettingsSiteImageQuery } from "../generated/graphql";
+import { GET_SITE_IMAGE_SETTINGS } from "../utils/graphql_helpers";
+import NavigationCard from "../components/navigation_card";
+import { serverGraphQL } from "../utils/api_utils";
 import { API } from "../utils/api.server";
-import { Metadata } from "next";
+import type { Metadata } from "next";
+import ResetAll from "./reset_all";
 
-export const metadata: Metadata = {
-    title: "Organizer Team Bdaya",
-    description: "Organizer Team Bdaya, Come and manage your everything",
-    keywords: "Organizer,organizer,Track,Settings",
-    openGraph: {
-        title: `Organizer Team Dbaya`,
-        description: `Manage tracks members and attendance.`,
-        images: [`/bdaya_black.png`],
-    },
+
+export async function generateMetadata(): Promise<Metadata> {
+    const res = await serverGraphQL<SettingsSiteImageQuery>(GET_SITE_IMAGE_SETTINGS);
+    const site = res.data.allSettings?.siteImage;
+
+    return {
+        title: "Organizer Team Bdaya",
+        description: "Organizer Team Bdaya, Come and manage your everything",
+        keywords: "Organizer,organizer,Track,Settings",
+        openGraph: {
+            title: `Organizer Team Dbaya`,
+            description: `Manage tracks members and attendance.`,
+            images: site ? [`${process.env.NEXT_PUBLIC_MEDIA_URL}${site}`] : undefined,
+        },
+    }
 }
 
 export default async function OrganizerPage() {
-    const { data } = await API.GET("/tracks/", { next: { revalidate: 300 } });
+    const { data } = await API.GET("/api/tracks/");
 
     return (
         <>
-            <div className="flex justify-center flex-wrap w-full gap-10">
+            <div className="flex justify-center flex-wrap w-full gap-10 mt-10">
                 {data?.map((track) => (
-                    <TrackCard
+                    <NavigationCard
                         url={`organizer/${track.track}`}
                         title={track.track}
                         desc={track.description ?? ""}
+                        imageUrl={track.image ? `${process.env.NEXT_PUBLIC_MEDIA_URL}/${track.image}` : undefined}
                         key={track.id}
                     />
                 ))}
-                <TrackCard
+                <NavigationCard
                     url="organizer/add-track"
                     title="Add Track"
                     desc="Add Track"
                 />
-                <TrackCard
+                <NavigationCard
                     url="organizer/settings"
                     title="Site Settings"
                     desc="Edit or view Site settings"
                 />
+                <NavigationCard
+                    url={`${process.env.NEXT_PUBLIC_API_URL}/api/admin/`}
+                    title="Admin Site"
+                    desc="Open The Main Admin Site"
+                />
+                <ResetAll />
             </div>
         </>
     )

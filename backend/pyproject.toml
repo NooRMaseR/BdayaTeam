@@ -5,9 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "celery>=5.6.0",
     "django>=5.2.8",
+    "django-cleanup>=9.0.0",
     "django-cors-headers>=4.9.0",
+    "django-imagekit>=6.0.0",
     "django-phonenumber-field[phonenumberslite]>=8.3.0",
     "django-redis>=6.0.0",
     "django-solo>=2.4.0",
@@ -19,11 +20,13 @@ dependencies = [
     "graphene-django-optimizer>=0.10.0",
     "graphene-file-upload>=1.3.0",
     "gunicorn>=23.0.0",
+    "huey>=2.6.0",
+    "msgspec>=0.20.0",
     "pillow>=12.0.0",
     "psycogreen>=1.0.2",
     "psycopg[binary,pool]>=3.3.1",
     "python-dotenv>=1.2.1",
-    "redis>=7.1.0",
+    "redis[hiredis]>=7.1.0",
     "whitenoise>=6.11.0",
 ]
 

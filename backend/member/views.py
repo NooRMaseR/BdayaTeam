@@ -11,10 +11,9 @@ from django.core.cache import cache
 from django.http import HttpResponse
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
-# from django.views.decorators.cache import cache_page
+from django.db.models.functions import Coalesce
 from django.utils.decorators import method_decorator
 from django.views.decorators.clickjacking import xframe_options_exempt
-from django.db.models.functions import Coalesce
 from django.db.models import (
     PositiveSmallIntegerField, 
     ExpressionWrapper, 
@@ -28,32 +27,39 @@ from django.db.models import (
 
 from core.models import UserRole
 from core.permissions import IsMember
-from member.auth import CookieTokenAuthentication
+from core.serializers import TrackNameOnlyMSGSerializer
 from organizer.models import Attendance, AttendanceStatus
 
-from technical.serializers import TaskSerializer
+from member.serializers import MemberProfileMSGSerializer
+from member.auth import CookieTokenAuthentication, RawJsonRenderer
+
+from technical.serializers import TaskMSGSerializer
+from technical.api_schemas import TaskSerializer
 from technical.models import Task
-from . import serializers, models
+
+from utils import SAFE_MIMETYPES, serializer_encoder, DEFAULT_CACHE_DURATION
+from . import api_schemas, models
 import mimetypes, os
 
 # Create your views here.
+
 class Tasks(APIView):
-    parser_classes = [MultiPartParser, FormParser]
-    serializer_class = TaskSerializer
+    parser_classes = (MultiPartParser, FormParser)
+    serializer_class = TaskSerializer(many=True)
+    renderer_classes = (RawJsonRenderer,)
+    permission_classes = (IsMember,)
     
-    def get_permissions(self):
-        perms = super().get_permissions()
-        perms.append(IsMember())
-        return perms
+    @staticmethod
+    def get_cache_key(member_id: int):
+        return f"member_tasks_{member_id}"
     
     def get(self, request: Request) -> Response:
-        CACHE_KEY = f"member_tasks_{request.user.email}"
+        CACHE_KEY = self.get_cache_key(request.user.id)
         if (data:=cache.get(CACHE_KEY)):
             return Response(data)
         
         tasks = (
             Task.objects
-            .select_related("track")
             .filter(track=request.user.track)
             .annotate(
                 expired=ExpressionWrapper(
@@ -69,21 +75,33 @@ class Tasks(APIView):
                     .values("task_id")
                 )
             )
+            .values('id', 'task_number', 'created_at', 'expires_at', 'description', 'expired')
         )
-        data = TaskSerializer(tasks, many=True).data
-        cache.set(CACHE_KEY, data, 300)
-        return Response(data)
+        
+        encoded_data = serializer_encoder.encode([
+            TaskMSGSerializer(
+                id=task['id'],
+                task_number=task['task_number'],
+                created_at=task['created_at'],
+                expires_at=task['expires_at'],
+                description=task['description'],
+                expired=task['expired'],
+            )
+            for task in tasks
+        ])
+        cache.set(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
+        return Response(encoded_data)
     
     @extend_schema(
         request=inline_serializer(
             "task-member-input",
             {
-                "task_id": serializers.serializers.IntegerField(),
-                "file": serializers.serializers.ListField(
-                    child=serializers.serializers.FileField(),
+                "task_id": api_schemas.serializers.IntegerField(),
+                "file": api_schemas.serializers.ListField(
+                    child=api_schemas.serializers.FileField(),
                     required=False
                 ),
-                "notes": serializers.serializers.CharField(required=False)
+                "notes": api_schemas.serializers.CharField(required=False)
             }
         ),
         responses={
@@ -91,13 +109,13 @@ class Tasks(APIView):
             400: inline_serializer(
                 name="badTask",
                 fields={
-                    "details": serializers.serializers.CharField(default="error here")
+                    "details": api_schemas.serializers.CharField(default="error here")
                 }
             ),
             406: inline_serializer(
                 name="taskExpired",
                 fields={
-                    "details": serializers.serializers.CharField(default="task is expired")
+                    "details": api_schemas.serializers.CharField(default="task is expired")
                 }
             )
         }
@@ -119,7 +137,9 @@ class Tasks(APIView):
                 )
                 oc_files = (models.ReciviedTaskFile(recivied_task=rec_task, file=f) for f in request.data.getlist("file")) # type: ignore
                 models.ReciviedTaskFile.objects.bulk_create(oc_files)
-            cache.delete(f"member_profile_{member.code}")
+            cache.delete(self.get_cache_key(request.user.id))
+            cache.delete(MemberProfile.get_cache_key(member.code))
+            cache.delete_pattern(f"technical_recived_tasks_{request.user.track}*") # type: ignore
             return Response(status=status.HTTP_201_CREATED)
         
         except IntegrityError:
@@ -133,28 +153,35 @@ class Tasks(APIView):
 @method_decorator(xframe_options_exempt, name='dispatch')
 class ProtectedTask(APIView):
     authentication_classes = (CookieTokenAuthentication,)
+    serializer_class = None
     
     def get(self, request: Request, task_id: int) -> HttpResponse:
         document = get_object_or_404(models.ReciviedTaskFile.objects.only("id", 'file', "recivied_task__member__email").select_related('recivied_task__member'), id=task_id)
         
         # check if it's an organizer or technical to get the file or check if the user is a member and it's the same member that uplouded this task
-        if (not request.user.role in (UserRole.ORGANIZER, UserRole.TECHNICAL) and document.recivied_task.member.email != request.user.email):
+        if (request.user.role == UserRole.MEMBER and document.recivied_task.member.email != request.user.email):
             return Response(status=status.HTTP_404_NOT_FOUND)
         
         content_type, _ = mimetypes.guess_type(document.file.url)
         
+        nginx_uri = f"/api/media/{document.file.name}"
+        final_content_type = content_type or 'application/octet-stream'
+
+        disposition_type = 'inline' if final_content_type in SAFE_MIMETYPES else 'attachment'
+        
         return Response(
             headers={
-                "X-Accel-Redirect": document.file.url,
-                'Content-Disposition': f'inline; filename="{os.path.basename(document.file.name)}"'
+                "X-Accel-Redirect": nginx_uri,
+                'Content-Disposition': f'{disposition_type}; filename="{os.path.basename(document.file.name)}"'
             },
             content_type=content_type or 'application/octet-stream'
         )
 
 class MemberProfile(APIView):
-    serializer_class = serializers.MemberProfileSerializer
+    serializer_class = api_schemas.MemberProfileSerializer
+    renderer_classes = (RawJsonRenderer,)
     
-    def get_sub_querys(self):
+    def get_sub_queries(self):
         absents_subquery = Subquery(
             Attendance.objects.filter(
                 member=OuterRef('pk'),
@@ -185,12 +212,15 @@ class MemberProfile(APIView):
             )
         )
     
+    @staticmethod
+    def get_cache_key(code: str):
+        return f"member_profile_{code}"
+    
     def get(self, request: Request, member_code: str) -> Response:
-        CACHE_KEY = f"member_profile_{member_code}"
-        if (data:=cache.get(CACHE_KEY)):
+        if (data:=cache.get(self.get_cache_key(member_code))):
             return Response(data)
         
-        query = self.get_sub_querys()
+        query = self.get_sub_queries()
         
         match request.user.role:
             case UserRole.MEMBER:
@@ -203,8 +233,19 @@ class MemberProfile(APIView):
                     query,
                     code=member_code
                 )
-                
-        data = serializers.MemberProfileSerializer(user).data
-        cache.set(CACHE_KEY, data, 300)
-        return Response(data)
         
+        data = MemberProfileMSGSerializer(
+            absents=user.absents, # type: ignore
+            track=TrackNameOnlyMSGSerializer(
+                user.track.pk,
+                user.track.track,
+            ),
+            total_tasks_sent=user.total_tasks_sent, # type: ignore
+            missing_tasks=user.missing_tasks, # type: ignore
+            name=user.name,
+            code=user.code,
+        )
+        encoded_data = serializer_encoder.encode(data)
+        cache.set(self.get_cache_key(data.code), encoded_data, 1800) # 30 minutes
+        return Response(encoded_data)
+

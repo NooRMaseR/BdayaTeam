@@ -1,5 +1,6 @@
 from unfold.contrib.filters.admin.dropdown_filters import ChoicesDropdownFilter
 from unfold.admin import ModelAdmin as UnfoldModelAdmin
+from unfold.paginator import InfinitePaginator
 from django.contrib import admin
 from . import models
 
@@ -9,7 +10,8 @@ class MemberAdmin(UnfoldModelAdmin):
     list_display = ("code", "name", "email", "track", "status", "collage_code", "phone_number", "joined_at")
     search_fields = ("name", "code", "collage_code", "phone_number")
     list_display_links = ("name", "code", "email")
-    list_per_page = 20
+    list_per_page = 50
+    paginator = InfinitePaginator
     ordering = ("track", "-joined_at")
     list_filter = (
         ("track", ChoicesDropdownFilter),
@@ -20,8 +22,12 @@ class MemberAdmin(UnfoldModelAdmin):
 class RecivedTaskAdmin(UnfoldModelAdmin):
     list_display = ("task", "member", "track", "degree", "signed")
     list_display_links = ("task", "member")
+    paginator = InfinitePaginator
+    list_per_page = 50
     
 @admin.register(models.ReciviedTaskFile)
 class RecivedTaskFileAdmin(UnfoldModelAdmin):
     list_display = ("id", "recivied_task", "recivied_task__member__name", "recivied_task__member__code")
     list_display_links = ("id", "recivied_task", "recivied_task__member__name")
+    paginator = InfinitePaginator
+    list_per_page = 50

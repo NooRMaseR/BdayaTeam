@@ -1,2 +1,2 @@
-schema: 'http://127.0.0.1/graphql/'
+schema: 'https://127.0.0.1/api/graphql/'
 documents: "app/**/*.{ts,tsx,graphql}"

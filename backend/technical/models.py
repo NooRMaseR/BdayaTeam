@@ -16,7 +16,7 @@ class Task(models.Model):
         return timezone.now() >= self.expires_at        
     
     class Meta:
-        ordering = ['-task_number', '-created_at']
+        ordering = ('task_number', '-track_id')
         unique_together = ("task_number", "track")
 
     def __str__(self):

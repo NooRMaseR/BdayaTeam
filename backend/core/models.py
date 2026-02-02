@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from phonenumber_field.modelfields import PhoneNumberField
 from django.core.exceptions import ValidationError
+from imagekit.models import ProcessedImageField
 from django.db import models
 
 # Create your models here.
@@ -39,9 +40,14 @@ class Track(models.Model):
     track = models.CharField(max_length=40, unique=True)
     prefix = models.CharField(max_length=3, unique=True)
     description = models.TextField(blank=True, null=True)
+    image = ProcessedImageField(upload_to="public/tracks", format="webP", null=True, blank=True) # type: ignore
 
     def __str__(self):
         return self.track
+    
+class TrackCounter(models.Model):
+    track = models.OneToOneField(Track, on_delete=models.CASCADE)
+    current_value = models.PositiveIntegerField(default=0)
 
 class BdayaUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)

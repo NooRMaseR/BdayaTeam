@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.http import HttpRequest
 from django.forms.models import ModelForm
 from solo.admin import SingletonModelAdmin
+from unfold.paginator import InfinitePaginator
 from unfold.contrib.forms.widgets import ArrayWidget
 from django.contrib.postgres.fields import ArrayField
 from unfold.admin import ModelAdmin as UnfoldModelAdmin
@@ -28,6 +29,8 @@ class AttendanceAdmin(UnfoldModelAdmin):
     list_display = ("id", "member", "get_member_track", "status")
     list_display_links = ("id", "member")
     search_fields = ("member__name", "member__code")
+    paginator = InfinitePaginator
+    list_per_page = 50
     
     def get_member_track(self, obj: models.Attendance) -> Track:
         return obj.member.track
@@ -40,4 +43,6 @@ class AttendanceDayAdmin(UnfoldModelAdmin):
     list_display = ("id", "day", "track__track")
     list_display_links = ("id", "day")
     search_fields = ("day", )
+    paginator = InfinitePaginator
+    list_per_page = 50
     

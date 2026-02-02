@@ -3,6 +3,7 @@ from django.db import models
 from core.models import Track
 from member.models import Member
 from solo.models import SingletonModel
+from imagekit.models import ProcessedImageField
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField
 
@@ -51,5 +52,6 @@ class Attendance(models.Model):
 class SiteSetting(SingletonModel):
     is_register_enabled = models.BooleanField(default=True)
     organizer_can_edit = ArrayField(models.CharField(max_length=30), default=list, blank=True)
-    site_image = models.ImageField(upload_to="public/site", null=True, blank=True)
+    site_image = ProcessedImageField(upload_to="public/site", format="webP", null=True, blank=True) # type: ignore
+    hero_image = ProcessedImageField(upload_to="public/hero", format="webP", null=True, blank=True) # type: ignore
     

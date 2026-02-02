@@ -1,27 +1,39 @@
 import Image from 'next/image';
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { API } from './utils/api.server';
-import TrackCard from './components/track_card';
 import NavButtons from './components/nav_buttons';
+import { serverGraphQL } from './utils/api_utils';
 import NormalAnimation from './components/animations';
+import NavigationCard from './components/navigation_card';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import { Button, Container, Typography, Chip } from '@mui/material';
+import type { SettingsHeroImageQuery, SettingsSiteImageQuery } from './generated/graphql';
+import { GET_HERO_IMAGE_SETTINGS, GET_SITE_IMAGE_SETTINGS } from './utils/graphql_helpers';
 
+export async function generateMetadata(): Promise<Metadata> { 
+  const res = await serverGraphQL<SettingsSiteImageQuery>(GET_SITE_IMAGE_SETTINGS);
+  const site = res.data.allSettings?.siteImage;
 
-export const metadata: Metadata = {
-  title: "Team Bdaya Home",
-  description: "Welcome To Team Bdaya, A Place where you can build skills and get courses for free",
-  keywords: "Join, Team, Bdaya, free, Tracks",
-  openGraph: {
-    title: `Team Bdaya Home`,
-    description: `Welcome To Team Bdaya, A Place where you can build skills and get courses for free`,
-    images: [`/bdaya_black.png`],
-  },
+  return {
+    title: "Team Bdaya Home",
+    description: "Welcome To Team Bdaya, A Place where you can build skills and get courses for free",
+    keywords: "Join, Team, Bdaya, free, Tracks",
+    openGraph: {
+      title: `Team Bdaya Home`,
+      description: `Welcome To Team Bdaya, A Place where you can build skills and get courses for free`,
+      images: site ? [`${process.env.NEXT_PUBLIC_MEDIA_URL}${site}`] : undefined,
+    },
+  }
 }
 
 export default async function HomePage() {
   const years = new Date().getFullYear() - 2015;
-  const { data } = await API.GET("/tracks/");
+  const [ tracks, hero ] = await Promise.all(
+    [
+      API.GET("/api/tracks/"),
+      serverGraphQL<SettingsHeroImageQuery>(GET_HERO_IMAGE_SETTINGS)
+    ]
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -31,7 +43,11 @@ export default async function HomePage() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ease: 'easeOut' }}>
-        <Image src={"/hero_section.jpg"} alt='Team pic' fill priority style={{ objectFit: "cover" }} />
+        {
+          hero.success && hero.data.allSettings?.heroImage
+            ? <Image src={`${process.env.NEXT_PUBLIC_MEDIA_URL}${hero.data.allSettings?.heroImage}`} alt='Team pic' fill priority style={{ objectFit: "cover" }} unoptimized />
+            : null
+        }
       </NormalAnimation>
 
       <section className={`relative bg-blue-700 text-white py-8 px-4 overflow-hidden`}>
@@ -81,11 +97,12 @@ export default async function HomePage() {
           </div>
 
           <div className="flex justify-center flex-wrap gap-6">
-            {data?.map((track) => (
-              <TrackCard
+            {tracks.data?.map((track) => (
+              <NavigationCard
                 title={track.track}
                 desc={track.description || ""}
                 key={track.id}
+                imageUrl={`${process.env.NEXT_PUBLIC_MEDIA_URL}${track.image}`}
               />
             ))}
           </div>
@@ -112,10 +129,10 @@ export default async function HomePage() {
               Built by Students, <br /> For Students.
             </h2>
             <p className="text-gray-600 text-lg leading-relaxed">
-              Team Bdaya wasn't built in a boardroom. It started {years} years ago with a simple mission: to bridge the gap between academic theory and real-world application.
+              Team Bdaya wasn&apos;t built in a boardroom. It started {years} years ago with a simple mission: to bridge the gap between academic theory and real-world application.
             </p>
             <p className="text-gray-600 text-lg leading-relaxed">
-              We believe education should be accessible to everyone. That's why all our tracks, from Graphic Design to Software Engineering, remain 100% free.
+              We believe education should be accessible to everyone. That&apos;s why all our tracks, from Graphic Design to Software Engineering, remain 100% free.
             </p>
             <Button variant="text" color="primary" className="font-bold text-lg p-0 hover:bg-transparent">
               Read Our Story &rarr;

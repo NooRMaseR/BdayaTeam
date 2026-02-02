@@ -1,5 +1,9 @@
-import { API } from '../utils/api.server';
+import { API } from '../../utils/api.server';
 import { Box, Chip } from '@mui/material';
+
+type ParamsProps = {
+    params: Promise<{code: `${string}-${number}`}>;
+}
 
 function Stat({ label, value }: { label: string; value: number | string }) {
     return (
@@ -10,8 +14,9 @@ function Stat({ label, value }: { label: string; value: number | string }) {
     )
 }
 
-export default async function ProfilePage() {
-    const {response, data} = await API.GET("/member/profile/{member_code}/", {params: {path: {member_code: "p-1"}}});
+export default async function ProfilePage({ params }: ParamsProps) {
+    const { code } = await params;
+    const {response, data} = await API.GET("/api/member/profile/{member_code}/", {params: {path: {member_code: code}}});
     const user = response.ok && data ? data : null;
 
     if (!user) {

@@ -17,13 +17,14 @@ export default function SmartTaskLoader({ task_id }: { task_id: number }) {
         const req = async () => {
 
             const { response, data, error } = await API.GET(
-                "/member/protected_media/tasks/{task_id}/",
+                "/api/member/protected_media/tasks/{task_id}/",
                 {
                     params: { path: { task_id } },
                     parseAs: "blob"
                 }
             );
             if (error) {
+                console.error(error);
                 setHasError(error);
             } else {
                 setContentType(response.headers.get('Content-Type') || '');
@@ -33,7 +34,7 @@ export default function SmartTaskLoader({ task_id }: { task_id: number }) {
             }
         };
         req();
-    }, []);
+    }, [task_id, contentDisposition]);
 
     if (hasError) {
         return <h1>An Error Ocurred, please try again later</h1>

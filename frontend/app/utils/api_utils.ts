@@ -2,7 +2,6 @@
 'use server';
 
 import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
-import { BASE_API_URL } from "./api.client";
 import { cookies } from "next/headers";
 import { gql } from "graphql-tag";
 
@@ -99,7 +98,7 @@ type GraphResponse<T> = {
     success: boolean;
 }
 
-export async function serverGraphQL<T>(query: string, variables: Record<string, any> = {}, mutate: boolean = false, useForm: boolean = false): Promise<GraphResponse<T>> {
+export async function serverGraphQL<T>(query: string, variables: Record<string,any> = {}, mutate: boolean = false, useForm: boolean = false): Promise<GraphResponse<T>> {
     const { token, csrf } = await getAuthCookies();
 
     const headers: HeadersInit = {
@@ -113,19 +112,19 @@ export async function serverGraphQL<T>(query: string, variables: Record<string, 
 
     const ap = new ApolloClient({
         link: new HttpLink({
-            uri: `${BASE_API_URL}graphql/`,
+            uri: `${process.env.NEXT_PUBLIC_API_URL}/api/graphql/`,
             headers: headers,
             credentials: "include"
         }),
         cache: new InMemoryCache(),
     });
 
-    const newQuery = gql`${query}`;
+    const wrappedQuery = gql`${query}`;
 
     try {
         const { data } = mutate
-            ? await ap.mutate({ mutation: newQuery, variables })
-            : await ap.query({ query: newQuery, variables });
+            ? await ap.mutate({ mutation: wrappedQuery, variables })
+            : await ap.query({ query: wrappedQuery, variables });
 
         return {
             data: data as T,

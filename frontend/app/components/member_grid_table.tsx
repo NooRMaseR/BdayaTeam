@@ -1,21 +1,39 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import type { GridRowModel, GridColDef, GridRowsProp, GridColumnGroupingModel } from '@mui/x-data-grid';
+import type { GridRowModel, GridColDef, GridColumnGroupingModel, GridCellParams } from '@mui/x-data-grid';
 import { AttendanceStatus, MemberStatus } from '../utils/api_types_helper';
+import type { GridRowsProp } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
 import { API } from '../utils/api.client';
+import { Button } from '@mui/material';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 type GridProps = {
     rows: GridRowsProp;
     columns: GridColDef[];
     columnGroupingModel?: GridColumnGroupingModel;
+    track: string;
 }
 
-export default function MembersGridTable({ rows, columns, columnGroupingModel = [] }: GridProps) {
+export default function MembersGridTable({ rows, columns, columnGroupingModel = [], track }: GridProps) {
     const memoRows = useMemo(() => rows, [rows]);
-    const memoColumns = useMemo(() => columns, [columns]);
+    const memoColumns = useMemo<GridColDef[]>(() => [{
+        align: "center",
+        headerAlign: "center",
+        field: "action",
+        headerName: "Action",
+        width: 120,
+        filterable: false,
+        sortable: false,
+        renderCell(params) {
+            return <Link href={`/profile/${params.id}`}>
+                <Button variant='contained'>Profile</Button>
+            </Link>
+        },
+    }, ...columns], [columns]);
 
     const handelProccess = async (newRow: GridRowModel, oldRow: GridRowModel) => {
         const changedKey = Object.keys(newRow).find(
@@ -29,7 +47,7 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
             const isAttendance: boolean = Object.values(AttendanceStatus).includes(changedValue);
             const hasExcuse: boolean = changedKey.endsWith("_excuse");
 
-            const { response } = await API.POST(`/organizer/attendance/{track_name}/editor/`, {
+            const { response } = await API.POST(`/api/organizer/attendance/{track_name}/editor/`, {
                 params: { path: { track_name: oldRow.track } },
                 body: {
                     code: newRow.code,
@@ -54,7 +72,7 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
         return newValidRow;
     };
 
-    const colorizeCellsFunction = (params: any) => {
+    const colorizeCellsFunction = (params: GridCellParams<any, AttendanceStatus | MemberStatus>) => {
         switch (params.value) {
             case AttendanceStatus.ABSENT:
                 return 'bg-[red] text-white';
@@ -78,6 +96,7 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
             <DataGrid
                 rows={memoRows}
                 columns={memoColumns}
+                label={`Track ${track}`}
                 getCellClassName={colorizeCellsFunction}
                 processRowUpdate={handelProccess}
                 columnGroupingModel={columnGroupingModel}

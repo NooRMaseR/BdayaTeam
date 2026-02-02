@@ -27,6 +27,8 @@
 				"name": "Edit nginx",
 				"command": "sudo nano /etc/nginx/sites-available/django.conf"
 			},
-		]
+		],
+		"django-settings-vscode.projectRoot": "./backend",
+		"django-settings-vscode.settingsModule": "BdayaTeam.settings",
 	}
 }

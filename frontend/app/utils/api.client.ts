@@ -2,10 +2,8 @@ import createClient, { type Middleware } from "openapi-fetch";
 import type { paths } from "@/app/generated/api_types";
 import { getAuthCookies } from "./api_utils";
 
-export const BASE_API_URL = "https://localhost/api/";
-
 export const API = createClient<paths>({
-    baseUrl: BASE_API_URL,
+    baseUrl: process.env.NEXT_PUBLIC_API_URL,
     credentials: "include"
 });
 
@@ -17,4 +15,5 @@ const middleware: Middleware = {
     },
 }
 
+// eslint-disable-next-line react-hooks/rules-of-hooks
 API.use(middleware);

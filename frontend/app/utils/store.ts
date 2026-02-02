@@ -1,10 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
-import {authReducer} from './states';
+import {authReducer, settingsReducer} from './states';
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
-      auth: authReducer
+      auth: authReducer,
+      settings: settingsReducer,
     },
   });
 };

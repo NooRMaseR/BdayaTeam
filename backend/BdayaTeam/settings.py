@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from django.utils.translation import gettext_lazy as _
-from celery.schedules import crontab
+from django.utils.csp import CSP
 from dotenv import load_dotenv
 from pathlib import Path
 import os
@@ -29,9 +29,12 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ('localhost', '127.0.0.1')
+ALLOWED_HOSTS = (
+    "localhost",
+    "127.0.0.1",
+)
 
 
 # Application definition
@@ -41,38 +44,48 @@ INSTALLED_APPS = (
     "unfold.contrib.filters",
     "unfold.contrib.forms",
     "unfold.contrib.inlines",
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.postgres",
     # "django_er_diagram", #! debug only
     "graphene_django",
-    'corsheaders',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'drf_spectacular',
-    'drf_spectacular_sidecar',
+    "corsheaders",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
     "phonenumber_field",
+    "huey.contrib.djhuey",
+    "imagekit",
+    "solo",
+    "django_cleanup.apps.CleanupConfig",
     "core",
     "technical",
     "organizer",
     "member",
-    'solo',
 )
 
 MIDDLEWARE = (
     "corsheaders.middleware.CorsMiddleware",
-    'django.middleware.security.SecurityMiddleware',
-    "corsheaders.middleware.CorsMiddleware",
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 )
+
+SECURE_CSP = {
+    "default-src": [CSP.SELF],
+    "script-src": [CSP.SELF],
+    "style-src": [CSP.SELF, CSP.UNSAFE_INLINE], # Allows inline styles
+    "img-src": [CSP.SELF, "data:"],
+}
 
 # if DEBUG:
 #     INSTALLED_APPS = (*INSTALLED_APPS, "debug_toolbar")
@@ -83,14 +96,13 @@ MIDDLEWARE = (
 #     )
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated'
-    ],
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema'
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_PARSER_CLASSES": ("rest_framework.parsers.JSONParser",),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 SPECTACULAR_SETTINGS = {
@@ -98,8 +110,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "APIs for the frontend to work with",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    'COMPONENT_SPLIT_REQUEST': True,
-    
+    "COMPONENT_SPLIT_REQUEST": True,
     "SWAGGER_UI_DIST": "SIDECAR",
     "SWAGGER_UI_FAVICON_HREFF": "SIDECAR",
     "REDOC_DIST": "SIDECAR",
@@ -107,74 +118,51 @@ SPECTACULAR_SETTINGS = {
 
 GRAPHENE = {
     "SCHEMA": "organizer.schema.schema",
-    "MIDDLWERE": [
-        'django.contrib.auth.middleware.AuthenticationMiddleware'
-    ]
+    "MIDDLWERE": ["django.contrib.auth.middleware.AuthenticationMiddleware"],
 }
 
-ROOT_URLCONF = 'BdayaTeam.urls'
-AUTH_USER_MODEL = 'core.BdayaUser'
+ROOT_URLCONF = "BdayaTeam.urls"
+AUTH_USER_MODEL = "core.BdayaUser"
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' #! set to smtp in production
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  #! set to smtp in production
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_BEAT_SCHEDULE = {
-    'mark-absents-daily': {
-        'task': 'organizer.tasks.make_rest_members_absents',
-        'schedule': crontab(hour=21, minute=0), 
-    },
-    'delete-fired-members': {
-        'task': 'organizer.tasks.delete_fired_members',
-        'schedule': crontab(day_of_month=6), 
-    },
-}
-
 TEMPLATES = (
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': (BASE_DIR / "templates",),
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": (BASE_DIR / "templates",),
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 )
 
-WSGI_APPLICATION = 'BdayaTeam.wsgi.application'
+WSGI_APPLICATION = "BdayaTeam.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+    "default": {
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': BASE_DIR / 'db.sqlite3',
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv("DB_NAME"),
-        'USER': os.getenv("DB_USER"),
-        'PASSWORD': os.getenv("DB_PASSWORD"),
-        'HOST': os.getenv("DB_HOST"),
-        'PORT': os.getenv("DB_PORT"),
-        # 'CONN_MAX_AGE': 300 # 5 minutes
-        'OPTIONS': {
-            "pool": {
-                "min_size": 2,
-                "max_size": 10,
-                "timeout": 30
-            }
-        }
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
+        "OPTIONS": {"pool": {"min_size": 5, "max_size": 18, "timeout": 15}},
     }
 }
 
@@ -186,8 +174,22 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
-        }
+        },
+        "CONNECTION_POOL_KWARGS": {"max_connections": 100},
     }
+}
+
+HUEY = {
+    "huey_class": "huey.RedisHuey",
+    "name": "bdaya_tasks",
+    "results": False,
+    "utc": False,
+    "immediate": False,
+    "consumer": {
+        "workers": 4,
+        "worker_type": "thread",
+    },
+    "connection": {"host": "127.0.0.1", "port": 6379, "db": 0},
 }
 
 # STORAGES = {
@@ -205,16 +207,16 @@ CACHES = {
 
 AUTH_PASSWORD_VALIDATORS = (
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 )
 
@@ -222,17 +224,17 @@ AUTH_PASSWORD_VALIDATORS = (
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en'
+LANGUAGE_CODE = "en"
 
-TIME_ZONE = 'Africa/Cairo'
+TIME_ZONE = "Africa/Cairo"
 
 USE_I18N = False
 
 USE_TZ = True
 
-LOCALE_PATHS = (BASE_DIR / "locales", )
+LOCALE_PATHS = (BASE_DIR / "locales",)
 
-LANGUAGES =  (
+LANGUAGES = (
     ("en", _("English")),
     ("ar", _("Arabic")),
 )
@@ -240,47 +242,52 @@ LANGUAGES =  (
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "api/static/"
 STATIC_ROOT = BASE_DIR / "static_files"
 
 
-MEDIA_URL = "media/"
+MEDIA_URL = "api/media/"
 MEDIA_ROOT = BASE_DIR / "media_files"
 
 # UNFOLD = {
-    # "SHOW_LANGUAGES": True,
+# "SHOW_LANGUAGES": True,
 # }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # security settings
 
-CORS_ALLOW_CREDENTIALS = True 
+CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOW_ALL_ORIGINS = True #! danger
 CORS_ALLOWED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
+    "https://canal-semiconductor-insertion-saw.trycloudflare.com",
 )
 
 CSRF_TRUSTED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
+    "https://canal-semiconductor-insertion-saw.trycloudflare.com",
 )
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SECURE = False #! True in production (HTTPS)
-CSRF_COOKIE_DOMAIN = 'localhost'
+# CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True  #! True in production (HTTPS)
+# CSRF_COOKIE_DOMAIN = 'localhost'
 
-SESSION_COOKIE_DOMAIN = 'localhost'
+# SESSION_COOKIE_DOMAIN = 'localhost'
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SECURE = False #! True in production (HTTPS)
+# SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True  #! True in production (HTTPS)
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # SECURE_BROWSER_XSS_FILTER = False
 # SECURE_CONTENT_TYPE_NOSNIFF = False
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+X_FRAME_OPTIONS = "SAMEORIGIN"
