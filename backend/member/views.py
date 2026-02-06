@@ -31,7 +31,7 @@ from core.serializers import TrackNameOnlyMSGSerializer
 from organizer.models import Attendance, AttendanceStatus
 
 from member.serializers import MemberProfileMSGSerializer
-from member.auth import CookieTokenAuthentication, RawJsonRenderer
+from member.auth import RawJsonRenderer
 
 from technical.serializers import TaskMSGSerializer
 from technical.api_schemas import TaskSerializer
@@ -121,8 +121,9 @@ class Tasks(APIView):
         }
     )
     def post(self, request: Request) -> Response:
+        TASK_ID: int | None = request.data.get("task_id") # type: ignore
         member = get_object_or_404(models.Member.objects.only("code"), email=request.user.email)
-        task = get_object_or_404(models.Task.objects.only("id", "created_at", "expires_at"), id=request.data.get("task_id")) # type: ignore
+        task = get_object_or_404(models.Task.objects.only("id", "created_at", "expires_at"), id=TASK_ID) # type: ignore
         
         if task.is_expired:
             return Response({"details": "task is expired"}, status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -138,9 +139,10 @@ class Tasks(APIView):
                 oc_files = (models.ReciviedTaskFile(recivied_task=rec_task, file=f) for f in request.data.getlist("file")) # type: ignore
                 models.ReciviedTaskFile.objects.bulk_create(oc_files)
             cache.delete(self.get_cache_key(request.user.id))
+            cache.delete(f"task_view:i{TASK_ID}")
             cache.delete(MemberProfile.get_cache_key(member.code))
             cache.delete_pattern(f"technical_recived_tasks_{request.user.track}*") # type: ignore
-            return Response(status=status.HTTP_201_CREATED)
+            return Response({}, status=status.HTTP_201_CREATED)
         
         except IntegrityError:
             return Response({"details": "this task already exists"}, status=status.HTTP_400_BAD_REQUEST)
@@ -152,7 +154,6 @@ class Tasks(APIView):
 
 @method_decorator(xframe_options_exempt, name='dispatch')
 class ProtectedTask(APIView):
-    authentication_classes = (CookieTokenAuthentication,)
     serializer_class = None
     
     def get(self, request: Request, task_id: int) -> HttpResponse:
@@ -164,14 +165,14 @@ class ProtectedTask(APIView):
         
         content_type, _ = mimetypes.guess_type(document.file.url)
         
-        nginx_uri = f"/api/media/{document.file.name}"
+        nginx_url = f"/api/media/{document.file.name}"
         final_content_type = content_type or 'application/octet-stream'
 
         disposition_type = 'inline' if final_content_type in SAFE_MIMETYPES else 'attachment'
         
         return Response(
             headers={
-                "X-Accel-Redirect": nginx_uri,
+                "X-Accel-Redirect": nginx_url,
                 'Content-Disposition': f'{disposition_type}; filename="{os.path.basename(document.file.name)}"'
             },
             content_type=content_type or 'application/octet-stream'

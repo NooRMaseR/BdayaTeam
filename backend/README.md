@@ -305,7 +305,7 @@ server {
     http2 on;
   #  listen 80 default_server;
   #  listen [::]:80;
-    server_name localhost;
+    server_name localhost 127.0.0.1;
     server_tokens off;
     client_max_body_size 10M;
 
@@ -334,7 +334,7 @@ server {
     }
 
     # --- server private media files ---
-    location /api/media/protected/ {
+    location ^~ /api/media/protected/ {
         internal;
         alias /home/kali/BdayaTeam/backend/media_files/protected/;
         expires 2d;
@@ -377,7 +377,7 @@ server {
     # --- media cache ---
     location ~* \.(ico|png|jpg|jpeg|svg|webp)$ {
         expires 1M;
-        add_header Cache-Control "public, must-revalidate, proxy-revalidate";
+        add_header Cache-Control "public";
         access_log off;
     }
 }

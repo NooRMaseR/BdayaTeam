@@ -1,7 +1,11 @@
-import { Card, CardContent, CardMedia, Typography } from "@mui/material";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+import CardMedia from "@mui/material/CardMedia";
+import Card from "@mui/material/Card";
+
+import { Link } from "@/i18n/navigation";
 import { ReactNode } from "react";
 import Image from "next/image";
-import Link from "next/link";
 
 type NavigationCardProps = {
   url?: string;
@@ -16,10 +20,10 @@ export default function NavigationCard({ title, desc, imageUrl, url = `#${title}
   }
   return (
     <Link href={url} className="h-auto">
-      <Card id={title} className="hover:shadow-xl transition-shadow duration-300 border-t-4 border-transparent hover:border-blue-500 hover:scale-110 cursor-pointer" sx={{ transition: "scale ease-out 300ms, border-color ease-out 300ms;", width: "20rem", height: "15rem" }}>
+      <Card id={title} className="hover:shadow-xl transition-shadow duration-250 border-t-4 border-transparent hover:border-blue-500 hover:scale-105 cursor-pointer" sx={{ transition: "scale ease-out 250ms, border-color ease-out 250ms;", width: "20rem", height: "19rem" }}>
         {
           imageUrl
-            ? <CardMedia sx={{ position: 'relative', width: 'auto', height: "7rem" }}>
+            ? <CardMedia sx={{ position: 'relative', width: 'auto', height: "11rem" }}>
               <Image src={imageUrl} alt={`track ${title} Image`} fill unoptimized />
             </CardMedia>
             : null

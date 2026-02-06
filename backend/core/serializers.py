@@ -9,3 +9,4 @@ class TrackMSGSerializer(msgspec.Struct):
     track: str
     description: str
     image: str
+    

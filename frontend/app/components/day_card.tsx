@@ -1,18 +1,31 @@
 'use client';
 
-import { Button, Card, CardActions, CardContent, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton } from '@mui/material';
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-// import type { AttendanceDay } from '@/app/utils/api_types_helper';
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { DatePicker } from "@mui/x-date-pickers";
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Dialog from '@mui/material/Dialog';
+
+import CardContent from '@mui/material/CardContent';
+import CardActions from '@mui/material/CardActions';
+import Card from '@mui/material/Card';
+
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
+import Button from '@mui/material/Button';
+
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import type { components } from '../generated/api_types';
+import DeleteIcon from "@mui/icons-material/Delete";
+import { DatePicker } from "@mui/x-date-pickers";
 import { API } from '@/app/utils/api.client';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import React from 'react';
 import dayjs from 'dayjs';
-import { components } from '../generated/api_types';
 
 type AttendanceDay = components['schemas']['AttendanceDays'];
 type DayCardProps = {
@@ -24,6 +37,8 @@ type DayCardProps = {
 function DayCard({ day, onDelete, track_name }: DayCardProps) {
     const [dayState, setDayState] = React.useState<string>(day.day);
     const [dlgOpen, setDlgOpen] = React.useState<boolean>(false);
+    const tr = useTranslations('trackDayAddPage');
+    const dtr = useTranslations('weekDays');
 
     const saveDay = () => {
         toast.promise<string | undefined>(async () => {
@@ -38,9 +53,9 @@ function DayCard({ day, onDelete, track_name }: DayCardProps) {
             return await Promise.reject(dayState);
         },
             {
-                loading: "Updating.....",
-                success: (date) => `Date Update to ${date} successfully`,
-                error: "somthing went wrong",
+                loading: tr('updating'),
+                success: (date) => tr('updated', {date: date || ''}),
+                error: tr('wrong'),
             }
         );
     }
@@ -48,20 +63,20 @@ function DayCard({ day, onDelete, track_name }: DayCardProps) {
     return (
         <>
             <Dialog open={dlgOpen}>
-                <DialogTitle><p>Editing {dayState} </p></DialogTitle>
+                <DialogTitle>{tr("editing", {dayState})}</DialogTitle>
                 <DialogContent>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker defaultValue={dayjs(dayState)} onChange={(e) => setDayState(e?.format("YYYY-MM-DD") || day.day)} />
                     </LocalizationProvider>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => saveDay()} >Save</Button>
-                    <Button onClick={() => setDlgOpen(false)} >Cancle</Button>
+                    <Button variant='contained' onClick={() => saveDay()}>{tr('save')}</Button>
+                    <Button variant='contained' onClick={() => setDlgOpen(false)}>{tr('cancel')}</Button>
                 </DialogActions>
             </Dialog>
             <Card sx={{ width: "20rem", mb: "1rem" }}>
                 <CardContent>
-                    <p className='text-center'>{new Date(dayState).toLocaleDateString('en-US', { weekday: "long" })} - {dayState}</p>
+                    <Typography sx={{textAlign: "center"}}>{dtr(new Date(dayState).toLocaleDateString('en-US', { weekday: "long" }))} - {dayState}</Typography>
                 </CardContent>
                 <CardActions sx={{ display: "flex", justifyContent: "center" }}>
                     <IconButton onClick={() => setDlgOpen(true)}>
@@ -81,6 +96,7 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
     const [confDlgOpen, setConfDlgOpen] = React.useState<boolean>(false);
     const [confDlgDate, setConfDlgDate] = React.useState<string>("");
     const [dlgDate, setDlgDate] = React.useState<{ open: boolean, date: string }>({ open: false, date: "" });
+    const tr = useTranslations('trackDayAddPage');
 
     const saveDay = () => {
         toast.promise<string | undefined>(async () => {
@@ -93,9 +109,9 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
             return await Promise.reject(dlgDate.date);
         },
             {
-                loading: "Adding.....",
-                success: (date) => `Date ${date} created successfully`,
-                error: "somthing went wrong",
+                loading: tr('adding'),
+                success: (date) => tr('dayCreated', {date: date || ''}),
+                error: tr('wrong'),
             }
         );
     }
@@ -118,9 +134,9 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
             return await Promise.reject();
         },
             {
-                loading: "Deleting.....",
-                success: "Date deleted successfully",
-                error: "somthing went wrong",
+                loading: tr('deleting'),
+                success: tr('dayDeleted'),
+                error: tr('wrong'),
             }
         );
     }
@@ -128,30 +144,30 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
     return (
         <div className='mt-7 w-full flex justify-center flex-col items-center'>
             <Dialog open={confDlgOpen}>
-                <DialogTitle><p>Delete?</p></DialogTitle>
+                <DialogTitle>{tr('deleteConf')}</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>Are you Sure That you want to delete this day?</DialogContentText>
+                    <DialogContentText>{tr('deleteConfDesc')}</DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={deleteDay} >Yes</Button>
-                    <Button onClick={() => setConfDlgOpen(false)} >Cancle</Button>
+                    <Button onClick={deleteDay} color='error' variant='contained'>{tr('delete')}</Button>
+                    <Button onClick={() => setConfDlgOpen(false)} variant='contained'>{tr('cancel')}</Button>
                 </DialogActions>
             </Dialog>
             <Dialog open={dlgDate.open}>
-                <DialogTitle><p>Add a new Attendance</p></DialogTitle>
+                <DialogTitle>{ tr('addAtten') }</DialogTitle>
                 <DialogContent>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker onChange={(e) => setDlgDate(pre => ({ open: true, date: (e?.format("YYYY-MM-DD") || pre.date) }))} />
                     </LocalizationProvider>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={saveDay}>Save</Button>
-                    <Button onClick={() => setDlgDate(pre => ({ open: false, date: pre.date }))}>Cancle</Button>
+                    <Button onClick={saveDay}>{tr('save')}</Button>
+                    <Button onClick={() => setDlgDate(pre => ({ open: false, date: pre.date }))}>{tr('cancel')}</Button>
                 </DialogActions>
             </Dialog>
             {days?.map(day => <DayCard track_name={ track } day={day} key={day?.id} onDelete={(e) => { setConfDlgOpen(true); setConfDlgDate(e); }} />)}
             <Button variant='contained' onClick={() => setDlgDate({ open: true, date: "" })}>
-                Add
+                {tr('add')}
                 <AddIcon />
             </Button>
         </div>

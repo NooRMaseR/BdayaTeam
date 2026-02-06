@@ -9,4 +9,5 @@ urlpatterns = (
     path("tracks/", views.Tracks.as_view()),
     path("tracks/<str:track_name>/delete/", views.DeleteTrack.as_view()),
     path("reset/", views.ResetAll.as_view()),
+    path('token/refresh/', views.CookiesRefreshTokenView.as_view(), name='token_refresh'),
 )

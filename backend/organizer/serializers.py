@@ -6,7 +6,7 @@ class AttendanceDayMSGSerializer(msgspec.Struct):
     day: date
     
 class AttendanceMSGSerializer(msgspec.Struct):
-    date: list[AttendanceDayMSGSerializer]
+    date: AttendanceDayMSGSerializer
     status: str
     excuse_reason: str
     

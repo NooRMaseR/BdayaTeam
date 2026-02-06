@@ -21,19 +21,19 @@ class UserDRF(FastHttpUser):
     
     @task
     def see_track_members_FrontEnd(self):
-        self.client.get(f"/api/organizer/members/frontend/", headers={"Authorization": "Token 1fff50986e94802e10e6045fc4bca350330362f3"})
+        self.client.get(f"/api/organizer/members/frontend/", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMTk5OTgyLCJpYXQiOjE3NzAxNzQ3ODIsImp0aSI6IjE4NmJjZTdhMmVhMDQ5Mzk4NzQ4OGY5MjQ2NjdlNGM5IiwidXNlcl9pZCI6IjEifQ.5SK13z4Wb9DQq6GLzxx4vJurkOW8bc1lk3Z3WtCY1ZA"})
     @task
     def see_track_members_CCNA(self):
-        self.client.get(f"/api/organizer/members/CCNA/", headers={"Authorization": "Token 1fff50986e94802e10e6045fc4bca350330362f3"})
+        self.client.get(f"/api/organizer/members/CCNA/", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMTk5OTgyLCJpYXQiOjE3NzAxNzQ3ODIsImp0aSI6IjE4NmJjZTdhMmVhMDQ5Mzk4NzQ4OGY5MjQ2NjdlNGM5IiwidXNlcl9pZCI6IjEifQ.5SK13z4Wb9DQq6GLzxx4vJurkOW8bc1lk3Z3WtCY1ZA"})
     @task
     def see_track_members_Python(self):
-        self.client.get(f"/api/organizer/members/Python/", headers={"Authorization": "Token 1fff50986e94802e10e6045fc4bca350330362f3"})
+        self.client.get(f"/api/organizer/members/Python/", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMTk5OTgyLCJpYXQiOjE3NzAxNzQ3ODIsImp0aSI6IjE4NmJjZTdhMmVhMDQ5Mzk4NzQ4OGY5MjQ2NjdlNGM5IiwidXNlcl9pZCI6IjEifQ.5SK13z4Wb9DQq6GLzxx4vJurkOW8bc1lk3Z3WtCY1ZA"})
     @task
     def see_track_members_C_Sharp(self):
-        self.client.get(f"/api/organizer/members/C-Sharp/", headers={"Authorization": "Token 1fff50986e94802e10e6045fc4bca350330362f3"})
+        self.client.get(f"/api/organizer/members/C-Sharp/", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMTk5OTgyLCJpYXQiOjE3NzAxNzQ3ODIsImp0aSI6IjE4NmJjZTdhMmVhMDQ5Mzk4NzQ4OGY5MjQ2NjdlNGM5IiwidXNlcl9pZCI6IjEifQ.5SK13z4Wb9DQq6GLzxx4vJurkOW8bc1lk3Z3WtCY1ZA"})
     @task
     def see_track_members_Graphic(self):
-        self.client.get(f"/api/organizer/members/Graphic%20Design/", headers={"Authorization": "Token 1fff50986e94802e10e6045fc4bca350330362f3"})
+        self.client.get(f"/api/organizer/members/Graphic%20Design/", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMTk5OTgyLCJpYXQiOjE3NzAxNzQ3ODIsImp0aSI6IjE4NmJjZTdhMmVhMDQ5Mzk4NzQ4OGY5MjQ2NjdlNGM5IiwidXNlcl9pZCI6IjEifQ.5SK13z4Wb9DQq6GLzxx4vJurkOW8bc1lk3Z3WtCY1ZA"})
 
     # @task
     # def do_register(self):

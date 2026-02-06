@@ -3,12 +3,13 @@
 import { IconButton, InputAdornment, TextField, TextFieldProps } from '@mui/material';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { useTranslations } from 'next-intl';
 import React from 'react';
 
 const PasswordField = React.forwardRef<HTMLDivElement, TextFieldProps>((props, ref) => {
     const [hidden, setHidden] = React.useState<boolean>(true);
     const handelHidden = () => setHidden((pre) => !pre);
-
+    const tr = useTranslations('loginPage');
     return (
         <TextField
             variant='filled'
@@ -26,7 +27,7 @@ const PasswordField = React.forwardRef<HTMLDivElement, TextFieldProps>((props, r
                     )
                 }
             }}
-            label="password"
+            label={tr('password')}
             fullWidth
             required
             sx={{ bgcolor: "whitesmoke", borderRadius: "0.5rem" }}
@@ -34,5 +35,7 @@ const PasswordField = React.forwardRef<HTMLDivElement, TextFieldProps>((props, r
         />
     );
 });
+
+PasswordField.displayName = 'PasswordField';
 
 export default PasswordField;

@@ -247,6 +247,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/token/refresh/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Takes a refresh type JSON web token and returns an access type JSON web
+         *     token if the refresh token is valid.
+         */
+        post: operations["token_refresh_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tracks/": {
         parameters: {
             query?: never;
@@ -439,8 +459,14 @@ export interface components {
             description: string;
         };
         TaskSigningRequest: {
-            task_id: number;
             degree: number;
+        };
+        TokenRefresh: {
+            readonly access: string;
+            refresh: string;
+        };
+        TokenRefreshRequest: {
+            refresh: string;
         };
         Track: {
             readonly id: number;
@@ -1165,6 +1191,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["test_auth"];
+                };
+            };
+        };
+    };
+    token_refresh_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenRefreshRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenRefresh"];
                 };
             };
         };

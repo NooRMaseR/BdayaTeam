@@ -58,11 +58,14 @@ class Members(APIView):
         CACHE_KEY = f"members_{TRACK}"
         if cached_data := cache.get(CACHE_KEY):
             return Response(cached_data)
+        
+        target_track = get_object_or_404(Track.objects.only("id", "track"), track=TRACK)
+        track_object = TrackNameOnlyMSGSerializer(id=target_track.pk, track=target_track.track)
 
         members = (
             Member.objects.select_related("track")
             .prefetch_related("attendances", 'attendances__date')
-            .filter(track__track=TRACK)
+            .filter(track=target_track)
             .order_by("joined_at")
             .iterator(300)
         )
@@ -77,8 +80,18 @@ class Members(APIView):
                 joined_at=m.joined_at,
                 status=m.status,
                 bonus=m.bonus,
-                track=TrackNameOnlyMSGSerializer(id=m.track.pk, track=m.track.track),
-                attendances=[AttendanceMSGSerializer(date=a.date, status=a.status, excuse_reason=a.excuse_reason) for a in m.attendances.all()] # type: ignore
+                track=track_object,
+                attendances=[
+                    AttendanceMSGSerializer(
+                        date=AttendanceDayMSGSerializer(
+                            id=a.date.id,
+                            day=a.date.day,
+                        ),
+                        status=a.status,
+                        excuse_reason=a.excuse_reason
+                    ) 
+                    for a in m.attendances.all() # type: ignore
+                ]
             )
             for m in members
         ]

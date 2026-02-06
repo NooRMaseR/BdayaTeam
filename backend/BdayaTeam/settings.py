@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from django.utils.translation import gettext_lazy as _
 from django.utils.csp import CSP
+from datetime import timedelta
 from dotenv import load_dotenv
 from pathlib import Path
 import os
@@ -34,8 +35,8 @@ DEBUG = False
 ALLOWED_HOSTS = (
     "localhost",
     "127.0.0.1",
+    "helmet-structure-surgery-potatoes.trycloudflare.com"
 )
-
 
 # Application definition
 
@@ -97,12 +98,20 @@ SECURE_CSP = {
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
+        'core.middleware.CookiesJWTAuthentication',
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PARSER_CLASSES": ("rest_framework.parsers.JSONParser",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=7),
+    'REFRESH_TOKEN_LIFETIME': timedelta(weeks=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 SPECTACULAR_SETTINGS = {
@@ -265,24 +274,24 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
-    "https://canal-semiconductor-insertion-saw.trycloudflare.com",
+    "https://helmet-structure-surgery-potatoes.trycloudflare.com",
 )
 
 CSRF_TRUSTED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
-    "https://canal-semiconductor-insertion-saw.trycloudflare.com",
+    "https://helmet-structure-surgery-potatoes.trycloudflare.com",
 )
 CSRF_COOKIE_HTTPONLY = True
-# CSRF_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = True  #! True in production (HTTPS)
 # CSRF_COOKIE_DOMAIN = 'localhost'
+CSRF_COOKIE_DOMAIN = None
 
 # SESSION_COOKIE_DOMAIN = 'localhost'
+SESSION_COOKIE_DOMAIN = None
 SESSION_COOKIE_HTTPONLY = True
-# SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = True  #! True in production (HTTPS)
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"

@@ -228,7 +228,7 @@ class TasksFromMembers(APIView):
                 "member__joined_at",
                 "member__status",
             )
-            .filter(track=request.user.track, task_id=task_id)
+            .filter(track=request.user.track, task_id=task_id, signed=False)
         )
         
         encoded_data = serializer_encoder.encode([
@@ -265,13 +265,12 @@ class TasksFromMembers(APIView):
         request=inline_serializer(
             name="TaskSigning",
             fields={
-                "task_id": api_schemas.serializers.IntegerField(),
                 "degree": api_schemas.serializers.IntegerField(),
             },
         ),
         responses={200: None},
     )
     def post(self, request: Request, task_id: int) -> Response:
-        ReciviedTask.objects.select_for_update().filter(id=request.data.get("task_id"), track=request.user.track).update(degree=request.data.get("degree"), signed=True)  # type: ignore
+        ReciviedTask.objects.select_for_update().filter(id=task_id, track=request.user.track).update(degree=request.data.get("degree"), signed=True)  # type: ignore
         cache.delete(self.get_cache_key(request.user.track.track, task_id))
         return Response()

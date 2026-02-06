@@ -8,11 +8,13 @@ import { gql } from "graphql-tag";
 
 export async function getAuthCookies() {
     const cookieStore = await cookies();
-    const auth_token = cookieStore.get("auth_token")?.value;
+    const access_token = cookieStore.get("access_token")?.value;
+    const refresh_token = cookieStore.get("refresh_token")?.value;
     const csrfToken = cookieStore.get("csrftoken")?.value;
 
     return {
-        "token": auth_token,
+        "token": access_token,
+        "refresh": refresh_token,
         "csrf": csrfToken
     }
 }
@@ -64,13 +66,12 @@ export const fetchWithCookies: typeof fetch = async (url, options) => {
     }
 
     if (token) {
-        headers.set("Authorization", `Token ${token}`);
+        headers.set("Authorization", `Bearer ${token}`);
     }
 
     if (csrf) {
         headers.set("X-CSRFToken", csrf);
     }
-
 
     const response = await fetch(url, {
         ...options,
@@ -98,11 +99,11 @@ type GraphResponse<T> = {
     success: boolean;
 }
 
-export async function serverGraphQL<T>(query: string, variables: Record<string,any> = {}, mutate: boolean = false, useForm: boolean = false): Promise<GraphResponse<T>> {
+export async function serverGraphQL<T>(query: string, variables: Record<string, any> = {}, mutate: boolean = false, useForm: boolean = false): Promise<GraphResponse<T>> {
     const { token, csrf } = await getAuthCookies();
 
     const headers: HeadersInit = {
-        Authorization: token ? `Token ${token}` : "",
+        Authorization: token ? `Bearer ${token}` : "",
         "X-CSRFToken": csrf || ""
     };
 
@@ -131,7 +132,7 @@ export async function serverGraphQL<T>(query: string, variables: Record<string,a
             success: true
         };
     } catch (error) {
-        console.error("GraphQL Error:", error);
+        // console.error("GraphQL Error:", error);
         return {
             data: {} as T,
             error: error,

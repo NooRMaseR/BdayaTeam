@@ -34,11 +34,11 @@ dependencies = [
     { name = "django-solo" },
     { name = "django-unfold" },
     { name = "djangorestframework" },
+    { name = "djangorestframework-simplejwt" },
     { name = "drf-spectacular", extra = ["sidecar"] },
     { name = "gevent" },
     { name = "graphene-django" },
     { name = "graphene-django-optimizer" },
-    { name = "graphene-file-upload" },
     { name = "gunicorn" },
     { name = "huey" },
     { name = "msgspec" },
@@ -47,7 +47,6 @@ dependencies = [
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "python-dotenv" },
     { name = "redis", extra = ["hiredis"] },
-    { name = "whitenoise" },
 ]
 
 [package.dev-dependencies]
@@ -65,7 +64,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "django", specifier = ">=5.2.8" },
+    { name = "django", specifier = ">=6.0.1" },
     { name = "django-cleanup", specifier = ">=9.0.0" },
     { name = "django-cors-headers", specifier = ">=4.9.0" },
     { name = "django-imagekit", specifier = ">=6.0.0" },
@@ -74,11 +73,11 @@ requires-dist = [
     { name = "django-solo", specifier = ">=2.4.0" },
     { name = "django-unfold", specifier = ">=0.72.0" },
     { name = "djangorestframework", specifier = ">=3.16.1" },
+    { name = "djangorestframework-simplejwt", specifier = ">=5.5.1" },
     { name = "drf-spectacular", extras = ["sidecar"], specifier = ">=0.29.0" },
     { name = "gevent", specifier = ">=25.9.1" },
     { name = "graphene-django", specifier = ">=3.2.3" },
     { name = "graphene-django-optimizer", specifier = ">=0.10.0" },
-    { name = "graphene-file-upload", specifier = ">=1.3.0" },
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "huey", specifier = ">=2.6.0" },
     { name = "msgspec", specifier = ">=0.20.0" },
@@ -87,7 +86,6 @@ requires-dist = [
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.1" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "redis", extras = ["hiredis"], specifier = ">=7.1.0" },
-    { name = "whitenoise", specifier = ">=6.11.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -390,6 +388,20 @@ wheels = [
 ]
 
 [[package]]
+name = "djangorestframework-simplejwt"
+version = "5.5.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "djangorestframework" },
+    { name = "pyjwt" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a8/27/2874a325c11112066139769f7794afae238a07ce6adf96259f08fd37a9d7/djangorestframework_simplejwt-5.5.1.tar.gz", hash = "sha256:e72c5572f51d7803021288e2057afcbd03f17fe11d484096f40a460abc76e87f", size = 101265, upload-time = "2025-07-21T16:52:25.026Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/94/fdfb7b2f0b16cd3ed4d4171c55c1c07a2d1e3b106c5978c8ad0c15b4a48b/djangorestframework_simplejwt-5.5.1-py3-none-any.whl", hash = "sha256:2c30f3707053d384e9f315d11c2daccfcb548d4faa453111ca19a542b732e469", size = 107674, upload-time = "2025-07-21T16:52:07.493Z" },
+]
+
+[[package]]
 name = "drf-spectacular"
 version = "0.29.0"
 source = { registry = "https://pypi.org/simple" }
@@ -575,18 +587,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/fa/6c/cd89093083debac1c8eba62f2f1daa55caeb3a27f0f908761a7e68e3ed2e/graphene-django-optimizer-0.10.0.tar.gz", hash = "sha256:5a5d9d1e1abda3571bdff77a71af5e71b994e5e9d97d17a576df89181284075d", size = 14681, upload-time = "2023-08-05T17:53:27.486Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1b/e3/2f0d01168d9c781d17c8f49a8ffe3d52a370382b9a5f4f4a756d86a46a01/graphene_django_optimizer-0.10.0-py2.py3-none-any.whl", hash = "sha256:5b81aaa114514c9a89d064aaaf09c8e00c27d1cf6f734993f0ea5afe776041b9", size = 10442, upload-time = "2023-08-05T17:53:25.936Z" },
-]
-
-[[package]]
-name = "graphene-file-upload"
-version = "1.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "six" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/25/9a/d06f6e3fa33a53c8ba2cbe1a5ad509b7dc7124e85f221b8e13cee6c7d0c2/graphene_file_upload-1.3.0.tar.gz", hash = "sha256:6898480b0556826472c80971032917c01968ade5800d84054008fe598795b063", size = 10742, upload-time = "2021-02-20T19:28:13.011Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/b2/2961fd74e960729a667137435dc3229fb38d73f447c9a6da58372344ab32/graphene_file_upload-1.3.0-py3-none-any.whl", hash = "sha256:5afe50f409f50e3d198fd92c883d98d868e6c6aaadf5df3a3f4d88ecad90ed97", size = 8941, upload-time = "2021-02-20T19:28:11.348Z" },
 ]
 
 [[package]]
@@ -1090,6 +1090,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyjwt"
+version = "2.11.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5c/5a/b46fa56bf322901eee5b0454a34343cdbdae202cd421775a8ee4e42fd519/pyjwt-2.11.0.tar.gz", hash = "sha256:35f95c1f0fbe5d5ba6e43f00271c275f7a1a4db1dab27bf708073b75318ea623", size = 98019, upload-time = "2026-01-30T19:59:55.694Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6f/01/c26ce75ba460d5cd503da9e13b21a33804d38c2165dec7b716d06b13010c/pyjwt-2.11.0-py3-none-any.whl", hash = "sha256:94a6bde30eb5c8e04fee991062b534071fd1439ef58d2adc9ccb823e7bcd0469", size = 28224, upload-time = "2026-01-30T19:59:54.539Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "9.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1397,15 +1406,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5a/70/1469ef1d3542ae7c2c7b72bd5e3a4e6ee69d7978fa8a3af05a38eca5becf/werkzeug-3.1.5.tar.gz", hash = "sha256:6a548b0e88955dd07ccb25539d7d0cc97417ee9e179677d22c7041c8f078ce67", size = 864754, upload-time = "2026-01-08T17:49:23.247Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ad/e4/8d97cca767bcc1be76d16fb76951608305561c6e056811587f36cb1316a8/werkzeug-3.1.5-py3-none-any.whl", hash = "sha256:5111e36e91086ece91f93268bb39b4a35c1e6f1feac762c9c822ded0a4e322dc", size = 225025, upload-time = "2026-01-08T17:49:21.859Z" },
-]
-
-[[package]]
-name = "whitenoise"
-version = "6.11.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/15/95/8c81ec6b6ebcbf8aca2de7603070ccf37dbb873b03f20708e0f7c1664bc6/whitenoise-6.11.0.tar.gz", hash = "sha256:0f5bfce6061ae6611cd9396a8231e088722e4fc67bc13a111be74c738d99375f", size = 26432, upload-time = "2025-09-18T09:16:10.995Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/e9/4366332f9295fe0647d7d3251ce18f5615fbcb12d02c79a26f8dba9221b3/whitenoise-6.11.0-py3-none-any.whl", hash = "sha256:b2aeb45950597236f53b5342b3121c5de69c8da0109362aee506ce88e022d258", size = 20197, upload-time = "2025-09-18T09:16:09.754Z" },
 ]
 
 [[package]]

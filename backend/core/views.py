@@ -3,11 +3,13 @@ from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.parsers import FormParser, MultiPartParser
 from drf_spectacular.utils import extend_schema, inline_serializer
 
 from django.contrib import auth
+from django.conf import settings
 from django.db import transaction
 from django.middleware import csrf
 from django.core.cache import cache
@@ -29,14 +31,31 @@ from contextlib import suppress
 
 # Create your views here.
 
-TOKEN_COOKIE_SETTINGS = {
-    "key": "auth_token",
-    "samesite": "Lax",
-    "httponly": True,
-    "secure": True,  #! True in production
-    "max_age": 60 * 60 * 24 * 7,  # 7 days
-}
-
+@extend_schema(tags=('Auth',))
+class CookiesRefreshTokenView(TokenRefreshView):
+    def post(self, request: Request, *args, **kwargs) -> Response:
+        response = super().post(request, *args, **kwargs)
+        access_token = response.data.get("access") # type: ignore
+        refresh_token = response.data.get("refresh") # type: ignore
+        
+        if all([access_token, refresh_token]):
+            response.set_cookie(
+                key="access_token",
+                value=access_token,
+                expires=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
+                secure=True,
+                httponly=True,
+                samesite='Lax'
+            )
+            response.set_cookie(
+                key='refresh_token',
+                value=refresh_token,
+                expires=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
+                secure=True,
+                httponly=True,
+                samesite='Lax'
+            )
+        return response
 
 class Login(APIView):
     permission_classes = (AllowAny,)
@@ -82,9 +101,6 @@ class Login(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        token_obj, _ = Token.objects.get_or_create(user=user)
-        auth.login(request._request, user)
-
         if user.is_technical:
             track = TrackNameOnlyMSGSerializer(
                 id=user.track.id, # type: ignore
@@ -99,13 +115,37 @@ class Login(APIView):
                 )
                 track = TrackNameOnlyMSGSerializer(id=member.track.id, track=member.track.track)  # type: ignore
         
-        encoded_data = serializer_encoder.encode({"username": user.username, "role": user.role, "track": track})
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        encoded_data = serializer_encoder.encode({
+            "username": user.username, 
+            "role": user.role, 
+            "track": track,
+        })
         
         response = Response(encoded_data)
-        response.set_cookie(value=token_obj.key, **TOKEN_COOKIE_SETTINGS)
-
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            expires=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
+            secure=True,
+            httponly=True,
+            samesite='Lax'
+        )
+        response.set_cookie(
+            key='refresh_token',
+            value=refresh_token,
+            expires=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
+            secure=True,
+            httponly=True,
+            samesite='Lax'
+        )
+        
         csrf.get_token(request._request)
         return response
+        
 
 
 class TestAuthCredentials(APIView):
@@ -160,8 +200,10 @@ class Logout(APIView):
     def get(self, request: Request) -> Response:
         auth.logout(request._request)
         response = Response()
-        response.delete_cookie(TOKEN_COOKIE_SETTINGS["key"])
         response.delete_cookie("csrftoken")
+        response.delete_cookie("sessionid")
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
         return response
 
 
@@ -186,17 +228,34 @@ class Register(APIView):
 
     @transaction.atomic
     def post(self, request: Request) -> Response:
-        data = api_schemas.RegisterMemberSerializer(data=request.data)
+        serializer = api_schemas.RegisterMemberSerializer(data=request.data)
 
-        if data.is_valid():
-            data.save()
-            user = get_object_or_404(models.BdayaUser, email=data.validated_data.get("email"))  # type: ignore
-            token_obj, _ = Token.objects.get_or_create(user=user)
-            response = Response(data.data, status=status.HTTP_201_CREATED)
-            response.set_cookie(value=token_obj.key, **TOKEN_COOKIE_SETTINGS)
+        if serializer.is_valid():
+            instance: Member = serializer.save() # type: ignore
+            user = get_object_or_404(models.BdayaUser.objects.only('id'), email=instance.email)
+            refresh = RefreshToken.for_user(user)
+        
+            cache.delete_pattern("*member*") # type: ignore
+            response = Response(serializer.data, status=status.HTTP_201_CREATED)
+
+            response.set_cookie(
+                key='access_token',
+                value=str(refresh.access_token),
+                httponly=True,
+                secure=True,
+                samesite='Lax'
+            )
+            response.set_cookie(
+                key='refresh_token',
+                value=str(refresh),
+                httponly=True,
+                secure=True,
+                samesite='Lax'
+            )
+            
             return response
         else:
-            return Response(data.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class Tracks(APIView):

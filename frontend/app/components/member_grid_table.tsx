@@ -4,12 +4,13 @@
 import type { GridRowModel, GridColDef, GridColumnGroupingModel, GridCellParams } from '@mui/x-data-grid';
 import { AttendanceStatus, MemberStatus } from '../utils/api_types_helper';
 import type { GridRowsProp } from '@mui/x-data-grid';
+import { useTranslations } from 'next-intl';
 import { DataGrid } from '@mui/x-data-grid';
 import { API } from '../utils/api.client';
+import { Link } from '@/i18n/navigation';
 import { Button } from '@mui/material';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
-import Link from 'next/link';
 
 type GridProps = {
     rows: GridRowsProp;
@@ -19,21 +20,22 @@ type GridProps = {
 }
 
 export default function MembersGridTable({ rows, columns, columnGroupingModel = [], track }: GridProps) {
+    const tr = useTranslations('showMembersPage');
     const memoRows = useMemo(() => rows, [rows]);
     const memoColumns = useMemo<GridColDef[]>(() => [{
         align: "center",
         headerAlign: "center",
-        field: "action",
-        headerName: "Action",
+        field: "actions",
+        headerName: tr("actions"),
         width: 120,
         filterable: false,
         sortable: false,
         renderCell(params) {
             return <Link href={`/profile/${params.id}`}>
-                <Button variant='contained'>Profile</Button>
+                <Button variant='contained'>{tr('profile')}</Button>
             </Link>
         },
-    }, ...columns], [columns]);
+    }, ...columns], [columns, tr]);
 
     const handelProccess = async (newRow: GridRowModel, oldRow: GridRowModel) => {
         const changedKey = Object.keys(newRow).find(
@@ -64,9 +66,9 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
             return oldRow;
         },
             {
-                loading: "Saving....",
-                success: "Saved",
-                error: "Couldn't save",
+                loading: tr('saving'),
+                success: tr('saved'),
+                error: tr('notSaved'),
             }
         ).unwrap();
         return newValidRow;
@@ -96,13 +98,26 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
             <DataGrid
                 rows={memoRows}
                 columns={memoColumns}
-                label={`Track ${track}`}
+                label={tr('trackHead', {track})}
                 getCellClassName={colorizeCellsFunction}
                 processRowUpdate={handelProccess}
                 columnGroupingModel={columnGroupingModel}
                 showColumnVerticalBorder
                 showCellVerticalBorder
                 showToolbar
+                localeText={{
+                    filterOperatorContains: tr('contains'),
+                    filterOperatorDoesNotContain: tr('notContains'),
+                    filterOperatorEquals: tr('equals'),
+                    filterOperatorDoesNotEqual: tr('notEqual'),
+                    filterOperatorStartsWith: tr('startsWith'),
+                    filterOperatorEndsWith: tr('endsWith'),
+                    filterOperatorIsEmpty: tr('isEmpty'),
+                    filterOperatorIsNotEmpty: tr('isNotEmpty'),
+                    filterOperatorIsAnyOf: tr('isAnyOf'),
+                    paginationDisplayedRows: (params) => tr('totalRows', { from: params.from, to: params.to, count: params.count }),
+                    paginationRowsPerPage: tr('perPage')
+                }}
             />
         </div>
     )
