@@ -19,11 +19,11 @@ from django.views.decorators.csrf import csrf_exempt
 from core.middleware import GraphQLAuthMiddleware
 from graphene_django.views import GraphQLView
 from django.urls import path, include
-# from django.conf import settings
+from django.conf import settings
 from django.contrib import admin
 
 
-urlpatterns = (
+urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/schema/swagger-ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
@@ -33,11 +33,12 @@ urlpatterns = (
     path('api/admin/', admin.site.urls),
     path("api/", include("core.urls")),
     path("api/graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True, middleware=[GraphQLAuthMiddleware()]))),
-)
+    path('api/i18n/', include('django.conf.urls.i18n')),
+]
 
-# if settings.DEBUG:
-#     from debug_toolbar.toolbar import debug_toolbar_urls
-#     from django.conf.urls.static import static
+if settings.DEBUG:
+    from debug_toolbar.toolbar import debug_toolbar_urls
+    from django.conf.urls.static import static
     
-#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-#     urlpatterns += debug_toolbar_urls()
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += debug_toolbar_urls()

@@ -1,8 +1,9 @@
 "use client";
 
 import { useLocale } from 'next-intl';
-import { Button, ButtonGroup } from '@mui/material';
-import { usePathname, useRouter } from '@/i18n/navigation'; // Use the navigation from your i18n config
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import { usePathname, useRouter } from '@/i18n/navigation';
 
 export default function LanguageSwitcher() {
     const locale = useLocale();

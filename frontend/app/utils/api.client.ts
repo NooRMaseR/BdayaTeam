@@ -1,8 +1,9 @@
 import createClient, { type MiddlewareCallbackParams, type Middleware } from "openapi-fetch";
 import type { paths } from "@/app/generated/api_types";
 import { getAuthCookies } from "./api_utils";
+import type { UserAuth } from "./store";
 
-export const API = createClient<paths>({
+const API = createClient<paths>({
     baseUrl: process.env.NEXT_PUBLIC_API_URL,
     credentials: "include"
 });
@@ -43,11 +44,21 @@ export async function refreshToken(options: MiddlewareCallbackParams & {
 
 const middleware: Middleware = {
     onResponse: refreshToken,
-    onRequest: async (options) => {
-        const { token } = await getAuthCookies();
-        options.request.headers.set("Authorization", `Bearer ${token}`);
-    },
+    // onRequest: async (options) => {
+    //     const { token } = await getAuthCookies();
+        
+    //     if (token) 
+    //         options.request.headers.set("Authorization", `Bearer ${token}`);
+    //     return options.request;
+    // },
 }
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
 API.use(middleware);
+
+
+export function getHomeUrl(user: UserAuth['user']): string {
+    return user?.role === "member" || user?.role === 'technical' ? `/${user?.role}/${user?.track?.name}` : `/${user?.role}`;
+}
+
+export default API;

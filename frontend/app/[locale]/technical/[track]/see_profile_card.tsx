@@ -21,20 +21,25 @@ export default function SeeProfileCard() {
     const handleCloseDialog = () => setOpen(false);
     const handleOpenDialog = () => setOpen(true);
 
-    const seeMember = () => navigation.push(`/profile/${code}`);
+    const seeMember = (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        navigation.push(`/profile/${code}`);
+    };
     const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => setCode(e.target.value);
 
     return (
         <>
             <Dialog open={open} scroll='paper'>
                 <DialogTitle>{tr('enterMemberCode')}</DialogTitle>
-                <DialogContent sx={{marginBlock: '1rem'}}>
-                    <TextField onChange={handleOnChange} label={tr('memberCode')} required fullWidth />
-                </DialogContent>
-                <DialogActions>
-                    <Button variant='contained' onClick={handleCloseDialog}>{tr('cancel')}</Button>
-                    <Button color='success' variant='contained' onClick={seeMember}>{tr('go')}</Button>
-                </DialogActions>
+                <form onSubmit={seeMember}>
+                    <DialogContent sx={{marginBlock: '1rem'}}>
+                        <TextField onChange={handleOnChange} label={tr('memberCode')} required fullWidth />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button variant='contained' onClick={handleCloseDialog}>{tr('cancel')}</Button>
+                        <Button color='success' variant='contained' type='submit'>{tr('go')}</Button>
+                    </DialogActions>
+                </form>
             </Dialog>
             <div onClick={handleOpenDialog}>
                 <NavigationCard

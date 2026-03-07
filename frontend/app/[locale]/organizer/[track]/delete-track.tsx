@@ -9,11 +9,12 @@ import Dialog from '@mui/material/Dialog';
 import Button from '@mui/material/Button';
 
 import NavigationCard from '@/app/components/navigation_card';
+import { revalidateTracks } from '@/app/utils/api_utils';
 import { useRouter } from '@/i18n/navigation';
-import { API } from '@/app/utils/api.client';
+import { useTranslations } from 'next-intl';
+import API from '@/app/utils/api.client';
 import { toast } from 'sonner';
 import React from 'react'
-import { useTranslations } from 'next-intl';
 
 interface DeleteTrackProps {
     name: string;
@@ -27,26 +28,36 @@ export default function DeleteTrack({ name }: DeleteTrackProps) {
     const tr = useTranslations('trackPage');
 
     const performDeleteTrack = async () => {
-        const success = await toast.promise<boolean>(async () => {
-            const { response } = await API.DELETE("/api/tracks/{track_name}/delete/", {
-                params: {path: {track_name: name}}
-            });
-            if (response.ok) {
-                return await Promise.resolve(true);
-            } else {
-                return await Promise.reject(false);
+        try {
+            const success = await toast.promise<boolean>(async () => {
+                const { response } = await API.DELETE("/api/tracks/{track_name}/", {
+                    params: {path: {track_name: name}}
+                });
+                if (response.ok) {
+                    return await Promise.resolve(true);
+                } else {
+                    return await Promise.reject(response.status);
+                }
+            },
+                {
+                    loading: tr('deleting'),
+                    success: tr('trackDeleted', {name}),
+                    error(code) {
+                        if (code === 403) {
+                            return tr('noPerm');
+                        }
+                        return tr('wrong');
+                    },
+                }
+            ).unwrap();
+            if (success) {
+                await revalidateTracks();
+                navigation.replace("/organizer");
             }
-        },
-            {
-                loading: tr('deleting'),
-                success: tr('trackDeleted', {name}),
-                error: tr('wrong'),
-            }
-        ).unwrap();
-        
-        if (success) {
-            navigation.replace("/organizer");
+        } catch {
+
         }
+        
     };
 
     return (

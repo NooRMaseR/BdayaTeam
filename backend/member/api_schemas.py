@@ -1,5 +1,5 @@
+from technical.api_schemas import TaskNoTrackSerializer, TaskSmallSerializer
 from organizer.api_schemas import AttendenceSmallSerializer
-from technical.api_schemas import TaskNoTrackSerializer
 from core.api_schemas import TrackNameOnlySerializer
 from rest_framework import serializers
 from . import models
@@ -10,7 +10,29 @@ class MemberSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = models.Member
-        fields = '__all__'
+        exclude = ('joined_at',)
+        
+
+class RecivedTaskSmallSerializer(serializers.ModelSerializer):
+    member_code = serializers.CharField(read_only=True)
+    task = TaskSmallSerializer(read_only=True)
+    
+    class Meta:
+        model = models.ReciviedTask
+        fields = (
+            "id",
+            "task",
+            "member_code",
+            "technical_notes",
+            "degree"
+        )
+
+class MemberTechnicalSerializer(serializers.ModelSerializer):
+    tasks = RecivedTaskSmallSerializer(read_only=True, many=True)
+    track = TrackNameOnlySerializer(read_only=True)
+    class Meta:
+        model = models.Member
+        exclude = ('joined_at',)
 
 class MemberSerializerForTask(serializers.ModelSerializer):
     class Meta:
@@ -52,6 +74,7 @@ class MemberProfileSerializer(serializers.ModelSerializer):
     track = TrackNameOnlySerializer(read_only=True)
     total_tasks_sent = serializers.IntegerField()
     missing_tasks = serializers.IntegerField()
+    tasks = RecivedTaskSerializer(read_only=True, many=True)
     
     class Meta:
         model = models.Member
@@ -59,7 +82,9 @@ class MemberProfileSerializer(serializers.ModelSerializer):
             "name",
             "code",
             "track",
+            "status",
             "absents",
             "total_tasks_sent",
-            "missing_tasks"
+            "missing_tasks",
+            "tasks"
         )

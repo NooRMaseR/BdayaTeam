@@ -1,7 +1,7 @@
-import type { Get_Member_CodeQuery, SettingsSiteImageQuery } from '@/app/generated/graphql';
-import { GET_MEMBER_CODE, GET_SITE_IMAGE_SETTINGS } from '@/app/utils/graphql_helpers';
+import { fetchSiteImage, serverGraphQL } from '@/app/utils/api_utils';
+import type { Get_Member_CodeQuery } from '@/app/generated/graphql';
+import { GET_MEMBER_CODE } from '@/app/utils/graphql_helpers';
 import NavigationCard from '@/app/components/navigation_card';
-import { serverGraphQL } from '@/app/utils/api_utils';
 import { getTranslations } from 'next-intl/server';
 import BodyM from '@/app/components/bodyM';
 import type { Metadata } from 'next';
@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const [tr, res] = await Promise.all(
         [
             getTranslations('membersPage'),
-            serverGraphQL<SettingsSiteImageQuery>(GET_SITE_IMAGE_SETTINGS)
+            fetchSiteImage()
         ]
     );
     const site = res.data.allSettings?.siteImage;

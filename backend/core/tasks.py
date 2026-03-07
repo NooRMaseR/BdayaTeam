@@ -16,7 +16,7 @@ def send_member_email(username: str, email: str, password: str, code: str, track
         }
     )
     send_mail(
-        "Team Bdaya Info",
+        "Welcome to Team Bdaya",
         "Welcome",
         from_email=None,
         recipient_list=[email],

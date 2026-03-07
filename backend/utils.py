@@ -21,4 +21,4 @@ serializer_encoder = msgspec.json.Encoder(enc_hook=enc_phone_str)
 DEFAULT_CACHE_DURATION = 3600
 "1 hour in seconds"
 
-SAFE_MIMETYPES = ('application/pdf', 'image/jpeg', 'image/png', 'image/webp')
+SAFE_MIMETYPES = ('application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/wav', 'video/wave')

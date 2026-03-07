@@ -4,9 +4,13 @@ import TextField  from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 
 import type { components } from '@/app/generated/api_types';
+import { revalidateTracks } from '@/app/utils/api_utils';
+import GroupTitled from '@/app/components/group_titled';
 import FilePicker from '@/app/components/file_picker';
-import { API } from '@/app/utils/api.client';
+import { useTranslations } from 'next-intl';
+import BodyM from '@/app/components/bodyM';
 import { useForm } from 'react-hook-form';
+import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -17,7 +21,8 @@ export default function AddTrackPage() {
     const [trackPreviewImage, setTrackPreviewImage] = useState<string | null>(null);
     const [trackFormImage, setTrackFormImage] = useState<File | null>(null);
     const [isLoading, setIsloading] = useState<boolean>(false);
-    const validData = ["track", "description", "prefix", 'image'] as const;
+    const validData = ["name", "en_description", "ar_description", "prefix", 'image'] as const;
+    const tr = useTranslations('createTrackPage');
 
 
     const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,32 +34,34 @@ export default function AddTrackPage() {
         }
     }
 
-
     const onSubmit = (data: CreateTrack) => {
         setIsloading(true);
         toast.promise(async () => {
             const formData = new FormData();
             formData.set("image", trackFormImage as Blob)
-            formData.set("track", data.track)
-            formData.set("description", data.description || '')
+            formData.set("name", data.name)
+            formData.set("en_description", data.en_description)
+            formData.set("ar_description", data.ar_description)
             formData.set("prefix", data.prefix)
 
             const { response, error } = await API.POST("/api/tracks/", {
                 body: formData as unknown as {
-                    track: string;
+                    name: string;
                     prefix: string;
-                    description?: string | null | undefined;
-                    image?: string | null | undefined;
+                    en_description: string;
+                    ar_description: string;
+                    image: string;
                 }
             });
 
             if (response.ok) {
-                setValue("track", '');
-                setValue("description", '');
+                setValue("name", '');
+                setValue("en_description", '');
+                setValue("ar_description", '');
                 setValue("prefix", '');
                 setTrackFormImage(null);
                 setTrackPreviewImage(null);
-                return await Promise.resolve(data.track);
+                return await Promise.resolve(data.name);
             } else {
                 Object.entries(error || {}).forEach(e => {
                     const key = e[0] as keyof CreateTrack;
@@ -70,10 +77,11 @@ export default function AddTrackPage() {
             }
         },
             {
-                loading: "Creating...",
-                success: (track) => `Track ${track} has been created successfully.`,
-                error: "Error when Creating the Track",
+                loading: tr('creating'),
+                success: (track) => tr('success', {track}),
+                error: tr('error'),
                 finally() {
+                    revalidateTracks();
                     setIsloading(false);
                 },
             }
@@ -81,15 +89,40 @@ export default function AddTrackPage() {
     };
 
     return (
-        <div className='flex justify-center items-center h-[80svh] w-full'>
-            <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col h-max lg:w-[50%] md:w-[50%] sm:w-[90%] w-[90%] gap-4'>
-                <h2 className='lg:text-4xl sm:text-3xl'>Enter Track Details</h2>
-                <FilePicker accept='image/png,image/webp/,image/jpeg,image/jpg,image/ico' preview={trackPreviewImage} onChange={handleImage} />
-                <TextField label="Track Name" {...register("track", { required: true })} required fullWidth error={!!errors.track} helperText={errors.track?.message} />
-                <TextField label="Track Prefix" {...register("prefix", { required: true })} required fullWidth error={!!errors.prefix} helperText={errors.prefix?.message} />
-                <TextField label="Track Decription" {...register("description")} minRows={4} multiline error={!!errors.description} helperText={errors.description?.message} />
-                <Button type='submit' variant='contained' loadingPosition='start' loading={isLoading}>Create</Button>
-            </form>
-        </div>
+        <BodyM>
+            <div className='flex justify-center items-center min-h-[80svh] w-full p-4'>
+                <GroupTitled title={tr('enterDetails')} caption={tr('enterDesc')}>
+                    <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6'>
+                        <div className="flex justify-center w-full mb-2">
+                             <div className="w-full max-w-sm">
+                                 <FilePicker accept='image/png,image/webp,image/jpeg,image/jpg,image/ico' preview={trackPreviewImage} onChange={handleImage} required />
+                             </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div className="md:col-span-3">
+                                <TextField label={tr('name')} {...register("name", { required: true })} required fullWidth error={!!errors.name} helperText={errors.name?.message} />
+                            </div>
+                            <div className="md:col-span-1">
+                                <TextField label={tr('pre')} {...register("prefix", { required: true, maxLength: {value: 2, message: tr("err_max_pre")} })} required fullWidth error={!!errors.prefix} helperText={errors.prefix?.message} />
+                            </div>
+                        </div>
+                        <TextField label={tr('en_desc')} {...register("en_description", { required: true })} required minRows={3} multiline fullWidth error={!!errors.en_description} helperText={errors.en_description?.message} />
+                        <TextField label={tr('ar_desc')} {...register("ar_description", { required: true })} required minRows={3} multiline fullWidth error={!!errors.ar_description} helperText={errors.ar_description?.message} />
+ 
+                        <div className="flex justify-end mt-4">
+                            <Button
+                                type='submit'
+                                variant='contained'
+                                size="large"
+                                disabled={isLoading}
+                                sx={{ px: 5, py: 1.5, borderRadius: 2, fontWeight: 'bold' }}
+                            >
+                                {isLoading ? tr('creating') : tr('create')}
+                            </Button>
+                        </div>
+                    </form>
+                </GroupTitled>
+            </div>
+        </BodyM>
     )
 }

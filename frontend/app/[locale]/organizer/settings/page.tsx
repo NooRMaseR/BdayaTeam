@@ -1,6 +1,7 @@
 import type { GetAllSettingsQuery } from "@/app/generated/graphql";
 import { GET_ALL_SETTINGS } from "@/app/utils/graphql_helpers";
 import { serverGraphQL } from "@/app/utils/api_utils";
+import Typography from "@mui/material/Typography";
 import SettingsClient from "./client_page";
 
 export default async function SettingsPage() {
@@ -14,4 +15,5 @@ export default async function SettingsPage() {
         };
         return <SettingsClient recivedSettings={settings} />
     }
+    return <Typography component='h3' variant="h3">error occured</Typography>
 }

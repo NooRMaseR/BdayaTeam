@@ -1,23 +1,24 @@
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import Chip from '@mui/material/Chip';
-import { API } from '../utils/api.server';
 import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
+import { fetchTracks } from '../utils/api.server';
 import NavButtons from '../components/nav_buttons';
-import { serverGraphQL } from '../utils/api_utils';
 import { getTranslations } from 'next-intl/server';
 import NormalAnimation from '../components/animations';
 import NavigationCard from '../components/navigation_card';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import type { SettingsHeroImageQuery, SettingsSiteImageQuery } from '../generated/graphql';
-import { GET_HERO_IMAGE_SETTINGS, GET_SITE_IMAGE_SETTINGS } from '../utils/graphql_helpers';
+import type { SettingsHeroImageQuery } from '../generated/graphql';
+import { fetchSiteImage, serverGraphQL } from '../utils/api_utils';
+import { GET_HERO_IMAGE_SETTINGS } from '../utils/graphql_helpers';
+
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> { 
   const [tr, res] = await Promise.all(
     [
       getTranslations('homePage'),
-      serverGraphQL<SettingsSiteImageQuery>(GET_SITE_IMAGE_SETTINGS)
+      fetchSiteImage()
     ]
   );
   const site = res.data.allSettings?.siteImage;
@@ -34,18 +35,17 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function HomePage({params}: {params: Promise<{locale: string}>}) {
+export default async function HomePage({params} : {params: Promise<{locale: string}>}) {
   const years = new Date().getFullYear() - 2015;
-  const [ paramsPrmise, tr, tracks, hero ] = await Promise.all(
+  const [ tr, tracks, hero, {locale} ] = await Promise.all(
     [
-      params,
       getTranslations('homePage'),
-      API.GET("/api/tracks/"),
-      serverGraphQL<SettingsHeroImageQuery>(GET_HERO_IMAGE_SETTINGS)
+      fetchTracks(),
+      serverGraphQL<SettingsHeroImageQuery>(GET_HERO_IMAGE_SETTINGS),
+      params
     ]
   );
   
-  const { locale } = paramsPrmise;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -77,11 +77,11 @@ export default async function HomePage({params}: {params: Promise<{locale: strin
           </h1>
 
           <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10">
-            {tr('join')} <strong>{tr('teamBdaya')}</strong>. {tr('weProvide')}
+            {tr('join')} <strong>{tr('teamBdaya')}</strong>. {tr('takeStep')}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <NavButtons locale={locale} />
+            <NavButtons />
           </div>
         </Container>
       </section>
@@ -91,7 +91,7 @@ export default async function HomePage({params}: {params: Promise<{locale: strin
         <Container maxWidth="lg">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-gray-100">
             <StatItem number={`${years - 1}+`} label={tr('exp')} />
-            <StatItem number="15k+" label={tr('std')} />
+            <StatItem number="10k+" label={tr('std')} />
             <StatItem number="100%" label={tr('freeC')} />
             <StatItem number="24/7" label={tr('support')} />
           </div>
@@ -109,8 +109,9 @@ export default async function HomePage({params}: {params: Promise<{locale: strin
           <div className="flex justify-center flex-wrap gap-6">
             {tracks.data?.map((track) => (
               <NavigationCard
-                title={track.track}
-                desc={track.description || ""}
+                url={`/track-info/${track.name}`}
+                title={track.name}
+                desc={locale === "ar" ? track.ar_description : track.en_description}
                 key={track.id}
                 imageUrl={`${process.env.NEXT_PUBLIC_MEDIA_URL}${track.image}`}
               />
@@ -132,9 +133,9 @@ export default async function HomePage({params}: {params: Promise<{locale: strin
             />
           </div>
           <div className="flex-1 space-y-8">
-            <Typography variant="overline" className="text-blue-600 font-bold tracking-widest">
+            <p className="text-blue-600 font-bold tracking-widest">
               {tr('who')}
-            </Typography>
+            </p>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
               {tr('by')}, <br /> {tr('for')}.
             </h2>
@@ -142,7 +143,7 @@ export default async function HomePage({params}: {params: Promise<{locale: strin
               {tr('bdayaStarted', {years})}
             </p>
             <p className="text-gray-600 text-lg leading-relaxed">
-              {tr('weBelieve')}
+              {tr('weProvide')}
             </p>
           </div>
         </Container>

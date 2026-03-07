@@ -15,8 +15,8 @@ from django.middleware import csrf
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404
 
-from core.serializers import TrackMSGSerializer, TrackNameOnlyMSGSerializer
-from core.permissions import IsOrganizer, IsSuperUser
+from .serializers import TrackMSGSerializer, TrackNameOnlyMSGSerializer
+from .permissions import IsOrganizer, IsSuperUser
 
 from member.models import Member
 from member.auth import RawJsonRenderer
@@ -102,18 +102,15 @@ class Login(APIView):
             )
 
         if user.is_technical:
-            track = TrackNameOnlyMSGSerializer(
-                id=user.track.id, # type: ignore
-                track=user.track.track # type: ignore
-            )
+            track = TrackNameOnlyMSGSerializer.from_model(user.track) # type: ignore
         elif user.is_member:
             with suppress(Member.DoesNotExist):
-                member = (
-                    Member.objects.only("code", "track_id", "track__track")
+                member =  (
+                    Member.objects.only("code", "track_id", "track__name")
                     .select_related("track")
                     .get(email=user.email)
                 )
-                track = TrackNameOnlyMSGSerializer(id=member.track.id, track=member.track.track)  # type: ignore
+                track = TrackNameOnlyMSGSerializer.from_model(member.track)  # type: ignore
         
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
@@ -165,18 +162,15 @@ class TestAuthCredentials(APIView):
         track: TrackNameOnlyMSGSerializer | None = None
 
         if request.user.is_technical:
-            track = TrackNameOnlyMSGSerializer(
-                id=request.user.track.id, 
-                track=request.user.track.track
-            )
+            track = TrackNameOnlyMSGSerializer.from_model(request.user.track)
         elif request.user.is_member:
             with suppress(Member.DoesNotExist):
                 member = (
-                    Member.objects.only("code", "track_id", 'track__track')
+                    Member.objects.only("code", "track_id", 'track__name')
                     .select_related("track")
                     .get(email=request.user.email)
                 )
-                track = TrackNameOnlyMSGSerializer(id=member.track.id, track=member.track.track)  # type: ignore
+                track = TrackNameOnlyMSGSerializer.from_model(member.track)
 
         settings = SiteSetting.get_solo()
         
@@ -184,10 +178,7 @@ class TestAuthCredentials(APIView):
             "username": request.user.username,
             "role": request.user.role,
             "track": track,
-            "settings": SiteSettingsImagesMSGSerializer(
-                settings.site_image.url,
-                settings.hero_image.url
-            ),
+            "settings": SiteSettingsImagesMSGSerializer.from_model(settings),
         })
 
         return Response(encoded_data)
@@ -228,6 +219,7 @@ class Register(APIView):
 
     @transaction.atomic
     def post(self, request: Request) -> Response:
+        print(request.COOKIES)
         serializer = api_schemas.RegisterMemberSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -276,21 +268,13 @@ class Tracks(APIView):
             return Response(cached)
 
         query_set = models.Track.objects.defer("prefix").values(
-            "id", "track", "image", "description"
+            "id", "name", "image", "en_description", "ar_description"
         )
-        data = [
-            TrackMSGSerializer(
-                id=track["id"],
-                track=track["track"],
-                description=track["description"],
-                image=track["image"],
-            )
-            for track in query_set
-        ]
+        data = TrackMSGSerializer.from_queryset_values(query_set)
 
-        data = serializer_encoder.encode(data)
-        cache.set(self.CACHE_NAME, data, DEFAULT_CACHE_DURATION)
-        return Response(data)
+        encoded_data = serializer_encoder.encode(data)
+        cache.set(self.CACHE_NAME, encoded_data, DEFAULT_CACHE_DURATION)
+        return Response(encoded_data)
 
     @extend_schema(
         request=api_schemas.TrackSerializer,
@@ -309,20 +293,41 @@ class Tracks(APIView):
     def post(self, request: Request) -> Response:
         serializer = api_schemas.TrackSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save() # type: ignore
             cache.delete(self.CACHE_NAME)
             return Response(status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
-class DeleteTrack(APIView):
-    permission_classes = (IsOrganizer,)
-
+class TrackApi(APIView):
+    renderer_classes = (RawJsonRenderer,)
+    serializer_class = api_schemas.TrackSerializer
+    
+    @staticmethod
+    def get_cache_key(track_name: str) -> str:
+        return f"Track:{track_name}"
+    
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        else:
+            return [IsSuperUser()]
+    
+    def get(self, request: Request, track_name: str) -> Response:
+        CACHE_KEY = self.get_cache_key(track_name)
+        if (data:= cache.get(CACHE_KEY)):
+            return Response(data)
+        
+        track = get_object_or_404(models.Track, name=track_name)
+        track_encoded = TrackMSGSerializer.from_model(track).encode()
+        cache.set(CACHE_KEY, track_encoded, DEFAULT_CACHE_DURATION)
+        return Response(track_encoded)
+        
     def delete(self, request: Request, track_name: str) -> Response:
-        get_object_or_404(models.Track, track=track_name).delete()
-        cache.delete(Tracks.CACHE_NAME)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        get_object_or_404(models.Track, name=track_name).delete()
+        cache.delete_many([Tracks.CACHE_NAME, self.get_cache_key(track_name)])
+        return Response({}, status=status.HTTP_204_NO_CONTENT)
 
 
 class ResetAll(APIView):
@@ -330,7 +335,7 @@ class ResetAll(APIView):
     serializer_class = None
 
     @transaction.atomic
-    def delete(self, request: Request) -> Response:
+    async def delete(self, request: Request) -> Response:
         "Very Dangores, Deletes all tracks and members and tasks and technicals."
         try:
             models.Track.objects.select_for_update().delete()

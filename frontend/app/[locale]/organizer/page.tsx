@@ -1,19 +1,18 @@
-import type { SettingsSiteImageQuery } from "../../generated/graphql";
-import { GET_SITE_IMAGE_SETTINGS } from "../../utils/graphql_helpers";
 import NavigationCard from "../../components/navigation_card";
-import { serverGraphQL } from "../../utils/api_utils";
+import { fetchSiteImage } from "../../utils/api_utils";
+import { fetchTracks } from "../../utils/api.server";
 import { getTranslations } from "next-intl/server";
-import { API } from "../../utils/api.server";
 import BodyM from "@/app/components/bodyM";
 import type { Metadata } from "next";
 import ResetAll from "./reset_all";
 
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
     const [tr, res] = await Promise.all(
         [
             getTranslations('organizerPage'),
-            serverGraphQL<SettingsSiteImageQuery>(GET_SITE_IMAGE_SETTINGS)
+            fetchSiteImage()
         ]
     );
     const site = res.data.allSettings?.siteImage;
@@ -30,11 +29,12 @@ export async function generateMetadata(): Promise<Metadata> {
     }
 }
 
-export default async function OrganizerPage() {
-    const [tr, tracks] = await Promise.all(
+export default async function OrganizerPage({params}: {params: Promise<{locale: string}>}) {
+    const [tr, tracks, {locale}] = await Promise.all(
         [
             getTranslations('organizerPage'),
-            API.GET("/api/tracks/")
+            fetchTracks(),
+            params
         ]
     );
 
@@ -43,9 +43,9 @@ export default async function OrganizerPage() {
             <div className="flex justify-center flex-wrap w-full gap-10">
                 {tracks.data?.map((track) => (
                     <NavigationCard
-                        url={`organizer/${track.track}`}
-                        title={track.track}
-                        desc={track.description ?? ""}
+                        url={`organizer/${track.name}`}
+                        title={track.name}
+                        desc={locale === "ar" ? track.ar_description : track.en_description}
                         imageUrl={track.image ? `${process.env.NEXT_PUBLIC_MEDIA_URL}/${track.image}` : undefined}
                         key={track.id}
                     />

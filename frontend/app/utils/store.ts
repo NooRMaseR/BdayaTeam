@@ -1,16 +1,37 @@
-import { configureStore } from '@reduxjs/toolkit';
-import {authReducer, settingsReducer} from './states';
+import type { components } from '../generated/api_types';
+import { create } from "zustand";
 
-export const makeStore = () => {
-  return configureStore({
-    reducer: {
-      auth: authReducer,
-      settings: settingsReducer,
-    },
-  });
-};
+export type UserAuth = {
+    isLoading: boolean;
+    isAuthed: boolean;
+    user: components['schemas']['Login'] | null;
+}
+type SettingsImages = components['schemas']['SiteSettingsImages'];
 
-// Types for TypeScript
-export type AppStore = ReturnType<typeof makeStore>;
-export type RootState = ReturnType<AppStore['getState']>;
-export type AppDispatch = AppStore['dispatch'];
+interface UserAuthStoreType extends UserAuth {
+    setCredentials: (payload: UserAuth) => void;
+    logout: () => void;
+}
+
+interface SettingsImagesStoreType extends SettingsImages {
+    setSiteImage: (url: SettingsImages['site_image']) => void;
+    setHeroImage: (url: SettingsImages['hero_image']) => void;
+    setImages: (images: SettingsImages) => void;
+}
+
+export const useAuthStore = create<UserAuthStoreType>((set) => ({
+    isLoading: true,
+    isAuthed: false,
+    user: null,
+    setCredentials: (payload: UserAuth) => set(payload),
+    logout: () => set({ user: null, isAuthed: false, isLoading: false })
+}))
+
+export const useSettingsStore = create<SettingsImagesStoreType>((set) => ({
+    hero_image: null,
+    site_image: null,
+    setSiteImage: (url: SettingsImages['site_image']) => set({ site_image: url }),
+    setHeroImage: (url: SettingsImages['hero_image']) => set({ hero_image: url }),
+    setImages: (images: SettingsImages) => set(images)
+}))
+

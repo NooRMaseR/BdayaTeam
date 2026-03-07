@@ -1,12 +1,19 @@
 'use client';
 
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import type { components } from '@/app/generated/api_types';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
-import { useRouter } from '@/i18n/navigation';
-import { API } from '@/app/utils/api.client';
 import Button from '@mui/material/Button';
-import { useForm } from 'react-hook-form';
+import Paper from '@mui/material/Paper';
+
+import type { components } from '@/app/generated/api_types';
+import { useForm, useWatch } from 'react-hook-form';
+import { useRouter } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
+import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -19,67 +26,127 @@ type TaskMemberSend = components['schemas']['task-member-inputRequest'];
 
 export default function TaskForm({ task, track_name }: TaskActionsProps) {
     const [isLoading, setIsloading] = useState<boolean>(false);
-    const navigation = useRouter();
-    const { register, handleSubmit, formState: { errors }, } = useForm<TaskMemberSend>(
-        {
-            defaultValues: {
-                task_id: task.id
-            }
+    const tr = useTranslations('taskPage');
+    const router = useRouter();
+    
+    const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<TaskMemberSend>({
+        defaultValues: {
+            task_id: task.id
         }
-    );
+    });
+
+    const selectedFiles = useWatch({ control, name: 'file' });
 
     const sendTaskRequest = (data: TaskMemberSend) => {
         setIsloading(true);
-        toast.promise(async () => {
-            const formData = new FormData();
-            formData.append('task_id', data.task_id.toString());
-            formData.append('notes', data.notes || '');
+        
+        const promise = API.POST('/api/member/tasks/', {
+            body: (() => {
+                const fd = new FormData();
+                fd.append('task_id', data.task_id.toString());
+                if (data.notes) fd.append('notes', data.notes);
 
-            if (data.file) {
-                for (let i = 0; i < data.file?.length || 0; i++) {
-                    formData.append('file', data.file[i]);
+                if (data.file) {
+                    Array.from(data.file).forEach(f => fd.append('file', f));
                 }
-            };
+                return fd as unknown as TaskMemberSend;
+            })()
+        });
 
-            const { response } = await API.POST('/api/member/tasks/', {
-                body: formData as unknown as TaskMemberSend
-            });
-            
-            if (response.ok) {
-                return await Promise.resolve();
-            } else {
-                if (response.status === 406) {
-                    toast.warning("This Task is Expired.");
+        toast.promise(promise, {
+            loading: tr('submiting'),
+            success: () => {
+                router.replace(`/member/${track_name}/tasks`);
+                return tr('taskSub');
+            },
+            error: (err) => {
+                if (err instanceof Error && err.message === "EXPIRED") {
+                    return tr('taskSubEx');
                 }
-                
-                return await Promise.reject();
-            }
-        },
-            {
-                loading: "Sending...",
-                success() {
-                    navigation.replace(`/member/${track_name}/tasks`);
-                    return "Task Sent Successfully";
-                },
-                error: "Somthing went wrong",
-                finally() {
-                    setIsloading(false);
-                },
-
-            }
-        );
+                return tr("taskSubError");
+            },
+            finally: () => setIsloading(false)
+        });
     };
 
+    const clearFiles = () => setValue('file', undefined);
+
     return (
-        <div className='flex gap-4 mx-6 md:mx-16 '>
-            <form onSubmit={handleSubmit(sendTaskRequest)} id='edit-form' className='flex flex-col gap-2 mt-16 mb-4'>
-                <div className="bg-blue-100 py-2 px-4 cursor-pointer hover:bg-blue-200 rounded-sm transition-all duration-300">
-                    <input type="file" {...register('file')} multiple />
-                    <KeyboardArrowDownIcon />
+        <Paper elevation={0} className="border border-slate-200 rounded-2xl overflow-hidden bg-white p-6 md:p-8">
+            <form onSubmit={handleSubmit(sendTaskRequest)} className='flex flex-col gap-6'>
+                
+                <div className="w-full">
+                    <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+                        {tr('attach')}
+                    </Typography>
+                    
+                    {!selectedFiles || selectedFiles.length === 0 ? (
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl hover:bg-slate-50 hover:border-blue-500 transition-colors cursor-pointer group">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <CloudUploadIcon className="w-8 h-8 mb-2 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                                <Typography variant="body2" color="text.secondary">
+                                    <span className="font-semibold text-blue-600">Click to upload</span>
+                                </Typography>
+                            </div>
+                            <input 
+                                type="file" 
+                                className="hidden" 
+                                multiple 
+                                {...register('file')} 
+                            />
+                        </label>
+                    ) : (
+                        <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 flex flex-col gap-2">
+                            <div className="flex justify-between items-center mb-2">
+                                <Typography variant="caption" fontWeight="bold" color="text.secondary" className="uppercase tracking-wider">
+                                    {selectedFiles.length} File(s) Selected
+                                </Typography>
+                                <IconButton size="small" onClick={clearFiles} color="error">
+                                    <DeleteOutlineIcon fontSize="small" />
+                                </IconButton>
+                            </div>
+                            <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
+                                {Array.from(selectedFiles).map((file, i) => (
+                                    <div key={i} className="flex items-center gap-2 bg-white border border-slate-200 p-2 rounded-lg">
+                                        <AttachFileIcon fontSize="small" className="text-slate-400" />
+                                        <Typography variant="body2" className="truncate flex-1 font-medium">
+                                            {(file as unknown as File).name}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {((file as unknown as File).size / 1024 / 1024).toFixed(2)} MB
+                                        </Typography>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <TextField label="Task Description" {...register("notes")} minRows={4} multiline error={!!errors.notes} helperText={errors.notes?.message} />
-                <Button variant='contained' type='submit' loadingPosition='start' loading={isLoading}>Send</Button>
+
+                <div>
+                    <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+                        {tr('notes')}
+                    </Typography>
+                    <TextField 
+                        placeholder={tr('notes')}
+                        {...register("notes")} 
+                        minRows={4}
+                        multiline
+                        fullWidth
+                        error={!!errors.notes}
+                        helperText={errors.notes?.message}
+                    />
+                </div>
+
+                <Button 
+                    variant='contained' 
+                    type='submit' 
+                    size="large"
+                    disabled={isLoading}
+                    sx={{ py: 1.5, borderRadius: 2, fontWeight: 'bold', mt: 2 }}
+                >
+                    {isLoading ? tr('submiting') : tr('submitTask')}
+                </Button>
             </form>
-        </div>
+        </Paper>
     )
 }

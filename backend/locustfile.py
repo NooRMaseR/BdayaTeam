@@ -3,37 +3,26 @@ from faker import Faker
 from locust import FastHttpUser, task, between
 
 
-class UserDRF(FastHttpUser):
-    wait_time = between(2, 5)
-    host="https://localhost"
+# class UserDRF(FastHttpUser):
+#     wait_time = between(1, 3)
+#     host="https://localhost"
+#     TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcyMzUyNjEwLCJpYXQiOjE3NzIzMjc0MTAsImp0aSI6ImRkNGYzMjc0YTJlOTQzYWY5ZTVlZTQ4N2FkNzNkNjM5IiwidXNlcl9pZCI6IjEwMzYxIn0.8qmrOM8TvHA-8dEdcOD-B_g2l4uPMxk6LfMX5ddGlN8"
 
-    # def get_random_token(self):
-    #     return f"Token {random.choice(("3312e312db9a5b22fcb4a59d08be15751a60a7fb", "1df01115f48d450fcc867f8b6293303d2602cba9", "5d30233f092915b0c1397ca6e7778cf63dc99ef3"))}"
-
-    # @task
-    # def see_user_profile(self):
-    #     # token = self.get_random_token()
-    #     self.client.get("/api/member/profile/p-1/", headers={"Authorization": "Token 1fff50986e94802e10e6045fc4bca350330362f3"})
-
-    # @task
-    # def see_tasks(self):
-    #     self.client.get("/api/member/tasks/", headers={"Authorization": "Token 7052ccbd55a3b7fd2c6f2061c11466f8694eb411"})
-    
-    @task
-    def see_track_members_FrontEnd(self):
-        self.client.get(f"/api/organizer/members/frontend/", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMTk5OTgyLCJpYXQiOjE3NzAxNzQ3ODIsImp0aSI6IjE4NmJjZTdhMmVhMDQ5Mzk4NzQ4OGY5MjQ2NjdlNGM5IiwidXNlcl9pZCI6IjEifQ.5SK13z4Wb9DQq6GLzxx4vJurkOW8bc1lk3Z3WtCY1ZA"})
-    @task
-    def see_track_members_CCNA(self):
-        self.client.get(f"/api/organizer/members/CCNA/", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMTk5OTgyLCJpYXQiOjE3NzAxNzQ3ODIsImp0aSI6IjE4NmJjZTdhMmVhMDQ5Mzk4NzQ4OGY5MjQ2NjdlNGM5IiwidXNlcl9pZCI6IjEifQ.5SK13z4Wb9DQq6GLzxx4vJurkOW8bc1lk3Z3WtCY1ZA"})
-    @task
-    def see_track_members_Python(self):
-        self.client.get(f"/api/organizer/members/Python/", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMTk5OTgyLCJpYXQiOjE3NzAxNzQ3ODIsImp0aSI6IjE4NmJjZTdhMmVhMDQ5Mzk4NzQ4OGY5MjQ2NjdlNGM5IiwidXNlcl9pZCI6IjEifQ.5SK13z4Wb9DQq6GLzxx4vJurkOW8bc1lk3Z3WtCY1ZA"})
-    @task
-    def see_track_members_C_Sharp(self):
-        self.client.get(f"/api/organizer/members/C-Sharp/", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMTk5OTgyLCJpYXQiOjE3NzAxNzQ3ODIsImp0aSI6IjE4NmJjZTdhMmVhMDQ5Mzk4NzQ4OGY5MjQ2NjdlNGM5IiwidXNlcl9pZCI6IjEifQ.5SK13z4Wb9DQq6GLzxx4vJurkOW8bc1lk3Z3WtCY1ZA"})
-    @task
-    def see_track_members_Graphic(self):
-        self.client.get(f"/api/organizer/members/Graphic%20Design/", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMTk5OTgyLCJpYXQiOjE3NzAxNzQ3ODIsImp0aSI6IjE4NmJjZTdhMmVhMDQ5Mzk4NzQ4OGY5MjQ2NjdlNGM5IiwidXNlcl9pZCI6IjEifQ.5SK13z4Wb9DQq6GLzxx4vJurkOW8bc1lk3Z3WtCY1ZA"})
+#     @task
+#     def see_track_members_FrontEnd(self):
+#         self.client.get(f"/api/organizer/members/frontend/", headers={"Authorization": self.TOKEN})
+#     @task
+#     def see_track_members_CCNA(self):
+#         self.client.get(f"/api/organizer/members/CCNA/", headers={"Authorization": self.TOKEN})
+#     @task
+#     def see_track_members_Python(self):
+#         self.client.get(f"/api/organizer/members/Python/", headers={"Authorization": self.TOKEN})
+#     @task
+#     def see_track_members_C_Sharp(self):
+#         self.client.get(f"/api/organizer/members/C-Sharp/", headers={"Authorization": self.TOKEN})
+#     @task
+#     def see_track_members_Graphic(self):
+#         self.client.get(f"/api/organizer/members/Graphic%20Design/", headers={"Authorization": self.TOKEN})
 
     # @task
     # def do_register(self):
@@ -50,3 +39,62 @@ class UserDRF(FastHttpUser):
     #         "/api/register/", json=body, headers={"Content-Type": "application/json"}
     #     )
 
+# class Technical(FastHttpUser):
+#     wait_time = between(1, 3)
+#     host = "https://localhost/en"
+    
+#     @task
+#     def see_home_page(self):
+#         self.client.get(f"", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNTM3NTA5LCJpYXQiOjE3NzE1MTIzMDksImp0aSI6ImQ5NmVkY2E4MWM0YzRiYmU5MzlkZjFmNmFlM2I3ZWE1IiwidXNlcl9pZCI6IjMwMjYifQ.mJM9mrvN26weEPWfyuU2MizgbbyinlwdvXlvpzxIebE"})
+    
+#     @task
+#     def see_home_role_page(self):
+#         self.client.get(f"/technical/Python", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNTM3NTA5LCJpYXQiOjE3NzE1MTIzMDksImp0aSI6ImQ5NmVkY2E4MWM0YzRiYmU5MzlkZjFmNmFlM2I3ZWE1IiwidXNlcl9pZCI6IjMwMjYifQ.mJM9mrvN26weEPWfyuU2MizgbbyinlwdvXlvpzxIebE"})
+    
+#     @task
+#     def see_tasks_page(self):
+#         self.client.get(f"/technical/Python/tasks", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNTM3NTA5LCJpYXQiOjE3NzE1MTIzMDksImp0aSI6ImQ5NmVkY2E4MWM0YzRiYmU5MzlkZjFmNmFlM2I3ZWE1IiwidXNlcl9pZCI6IjMwMjYifQ.mJM9mrvN26weEPWfyuU2MizgbbyinlwdvXlvpzxIebE"})
+    
+
+# class Member(FastHttpUser):
+#     wait_time = between(2, 5)
+#     host = "https://localhost/en"
+    
+    
+#     @task
+#     def see_home_page(self):
+#         self.client.get(f"/", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzEwNjg2LCJpYXQiOjE3NzE2ODU0ODYsImp0aSI6IjIxOTJiZmI5ODBhNTRiNjViZWRjYTFkNzk1NDIwNTQ4IiwidXNlcl9pZCI6IjEwMzUxIn0.Zb6GkCniTZEQBzegQsEtBDMhkOr9qcMpOl941pZdE_U"})
+    
+#     @task
+#     def see_home_role_page(self):
+#         self.client.get(f"/member/Python", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzEwNjg2LCJpYXQiOjE3NzE2ODU0ODYsImp0aSI6IjIxOTJiZmI5ODBhNTRiNjViZWRjYTFkNzk1NDIwNTQ4IiwidXNlcl9pZCI6IjEwMzUxIn0.Zb6GkCniTZEQBzegQsEtBDMhkOr9qcMpOl941pZdE_U"})
+    
+#     @task
+#     def see_my_profile_page(self):
+#         self.client.get(f"/profile/p-746", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzEwNjg2LCJpYXQiOjE3NzE2ODU0ODYsImp0aSI6IjIxOTJiZmI5ODBhNTRiNjViZWRjYTFkNzk1NDIwNTQ4IiwidXNlcl9pZCI6IjEwMzUxIn0.Zb6GkCniTZEQBzegQsEtBDMhkOr9qcMpOl941pZdE_U"})
+    
+#     @task
+#     def see_tasks_page(self):
+#         self.client.get(f"/member/Python/tasks", headers={"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxNzEwNjg2LCJpYXQiOjE3NzE2ODU0ODYsImp0aSI6IjIxOTJiZmI5ODBhNTRiNjViZWRjYTFkNzk1NDIwNTQ4IiwidXNlcl9pZCI6IjEwMzUxIn0.Zb6GkCniTZEQBzegQsEtBDMhkOr9qcMpOl941pZdE_U"})
+    
+class OtherTest(FastHttpUser):
+    
+    wait_time = between(1, 3)
+    host="http://localhost:5046"
+    
+    @task
+    def see_games(self):
+        self.client.get("/games")
+    
+    @task
+    def get_game(self):
+        self.client.get("/games/1")
+    
+    @task
+    def see_genres(self):
+        self.client.get("/genres")
+    
+    @task
+    def get_genre(self):
+        self.client.get("/genres/1")
+    

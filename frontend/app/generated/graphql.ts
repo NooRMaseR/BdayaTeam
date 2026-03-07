@@ -21,8 +21,10 @@ export enum MemberMemberStatusChoices {
   Fired = 'FIRED',
   /** Normal */
   Normal = 'NORMAL',
-  /** Warning */
-  Warning = 'WARNING'
+  /** Warning1 */
+  Warning_1 = 'WARNING_1',
+  /** Warning2 */
+  Warning_2 = 'WARNING_2'
 }
 
 export type MemberType = {
@@ -68,12 +70,13 @@ export type SettingsType = {
 
 export type TrackType = {
   __typename?: 'TrackType';
-  description?: Maybe<Scalars['String']['output']>;
+  arDescription: Scalars['String']['output'];
+  enDescription: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  image?: Maybe<Scalars['String']['output']>;
+  image: Scalars['String']['output'];
   members: Array<MemberType>;
+  name: Scalars['String']['output'];
   prefix: Scalars['String']['output'];
-  track: Scalars['String']['output'];
 };
 
 export type SettingsSiteImageQueryVariables = Exact<{ [key: string]: never; }>;
@@ -111,7 +114,7 @@ export type Get_Track_ImageQueryVariables = Exact<{
 }>;
 
 
-export type Get_Track_ImageQuery = { __typename?: 'Query', track?: { __typename?: 'TrackType', image?: string | null } | null };
+export type Get_Track_ImageQuery = { __typename?: 'Query', track?: { __typename?: 'TrackType', image: string } | null };
 
 export type Get_Member_CodeQueryVariables = Exact<{ [key: string]: never; }>;
 

@@ -2,7 +2,9 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from phonenumber_field.modelfields import PhoneNumberField
 from django.core.exceptions import ValidationError
 from imagekit.models import ProcessedImageField
+from django.shortcuts import get_object_or_404
 from django.db import models
+
 
 # Create your models here.
 class BdayaUserManager(BaseUserManager):
@@ -37,13 +39,14 @@ class UserRole(models.TextChoices):
     
 
 class Track(models.Model):
-    track = models.CharField(max_length=40, unique=True)
+    name = models.CharField(max_length=40, unique=True)
     prefix = models.CharField(max_length=3, unique=True)
-    description = models.TextField(blank=True, null=True)
-    image = ProcessedImageField(upload_to="public/tracks", format="webP", null=True, blank=True) # type: ignore
+    en_description = models.TextField()
+    ar_description = models.TextField()
+    image = ProcessedImageField(upload_to="public/tracks", format="webP") # type: ignore
 
     def __str__(self):
-        return self.track
+        return self.name
     
 class TrackCounter(models.Model):
     track = models.OneToOneField(Track, on_delete=models.CASCADE)
@@ -76,11 +79,16 @@ class BdayaUser(AbstractBaseUser, PermissionsMixin):
     def is_member(self) -> bool:
         return self.role == UserRole.MEMBER
     
+    @property
+    def member(self):
+        from member.models import Member
+        return get_object_or_404(Member.objects.only("code"), email=self.email)
+    
     def clean(self) -> None:
         if (self.is_technical or self.is_member) and self.track is None:
-            raise ValidationError(f"Track is requeired for {self.role} role")
+            raise ValidationError(f"Track is required for {self.role} role")
         elif self.is_organizer and self.track:
-            raise ValidationError(f"{self.role} cannot have a track")
+            raise ValidationError(f"an {self.role} cannot have a track")
         return super().clean()
 
     def __str__(self):

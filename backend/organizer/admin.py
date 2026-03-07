@@ -40,7 +40,7 @@ class AttendanceAdmin(UnfoldModelAdmin):
 
 @admin.register(models.AttendanceAllowedDay)
 class AttendanceDayAdmin(UnfoldModelAdmin):
-    list_display = ("id", "day", "track__track")
+    list_display = ("id", "day", "track__name")
     list_display_links = ("id", "day")
     search_fields = ("day", )
     paginator = InfinitePaginator

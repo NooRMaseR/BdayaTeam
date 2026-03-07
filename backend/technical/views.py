@@ -2,7 +2,11 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import (
+    extend_schema,
+    inline_serializer,
+    OpenApiExample,
+)
 
 from core.models import Track
 from core.api_schemas import ForbiddenOnlyTechnical
@@ -10,22 +14,35 @@ from core.serializers import TrackNameOnlyMSGSerializer
 from core.permissions import IsTechnical, IsTechnicalOrMember
 
 from member.auth import RawJsonRenderer
-from member.models import ReciviedTask
-from member.api_schemas import RecivedTaskSerializer
-from member.serializers import MemberMSGSerializerForTask, RecivedFile, RecivedTaskMSGSerializer
+from member.models import Member, ReciviedTask
+from member.api_schemas import MemberTechnicalSerializer, RecivedTaskSerializer
+from member.serializers import (
+    MemberTechnicalMSGSerializer,
+    RecivedTaskMSGSerializer,
+)
 
 from django.utils import timezone
 from django.db import transaction
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404
-from django.db.models import Q, ExpressionWrapper, BooleanField
+from django.db.models.functions import Coalesce
+from django.db.models import (
+    ExpressionWrapper,
+    BooleanField,
+    IntegerField,
+    Prefetch,
+    Subquery,
+    OuterRef,
+    Count,
+    Q,
+)
 
+from member.views import MemberProfile
 from utils import DEFAULT_CACHE_DURATION, serializer_encoder
 from technical.serializers import TaskMSGSerializer
 from . import api_schemas, models
 
 # Create your views here.
-
 
 class Tasks(APIView):
     permission_classes = (IsTechnical,)
@@ -48,33 +65,37 @@ class Tasks(APIView):
     )
     def get(self, request: Request) -> Response:
         TRACK: Track = request.user.track
-        if cached := cache.get(self.get_cache_key(TRACK.track)):
+        if cached := cache.get(self.get_cache_key(TRACK.name)):
             return Response(cached)
-
-        data = (
-            models.Task.objects.filter(track=TRACK)
-            .annotate(
-                expired=ExpressionWrapper(
-                    Q(expires_at__lte=timezone.now()), output_field=BooleanField()
-                )
+        
+        sub = Subquery(
+            ReciviedTask.objects
+            .filter(
+                task_id=OuterRef('pk'), 
+                track=TRACK, 
+                signed=False
             )
-            .values("id", "task_number", "created_at", "expires_at", "description", "expired")
+            .values("task_id")
+            .annotate(cnt=Count('id'))
+            .values('cnt'),
+            output_field=IntegerField()
         )
         
-        encoded_data = serializer_encoder.encode(
-            [
-                TaskMSGSerializer(
-                    id=t["id"],
-                    task_number=t["task_number"],
-                    created_at=t["created_at"],
-                    expires_at=t["expires_at"],
-                    expired=t["expired"],
-                    description=t["description"],
-                )
-                for t in data
-            ]
+        data = (
+            models.Task.objects
+            .filter(track=TRACK)
+            .annotate(
+                expired=ExpressionWrapper(
+                    Q(expires_at__lte=timezone.now()), 
+                    output_field=BooleanField()
+                ),
+                unsigned_tasks_count=Coalesce(sub, 0)
+            )
+            .values("id", "task_number", "created_at", "expires_at", "description", "expired", "unsigned_tasks_count")
         )
-        cache.set(self.get_cache_key(TRACK.track), encoded_data, DEFAULT_CACHE_DURATION)
+        
+        encoded_data = serializer_encoder.encode(TaskMSGSerializer.from_queryset_values(data))
+        cache.set(self.get_cache_key(TRACK.name), encoded_data, DEFAULT_CACHE_DURATION)
         return Response(encoded_data)
 
     @extend_schema(
@@ -96,7 +117,7 @@ class Tasks(APIView):
         serializer = api_schemas.TaskSerializer(data=request.data, context={'track': request.user.track})
         if serializer.is_valid():
             serializer.save(track=request.user.track)
-            cache.delete(self.get_cache_key(request.user.track.track))
+            cache.delete(self.get_cache_key(request.user.track.name))
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -139,14 +160,7 @@ class TaskView(APIView):
         )
         
         encoded_data = serializer_encoder.encode(
-            TaskMSGSerializer(
-                id=data["id"],
-                task_number=data["task_number"],
-                created_at=data["created_at"],
-                expires_at=data["expires_at"],
-                expired=data["expired"],
-                description=data["description"],
-            )
+            TaskMSGSerializer.from_model_values(data)
         )
         cache.set(self.get_cache_key(task_id), encoded_data, DEFAULT_CACHE_DURATION)
         return Response(encoded_data)
@@ -178,22 +192,33 @@ class TaskView(APIView):
             data_to_update["description"] = ex
             has_data = True
 
-        if has_data:
-            try:
-                models.Task.objects.filter(id=task_id).update(**data_to_update)
-                cache.delete(self.get_cache_key(task_id))
-                cache.delete(Tasks.get_cache_key(request.user.track.track))
-            except Exception as e:
-                return Response(
-                    {"details": repr(e)}, status=status.HTTP_400_BAD_REQUEST
-                )
-        return Response(status=status.HTTP_200_OK)
+        if not has_data:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            models.Task.objects.filter(id=task_id).update(**data_to_update)
+            cache.delete_many(
+                [
+                    self.get_cache_key(task_id),
+                    Tasks.get_cache_key(request.user.track.name)
+                ]
+            )
+            return Response()
+        except Exception as e:
+            return Response(
+                {"details": repr(e)}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     @transaction.atomic
     def delete(self, request: Request, task_id: int) -> Response:
         get_object_or_404(models.Task, id=task_id).delete()
-        cache.delete(self.get_cache_key(task_id))
-        cache.delete(Tasks.get_cache_key(request.user.track.track))
+        cache.delete_many(
+            [
+                self.get_cache_key(task_id),
+                Tasks.get_cache_key(request.user.track.name),
+                MemberProfile.get_cache_key(request.user.member.code)
+            ]
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -211,12 +236,14 @@ class TasksFromMembers(APIView):
         return f"technical_recived_tasks_{track_name}:i{task_id}"
 
     def get(self, request: Request, task_id: int) -> Response:
-        CACHE_KEY = self.get_cache_key(request.user.track.track, task_id)
+        track: Track = request.user.track
+        CACHE_KEY = self.get_cache_key(track.name, task_id)
         if cached := cache.get(CACHE_KEY):
             return Response(cached)
 
         tasks = (
-            ReciviedTask.objects.select_related("track", "task", "member")
+            ReciviedTask.objects
+            .select_related("track", "task", "member")
             .prefetch_related("files")
             .defer(
                 "task__track",
@@ -228,36 +255,14 @@ class TasksFromMembers(APIView):
                 "member__joined_at",
                 "member__status",
             )
-            .filter(track=request.user.track, task_id=task_id, signed=False)
+            .filter(
+                track=track,
+                task_id=task_id,
+                signed=False
+            )
         )
         
-        encoded_data = serializer_encoder.encode([
-            RecivedTaskMSGSerializer(
-                task=TaskMSGSerializer(
-                    id=t.task.pk,
-                    task_number=t.task.task_number,
-                    created_at=t.task.created_at,
-                    expires_at=t.task.expires_at,
-                    description=t.task.description,
-                    expired=t.task.is_expired
-                ),
-                member=MemberMSGSerializerForTask(
-                    t.member.code,
-                    t.member.name,
-                ),
-                track=TrackNameOnlyMSGSerializer(
-                    t.track.pk,
-                    t.track.track,
-                ),
-                id=t.pk,
-                notes=t.notes,
-                degree=t.degree,
-                signed=t.signed,
-                recived_at=t.recived_at,
-                files_url=[RecivedFile(id=f.id, file_url=f.file.url) for f in t.files.all() if f.file] # type: ignore
-            )
-            for t in tasks
-        ])
+        encoded_data = serializer_encoder.encode(RecivedTaskMSGSerializer.from_queryset(tasks))
         cache.set(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
         return Response(encoded_data)
 
@@ -266,11 +271,128 @@ class TasksFromMembers(APIView):
             name="TaskSigning",
             fields={
                 "degree": api_schemas.serializers.IntegerField(),
+                "technical_notes": api_schemas.serializers.CharField(required=False),
             },
         ),
         responses={200: None},
     )
     def post(self, request: Request, task_id: int) -> Response:
-        ReciviedTask.objects.select_for_update().filter(id=task_id, track=request.user.track).update(degree=request.data.get("degree"), signed=True)  # type: ignore
-        cache.delete(self.get_cache_key(request.user.track.track, task_id))
+        track: Track = request.user.track
+        recived_task = get_object_or_404(ReciviedTask.objects.select_related('task', 'member'), id=task_id, track=track)
+        try:
+            ReciviedTask.objects.filter(id=recived_task.pk).update(
+                degree=int(request.data.get("degree")), # type: ignore
+                technical_notes=request.data.get('technical_notes'), # type: ignore
+                signed=True
+            )
+            
+            cache.delete_many(
+                [
+                    self.get_cache_key(track.name, recived_task.task.pk),
+                    MemberProfile.get_cache_key(recived_task.member.code),
+                    Tasks.get_cache_key(track.name)
+                ]
+            )
+        except Exception as e:
+            return Response({"details": repr(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response()
+
+
+class Members(APIView):
+    permission_classes = (IsTechnical,)
+    renderer_classes = (RawJsonRenderer,)
+    
+    @staticmethod
+    def get_cache_key(track_name: str) -> str:
+        return f"members_tech_{track_name}"
+
+    @extend_schema(responses={200: MemberTechnicalSerializer(many=True)})
+    def get(self, request: Request, track_name: str) -> Response:
+        TRACK = track_name.replace("%20", " ")
+        track_obj: Track = request.user.track
+        
+        if request.user.is_technical and track_obj.name != TRACK:
+            return Response({"details": f"Not Your Track {request.user.username}"}, status=status.HTTP_403_FORBIDDEN)
+
+        CACHE_KEY = self.get_cache_key(track_name)
+        if cached_data := cache.get(CACHE_KEY):
+            return Response(cached_data)
+        
+        track_serialized = TrackNameOnlyMSGSerializer.from_model(track_obj)
+
+        members = (
+            Member.objects
+            .prefetch_related(
+                Prefetch(
+                    "tasks_sent",
+                    ReciviedTask.objects.select_related('task'),
+                    "prefetched_tasks"
+                )
+            )
+            .defer('joined_at')
+            .order_by("joined_at")
+            .filter(track=track_obj)
+        )
+        
+        data = MemberTechnicalMSGSerializer.from_queryset_with_track(members, track_serialized)
+        encoded_data = serializer_encoder.encode(data)
+        cache.set(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
+        return Response(encoded_data)
+    
+    @extend_schema(
+        request=inline_serializer(
+            "editMemberTask",
+            {
+                "code": api_schemas.serializers.CharField(),
+                "task_id": api_schemas.serializers.IntegerField(),
+                "field": api_schemas.serializers.ChoiceField(models.MemberTechEditType),
+                "value": api_schemas.serializers.CharField(),
+            },
+        ),
+        examples=[
+            OpenApiExample(
+                "Update a Field Example",
+                {
+                    "code": "c-2",
+                    "task_id": 1,
+                    "field": models.MemberTechEditType.DEGREE,
+                    "value": 2,
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Create Attendance Example",
+                {
+                    "code": "p-2",
+                    "task_id": 1,
+                    "field": models.MemberTechEditType.NOTES,
+                    "value": "nice job!!",
+                },
+                request_only=True,
+            ),
+        ],
+    )
+    def post(self, request: Request, track_name: str) -> Response:
+        code: str | None = request.data.get("code") # type: ignore
+        task_id: int | None = request.data.get("task_id") # type: ignore
+        value: str | int | None = request.data.get("value") # type: ignore
+        
+        if not value:
+            return Response({"details": "value is required"})
+        
+        try:
+            field = models.MemberTechEditType(request.data.get("field")) # type: ignore
+        except ValueError:
+            return Response({"details": "field not allowed"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        recivied_task = get_object_or_404(ReciviedTask.objects.only("id", "notes", "degree"), task_id=task_id, member__code=code)
+        
+        match field:
+            case models.MemberTechEditType.NOTES:
+                recivied_task.notes = str(value)
+            case models.MemberTechEditType.DEGREE:
+                recivied_task.degree = int(value)
+                
+        recivied_task.save()
+        cache.delete(self.get_cache_key(track_name))
         return Response()

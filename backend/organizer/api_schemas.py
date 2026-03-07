@@ -8,7 +8,6 @@ class AttendanceSmallDaysSerializer(serializers.ModelSerializer):
     
 
 class AttendanceDaysSerializer(serializers.ModelSerializer):
-    # track = TrackNameOnlySerializer(read_only=True)
     class Meta:
         model = models.AttendanceAllowedDay
         fields = ('id', "day")
