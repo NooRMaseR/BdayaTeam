@@ -219,6 +219,7 @@ class Register(APIView):
 
     @transaction.atomic
     def post(self, request: Request) -> Response:
+        print(request.COOKIES)
         serializer = api_schemas.RegisterMemberSerializer(data=request.data)
 
         if serializer.is_valid():
