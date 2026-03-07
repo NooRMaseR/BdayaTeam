@@ -34,7 +34,5 @@ class RawJsonRenderer(BaseRenderer):
     def render(self, data, accepted_media_type=None, renderer_context=None):
         if isinstance(data, bytes):
             return data
-        elif data is not None:
-            return serializer_encoder.encode(data)
-        else:
-            return data
+            
+        return serializer_encoder.encode(data)

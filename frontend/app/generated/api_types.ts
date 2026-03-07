@@ -100,22 +100,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/organizer/attendance/{track_name}/editor/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["organizer_attendance_editor_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/organizer/members/{track_name}/": {
         parameters: {
             query?: never;
@@ -125,7 +109,7 @@ export interface paths {
         };
         get: operations["organizer_members_list"];
         put?: never;
-        post?: never;
+        post: operations["organizer_members_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -176,6 +160,22 @@ export interface paths {
         post?: never;
         /** @description Very Dangores, Deletes all tracks and members and tasks and technicals. */
         delete: operations["reset_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/technical/members/{track_name}/with-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["technical_members_with_tasks_list"];
+        put?: never;
+        post: operations["technical_members_with_tasks_create"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -283,17 +283,17 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/tracks/{track_name}/delete/": {
+    "/api/tracks/{track_name}/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["tracks_retrieve"];
         put?: never;
         post?: never;
-        delete: operations["tracks_delete_destroy"];
+        delete: operations["tracks_destroy"];
         options?: never;
         head?: never;
         patch?: never;
@@ -329,6 +329,12 @@ export interface components {
          * @enum {string}
          */
         AttendenceSmallStatusEnum: "present" | "absent" | "excused";
+        /**
+         * @description * `notes` - notes
+         *     * `degree` - degree
+         * @enum {string}
+         */
+        FieldEnum: "notes" | "degree";
         ForbiddenOnlyTechnical: {
             /** @default Only technicals Allowed */
             details: string;
@@ -348,35 +354,41 @@ export interface components {
             collage_code: string;
             phone_number: string;
             bonus?: number;
-            /** Format: date-time */
-            readonly joined_at: string;
-            status?: components["schemas"]["MemberStatusEnum"];
+            status?: components["schemas"]["StatusB01Enum"];
         };
         MemberProfile: {
             name: string;
             code?: string;
             readonly track: components["schemas"]["TrackNameOnly"];
+            status?: components["schemas"]["StatusB01Enum"];
             readonly absents: number;
             total_tasks_sent: number;
             missing_tasks: number;
+            readonly tasks: components["schemas"]["RecivedTask"][];
         };
         MemberSerializerForTask: {
             code?: string;
             name: string;
         };
-        /**
-         * @description * `normal` - Normal
-         *     * `warning` - Warning
-         *     * `fired` - Fired
-         * @enum {string}
-         */
-        MemberStatusEnum: "normal" | "warning" | "fired";
+        MemberTechnical: {
+            code?: string;
+            readonly tasks: components["schemas"]["RecivedTaskSmall"][];
+            readonly track: components["schemas"]["TrackNameOnly"];
+            name: string;
+            /** Format: email */
+            email: string;
+            collage_code: string;
+            phone_number: string;
+            bonus?: number;
+            status?: components["schemas"]["StatusB01Enum"];
+        };
         RecivedTask: {
             readonly id: number;
             readonly task: components["schemas"]["TaskNoTrack"];
             readonly member: components["schemas"]["MemberSerializerForTask"];
             files_url: components["schemas"]["RecivedTaskFile"][];
             notes?: string | null;
+            technical_notes?: string | null;
             degree?: number | null;
             signed?: boolean;
             /** Format: date-time */
@@ -387,6 +399,13 @@ export interface components {
             readonly id: number;
             /** Format: uri */
             file?: string | null;
+        };
+        RecivedTaskSmall: {
+            readonly id: number;
+            readonly task: components["schemas"]["TaskSmall"];
+            readonly member_code: string;
+            technical_notes?: string | null;
+            degree?: number | null;
         };
         RegisterMember: {
             readonly code: string;
@@ -431,9 +450,19 @@ export interface components {
             /** Format: binary */
             hero_image?: string | null;
         };
+        /**
+         * @description * `normal` - Normal
+         *     * `warning 1` - Warning1
+         *     * `warning 2` - Warning2
+         *     * `fired` - Fired
+         * @enum {string}
+         */
+        StatusB01Enum: "normal" | "warning 1" | "warning 2" | "fired";
         Task: {
             readonly id: number;
             readonly expired: boolean;
+            /** @default 0 */
+            unsigned_tasks_count: number;
             task_number: number;
             /** Format: date-time */
             readonly created_at: string;
@@ -453,6 +482,8 @@ export interface components {
             track: number;
         };
         TaskRequest: {
+            /** @default 0 */
+            unsigned_tasks_count: number;
             task_number: number;
             /** Format: date-time */
             expires_at: string;
@@ -460,6 +491,11 @@ export interface components {
         };
         TaskSigningRequest: {
             degree: number;
+            technical_notes?: string;
+        };
+        TaskSmall: {
+            readonly id: number;
+            task_number: number;
         };
         TokenRefresh: {
             readonly access: string;
@@ -470,24 +506,26 @@ export interface components {
         };
         Track: {
             readonly id: number;
-            track: string;
-            description?: string | null;
+            name: string;
+            en_description: string;
+            ar_description: string;
             /** Format: uri */
-            image?: string | null;
+            image: string;
         };
         TrackNameOnly: {
             readonly id: number;
-            track: string;
+            name: string;
         };
         TrackNameOnlyRequest: {
-            track: string;
+            name: string;
         };
         TrackRequest: {
-            track: string;
+            name: string;
             prefix: string;
-            description?: string | null;
+            en_description: string;
+            ar_description: string;
             /** Format: binary */
-            image?: string | null;
+            image: string;
         };
         /**
          * @description * `attendance` - attendance
@@ -528,6 +566,12 @@ export interface components {
         };
         day_not_found: {
             field_name: string;
+        };
+        editMemberTaskRequest: {
+            code: string;
+            task_id: number;
+            field: components["schemas"]["FieldEnum"];
+            value: string;
         };
         "email-is-incorrect": {
             /** @default No BdayaUser matches the given query */
@@ -863,7 +907,28 @@ export interface operations {
             };
         };
     };
-    organizer_attendance_editor_create: {
+    organizer_members_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"][];
+                };
+            };
+        };
+    };
+    organizer_members_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -884,27 +949,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    organizer_members_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Member"][];
-                };
             };
         };
     };
@@ -993,6 +1037,51 @@ export interface operations {
         responses: {
             /** @description No response body */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    technical_members_with_tasks_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberTechnical"][];
+                };
+            };
+        };
+    };
+    technical_members_with_tasks_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["editMemberTaskRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1268,7 +1357,28 @@ export interface operations {
             };
         };
     };
-    tracks_delete_destroy: {
+    tracks_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Track"];
+                };
+            };
+        };
+    };
+    tracks_destroy: {
         parameters: {
             query?: never;
             header?: never;

@@ -1,20 +1,21 @@
 "use client";
 
 import React from 'react';
-import { API } from '../utils/api.client';
-import { usePathname } from 'next/navigation';
+import API from '../utils/api.client';
+import { usePathname } from '@/i18n/navigation';
 import { serverGraphQL } from '../utils/api_utils';
 import SessionTimeoutDialog from './session_timeout_dialog';
 import { GET_IMAGES_SETTINGS } from '../utils/graphql_helpers';
-import { useAppDispatch, useAppSelector } from '../utils/hooks';
 import type { SettingsImagesQuery } from '../generated/graphql';
-import { logout, setAllImage, setCredentials } from '../utils/states';
+import { useAuthStore, useSettingsStore } from '../utils/store';
 import LoadingAnimation from './loading_animations/loading_animation';
 
 export default function AuthLoader({ children }: { children: React.ReactNode }) {
-    const dispatch = useAppDispatch();
     const path = usePathname()
-    const isAuthed = useAppSelector(state => state.auth.isAuthed);
+    const isAuthed = useAuthStore(state => state.isAuthed);
+    const setCredentials = useAuthStore(state => state.setCredentials);
+    const logout = useAuthStore(state => state.logout);
+    const setImages = useSettingsStore(state => state.setImages);
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
     React.useEffect(() => {
@@ -29,16 +30,16 @@ export default function AuthLoader({ children }: { children: React.ReactNode }) 
             if (images.status === "fulfilled") {
                 if (images.value.data.allSettings) {
                     const { siteImage, heroImage } = images.value.data.allSettings;
-                    dispatch(setAllImage({
+                    setImages({
                         site_image: siteImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${siteImage}` : undefined,
                         hero_image: heroImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${heroImage}` : undefined
-                    }));
+                    });
                 };
             }
 
 
             if (authResponse.status === 'fulfilled' && authResponse.value.data) {
-                dispatch(setCredentials({
+                setCredentials({
                     isLoading: false,
                     isAuthed: true,
                     user: {
@@ -46,15 +47,15 @@ export default function AuthLoader({ children }: { children: React.ReactNode }) 
                         username: authResponse.value.data.username,
                         track: authResponse.value.data.track
                     }
-                }));
+                });
                 setIsLoading(false);
             } else {
-                dispatch(logout());
+                logout();
                 setIsLoading(false);
             }
         };
         req();
-    }, [dispatch]);
+    }, [logout, setCredentials, setImages]);
 
     if (isLoading) {
         return (

@@ -1,7 +1,9 @@
+import type { GridColDef, GridColumnGroupingModel, GridRowsProp } from "@mui/x-data-grid"
 
 export enum MemberStatus {
     NORMAL = "normal",
-    WARNING = "warning",
+    WARNING1 = "warning 1",
+    WARNING2 = "warning 2",
     FIRED = "fired",
 }
 
@@ -11,3 +13,8 @@ export enum AttendanceStatus {
     EXCUSED = "excused",
 }
 
+export type GetMemberGridType = {
+    rows: GridRowsProp,
+    columns: GridColDef[],
+    groupModel: GridColumnGroupingModel
+}

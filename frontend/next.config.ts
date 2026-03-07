@@ -6,7 +6,8 @@ const withNextIntl = createNextIntlPlugin();
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
-  allowedDevOrigins: ['helmet-structure-surgery-potatoes.trycloudflare.com'],
+  allowedDevOrigins: ['heavily-larry-commerce-contained.trycloudflare.com'],
+  output: "standalone",
   images: {
     remotePatterns: [
       {

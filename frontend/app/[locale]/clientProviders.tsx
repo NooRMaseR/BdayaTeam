@@ -2,13 +2,11 @@
 
 import { prefixer } from 'stylis';
 import { useLocale } from 'next-intl';
-import { Provider } from 'react-redux';
 import createCache from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
 import rtlPlugin from '@mui/stylis-plugin-rtl';
-import { makeStore, AppStore } from '../utils/store';
+import { type ReactNode, useMemo } from 'react';
 import { ProgressProvider } from '@bprogress/next/app';
-import { type ReactNode, useMemo, useRef } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 
@@ -25,15 +23,6 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   );
 };
 
-
-export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const storeRef = useRef<AppStore>(undefined);
-  if (!storeRef.current) {
-    storeRef.current = makeStore();
-  }
-  return <Provider store={ storeRef.current }> { children } </Provider>
-}
-
 export function RegisterThemeProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
   const isAr = locale === 'ar';
@@ -44,7 +33,6 @@ export function RegisterThemeProvider({ children }: { children: ReactNode }) {
     });
   }, [isAr]);
 
-  // 2. Create the Theme
   const theme = useMemo(() => {
     return createTheme({
       direction: isAr ? 'rtl' : 'ltr',

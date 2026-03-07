@@ -1,8 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from drf_spectacular.types import OpenApiTypes
 from rest_framework import status, serializers
+from drf_spectacular.types import OpenApiTypes
 from rest_framework.permissions import AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_spectacular.utils import (
@@ -16,21 +16,19 @@ from core.models import Track
 from core.api_schemas import RegisterMemberSerializer
 from core.permissions import IsOrganizer, IsTechnicalOrOrganizer
 
-from organizer.serializers import AttendanceDayMSGSerializer, AttendanceMSGSerializer, SiteSettingsMSGSerializer
+from organizer.serializers import AttendanceDayMSGSerializer, SiteSettingsMSGSerializer
+
+from member.serializers import TrackNameOnlyMSGSerializer, MemberORGMSGSerializer
 from member.api_schemas import MemberSerializer
 from member.auth import RawJsonRenderer
 from member.models import Member
-from member.serializers import (
-    TrackNameOnlyMSGSerializer,
-    MemberMSGSerializer, 
-)
 
 from django.http import Http404
 from django.db import transaction
 from django.core.cache import cache
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
-
 
 from .api_schemas import AttendanceDaysSerializer, SiteSettingsSerializer
 from utils import DEFAULT_CACHE_DURATION, serializer_encoder
@@ -45,73 +43,63 @@ from .models import (
 # Create your views here.
 
 class Members(APIView):
-    permission_classes = (IsTechnicalOrOrganizer,)
+    permission_classes = (IsOrganizer,)
     renderer_classes = (RawJsonRenderer,)
+    serializer_class = None
+
+    @staticmethod
+    def get_cache_key(track_name: str) -> str:
+        return f"members_{track_name}"
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [IsTechnicalOrOrganizer()]
+        return super().get_permissions()
 
     @extend_schema(responses={200: MemberSerializer(many=True)})
     def get(self, request: Request, track_name: str) -> Response:
         TRACK = track_name.replace("%20", " ")
-        
-        if request.user.is_technical and request.user.track.track != TRACK:
-            return Response({"details": f"Not Your Track {request.user.username}"}, status=status.HTTP_403_FORBIDDEN)
+        track: Track = request.user.track
 
-        CACHE_KEY = f"members_{TRACK}"
+        if request.user.is_technical and track.name != TRACK:
+            return Response(
+                {"details": f"Not Your Track {request.user.username}"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        CACHE_KEY = self.get_cache_key(track_name)
         if cached_data := cache.get(CACHE_KEY):
             return Response(cached_data)
-        
-        target_track = get_object_or_404(Track.objects.only("id", "track"), track=TRACK)
-        track_object = TrackNameOnlyMSGSerializer(id=target_track.pk, track=target_track.track)
+
+        target_track = get_object_or_404(
+            Track.objects.only("id", "name"), name=TRACK
+        )
+        track_serialized = TrackNameOnlyMSGSerializer.from_model(target_track)
 
         members = (
-            Member.objects.select_related("track")
-            .prefetch_related("attendances", 'attendances__date')
+            Member.objects.prefetch_related(
+                Prefetch(
+                    "attendances",
+                    Attendance.objects.select_related("date"),
+                )
+            )
+            .defer("joined_at")
             .filter(track=target_track)
             .order_by("joined_at")
-            .iterator(300)
         )
-        
-        data = [
-            MemberMSGSerializer(
-                code=m.code,
-                name=m.name,
-                email=m.email,
-                collage_code=m.collage_code,
-                phone_number=m.phone_number,
-                joined_at=m.joined_at,
-                status=m.status,
-                bonus=m.bonus,
-                track=track_object,
-                attendances=[
-                    AttendanceMSGSerializer(
-                        date=AttendanceDayMSGSerializer(
-                            id=a.date.id,
-                            day=a.date.day,
-                        ),
-                        status=a.status,
-                        excuse_reason=a.excuse_reason
-                    ) 
-                    for a in m.attendances.all() # type: ignore
-                ]
-            )
-            for m in members
-        ]
-        
+        data = MemberORGMSGSerializer.from_queryset_with_track(members, track_serialized)
+
         data = serializer_encoder.encode(data)
         cache.set(CACHE_KEY, data, DEFAULT_CACHE_DURATION)
         return Response(data)
-    
-    
-class MemberEdit(APIView):
-    serializer_class = None
-    permission_classes = (IsOrganizer,)
 
     def move_member_to_another_track(self, code: str, current_track: str, move_to_track: str) -> None:
         member = get_object_or_404(
-            Member.objects.defer("code", "bonus", "track", "joined_at"),
+            Member.objects.defer("code", "bonus", "name", "joined_at"),
             code=code,
-            track__track=current_track,
+            track__name=current_track,
         )
-        track = get_object_or_404(Track.objects.only("id"), track=move_to_track)
+        track = get_object_or_404(Track.objects.only("id"), name=move_to_track)
 
         serializer = RegisterMemberSerializer(
             data={
@@ -193,7 +181,7 @@ class MemberEdit(APIView):
         excuse: str | None = request.data.get("excuse")  # type: ignore
         code: str = request.data.get("code")  # type: ignore
         TRACK = track_name.replace("%20", " ")
-        CACHE_KEY = f"members_{TRACK}"
+        CACHE_KEY = self.get_cache_key(track_name)
 
         try:
             req_type: MemberEditType = MemberEditType(request.data.get("type"))  # type: ignore
@@ -203,6 +191,7 @@ class MemberEdit(APIView):
             )
 
         member: Member = get_object_or_404(Member, code=code)
+        
         match req_type:
             case MemberEditType.ATTENDANCE:
                 try:
@@ -228,7 +217,7 @@ class MemberEdit(APIView):
             case MemberEditType.DATA:
                 if field == "track":
                     self.move_member_to_another_track(code, TRACK, str(value))
-                    cache.delete(CACHE_KEY)
+                    cache.delete_many([CACHE_KEY, self.get_cache_key(str(value))])
                     return Response()
                 else:
                     settings = SiteSetting.get_solo()
@@ -242,6 +231,7 @@ class MemberEdit(APIView):
                     cache.delete(CACHE_KEY)
             case _:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
+                    
         return Response()
 
 
@@ -266,17 +256,11 @@ class AttendanceDayApi(APIView):
         if data := cache.get(CACHE_KEY):
             return Response(data)
 
-        days = AttendanceAllowedDay.objects.filter(
-            track__track=TRACK
-        ).values('id', 'day')
-        
-        encoded_data = serializer_encoder.encode([
-            AttendanceDayMSGSerializer(
-                id=day['id'],
-                day=day['day'],
-            ) 
-            for day in days
-        ])
+        days = AttendanceAllowedDay.objects.filter(track__name=TRACK).values("id", "day")
+
+        encoded_data = serializer_encoder.encode(
+            AttendanceDayMSGSerializer.from_queryset_values(days)
+        )
         cache.set(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
         return Response(encoded_data)
 
@@ -292,21 +276,18 @@ class AttendanceDayApi(APIView):
     def post(self, request: Request, track_name: str) -> Response:
         day = request.data.get("day")  # type: ignore
         TRACK = track_name.replace("%20", " ")
-        
+
         try:
-            if AttendanceAllowedDay.objects.filter(day=day, track__track=TRACK).exists():  # type: ignore
+            if AttendanceAllowedDay.objects.filter(day=day, track__name=TRACK).exists():
                 return Response(
                     {"details": "this day already exists."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            track = get_object_or_404(Track.objects.only("id"), track=TRACK)
+            track = get_object_or_404(Track.objects.only("id"), name=TRACK)
             attendance = AttendanceAllowedDay.objects.create(day=day, track=track)
             encoded_data = serializer_encoder.encode(
-                AttendanceDayMSGSerializer(
-                    id=attendance.pk,
-                    day=attendance.day
-                )
+                AttendanceDayMSGSerializer(id=attendance.pk, day=attendance.day)
             )
             cache.delete(self.get_cache_key(TRACK))
             return Response(
@@ -328,22 +309,10 @@ class AttendanceDayApi(APIView):
     def delete(self, request: Request, track_name: str) -> Response:
         day = request.query_params.get("day")
         TRACK = track_name.replace("%20", " ")
-        
-        query_set = AttendanceAllowedDay.objects.filter(day=day, track__track=TRACK)
-        
-        try:
-            if not query_set.exists():
-                return Response(
-                    {"details": "No Day Found"}, status=status.HTTP_400_BAD_REQUEST
-                )
 
-            query_set.delete()
-            cache.delete(self.get_cache_key(TRACK))
-            return Response()
-        except:
-            return Response(
-                {"details": "somthing went wrong"}, status=status.HTTP_400_BAD_REQUEST
-            )
+        get_object_or_404(AttendanceAllowedDay, day=day, track__name=TRACK).delete()
+        cache.delete(self.get_cache_key(TRACK))
+        return Response()
 
     @extend_schema(
         request=inline_serializer(
@@ -365,16 +334,16 @@ class AttendanceDayApi(APIView):
         old_day = request.data.get("oldDay")  # type: ignore
         new_day = request.data.get("newDay")  # type: ignore
         TRACK = track_name.replace("%20", " ")
-        
+
         attendace = get_object_or_404(
             AttendanceAllowedDay.objects.only("day"),
-            track__track=TRACK,
+            track__name=TRACK,
             day=old_day,
         )
         if attendace.day == new_day:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        attendace.day = new_day  # type: ignore
+        attendace.day = new_day # type: ignore
         attendace.save()
         cache.delete(self.get_cache_key(TRACK))
         return Response()
@@ -385,7 +354,7 @@ class SettingsApi(APIView):
     serializer_class = SiteSettingsSerializer
     permission_classes = (IsOrganizer,)
     CACHE_KEY = "settings"
-    
+
     def get_renderers(self):
         if self.request.method == "GET":
             return [RawJsonRenderer()]
@@ -401,12 +370,7 @@ class SettingsApi(APIView):
             return Response(cached)
 
         site = SiteSetting.get_solo()
-        encoded_data = serializer_encoder.encode(SiteSettingsMSGSerializer(
-            site_image=site.site_image.url,
-            hero_image=site.hero_image.url,
-            is_register_enabled=site.is_register_enabled,
-            organizer_can_edit=site.organizer_can_edit
-        ))
+        encoded_data = SiteSettingsMSGSerializer.from_model(site).encode()
         cache.set(self.CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
         return Response(encoded_data)
 

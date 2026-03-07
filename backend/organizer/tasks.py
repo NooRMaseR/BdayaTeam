@@ -1,6 +1,6 @@
 from huey import crontab
+from member.models import Member
 from django.utils import timezone
-from member.models import Member, MemberStatus
 from huey.contrib.djhuey import db_periodic_task
 from .models import Attendance, AttendanceAllowedDay, AttendanceStatus
 
@@ -18,8 +18,3 @@ def make_rest_members_absents():
     Attendance.objects.bulk_create(marked_atts, batch_size=300, ignore_conflicts=True)
     
     return f"{len(marked_atts)} Members has been marked as absent"
-
-@db_periodic_task(crontab(day_of_week='5'),retries=3, retry_delay=10)
-def delete_fired_members():
-    count, _ = Member.objects.filter(status=MemberStatus.FIRED).delete()
-    return f"{count} Members Deleted"

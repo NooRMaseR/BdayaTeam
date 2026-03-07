@@ -35,7 +35,7 @@ DEBUG = False
 ALLOWED_HOSTS = (
     "localhost",
     "127.0.0.1",
-    "helmet-structure-surgery-potatoes.trycloudflare.com"
+    "heavily-larry-commerce-contained.trycloudflare.com"
 )
 
 # Application definition
@@ -74,6 +74,7 @@ MIDDLEWARE = (
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -84,7 +85,7 @@ MIDDLEWARE = (
 SECURE_CSP = {
     "default-src": [CSP.SELF],
     "script-src": [CSP.SELF],
-    "style-src": [CSP.SELF, CSP.UNSAFE_INLINE], # Allows inline styles
+    "style-src": [CSP.SELF, CSP.UNSAFE_INLINE],
     "img-src": [CSP.SELF, "data:"],
 }
 
@@ -133,7 +134,7 @@ GRAPHENE = {
 ROOT_URLCONF = "BdayaTeam.urls"
 AUTH_USER_MODEL = "core.BdayaUser"
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  #! set to smtp in production
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USE_TLS = True
@@ -171,7 +172,13 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST"),
         "PORT": os.getenv("DB_PORT"),
-        "OPTIONS": {"pool": {"min_size": 5, "max_size": 18, "timeout": 15}},
+        "OPTIONS": {
+            "pool": {
+                "min_size": 5,
+                "max_size": 18, # 18 * 5 workers = 90 connection to DB
+                "timeout": 15
+            }
+        },
     }
 }
 
@@ -183,9 +190,27 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": 300
+            }
         },
-        "CONNECTION_POOL_KWARGS": {"max_connections": 100},
     }
+}
+
+LOGGING = {
+   'version': 1,
+   'disable_existing_loggers': False,
+   'handlers': {
+       'console': {
+           'class': 'logging.StreamHandler',
+       },
+   },
+   'loggers': {
+       'django.db': {
+           'level': 'DEBUG',
+           'handlers': ['console'],
+       },
+   },
 }
 
 HUEY = {
@@ -200,16 +225,6 @@ HUEY = {
     },
     "connection": {"host": "127.0.0.1", "port": 6379, "db": 0},
 }
-
-# STORAGES = {
-#     "default": {
-#       "BACKEND": "django.core.files.storage.filesystem.FileSystemStorage"
-#     },
-#     "staticfiles": {
-#         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-#     },
-# }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -237,11 +252,13 @@ LANGUAGE_CODE = "en"
 
 TIME_ZONE = "Africa/Cairo"
 
-USE_I18N = False
+USE_I18N = True
 
 USE_TZ = True
 
 LOCALE_PATHS = (BASE_DIR / "locales",)
+
+LANGUAGE_COOKIE_NAME = 'NEXT_LOCALE'
 
 LANGUAGES = (
     ("en", _("English")),
@@ -258,9 +275,9 @@ STATIC_ROOT = BASE_DIR / "static_files"
 MEDIA_URL = "api/media/"
 MEDIA_ROOT = BASE_DIR / "media_files"
 
-# UNFOLD = {
-# "SHOW_LANGUAGES": True,
-# }
+UNFOLD = {
+    "SHOW_LANGUAGES": True,
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -270,17 +287,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # security settings
 
 CORS_ALLOW_CREDENTIALS = True
-# CORS_ALLOW_ALL_ORIGINS = True #! danger
 CORS_ALLOWED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
-    "https://helmet-structure-surgery-potatoes.trycloudflare.com",
+    "https://heavily-larry-commerce-contained.trycloudflare.com",
 )
 
 CSRF_TRUSTED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
-    "https://helmet-structure-surgery-potatoes.trycloudflare.com",
+    "https://heavily-larry-commerce-contained.trycloudflare.com",
 )
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"
@@ -296,7 +312,4 @@ SESSION_COOKIE_SECURE = True  #! True in production (HTTPS)
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-
-# SECURE_BROWSER_XSS_FILTER = False
-# SECURE_CONTENT_TYPE_NOSNIFF = False
 X_FRAME_OPTIONS = "SAMEORIGIN"

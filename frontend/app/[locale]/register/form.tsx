@@ -13,15 +13,14 @@ import Select from '@mui/material/Select';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 
-import { useAppDispatch, useAppSelector } from '../../utils/hooks';
+import { useAuthStore, useSettingsStore } from '../../utils/store';
 import type { components } from '../../generated/api_types';
-import { setCredentials } from '../../utils/states';
 import { Link, useRouter } from '@/i18n/navigation';
-import { API } from '../../utils/api.client';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import styles from "./register.module.css";
 import { useForm } from 'react-hook-form';
+import API from '../../utils/api.client';
 import { toast } from 'sonner';
 import Image from 'next/image';
 
@@ -33,26 +32,33 @@ type RegisterFormProps = {
 type SendRegister = components['schemas']['RegisterMemberRequest'];
 
 export default function RegisterForm({ tracks, canRegister = false }: RegisterFormProps) {
-  const { handleSubmit, register, setError, formState: { errors } } = useForm<SendRegister>();
-  const siteImage = useAppSelector(state => state.settings.site_image);
+  const { handleSubmit, register, setError, formState: { errors } } = useForm<SendRegister>({defaultValues: {phone_number: "+20"}});
+  const siteImage = useSettingsStore(state => state.site_image);
+  const setCredentials = useAuthStore(state => state.setCredentials);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const tr = useTranslations('registerPage');
-  const dispatch = useAppDispatch();
   const router = useRouter();
 
   const onSubmit = async (data: SendRegister) => {
     setIsLoading(true);
     const submitRegister = async () => {
+      const editedData = data;
+      editedData.collage_code = editedData.collage_code.toUpperCase();
+      
+      if (!editedData.phone_number.startsWith("+2")) {
+        editedData.phone_number = `+2${editedData.phone_number}`;
+      }
+
       const { data: body, error, response } = await API.POST(
         "/api/register/",
         {
-          body: data
-        }
+          body: editedData
+        },
       );
 
       if (response.ok && body) {
-        dispatch(setCredentials({ isLoading: false, isAuthed: true, user: { username: body.name, role: "member", track: body.track } }));
-        router.replace(`/member/${body.track?.track}`);
+        setCredentials({ isLoading: false, isAuthed: true, user: { username: body.name, role: "member", track: body.track } });
+        router.replace(`/member/${body.track?.name}`);
         return await Promise.resolve(body);
       } else {
         if (error && error instanceof Object) {
@@ -89,7 +95,7 @@ export default function RegisterForm({ tracks, canRegister = false }: RegisterFo
           siteImage && <Image src={siteImage} alt='Team Bdaya' width={150} height={0} loading='eager' unoptimized />
         }
         <h2 className='text-white text-2xl'>{tr('register')}</h2>
-        {!canRegister ? <h1 className="text-white text-2xl">Register is Closed for Now</h1> :
+        {!canRegister ? <h1 className="text-white text-2xl">{tr("regClosed")}</h1> :
           <>
             <Box className="flex gap-4 justify-center items-center w-full">
               <EmailOutlinedIcon sx={{ color: "white" }} />
@@ -128,7 +134,7 @@ export default function RegisterForm({ tracks, canRegister = false }: RegisterFo
             <Box className='flex gap-4 justify-center items-center w-full'>
               <AssignmentIndOutlinedIcon sx={{ color: "white" }} />
               <TextField
-                {...register("collage_code", { required: true, pattern: { value: /^[CMA]\d{7}$/g, message: "This is Not a Valid Code" } })}
+                {...register("collage_code", { required: true })}
                 variant='filled'
                 label={tr('collage')}
                 fullWidth
@@ -165,7 +171,7 @@ export default function RegisterForm({ tracks, canRegister = false }: RegisterFo
                   required
                   sx={{ bgcolor: "whitesmoke", borderRadius: "0.5rem" }}
                 >
-                  {tracks.length > 0 ? tracks.map(track => <MenuItem value={track.id} key={track.id}>{track.track}</MenuItem>) : null}
+                  {tracks.length > 0 ? tracks.map(track => <MenuItem value={track.id} key={track.id}>{track.name}</MenuItem>) : null}
                 </Select>
               </FormControl>
             </Box>

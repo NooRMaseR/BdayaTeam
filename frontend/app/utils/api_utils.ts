@@ -2,6 +2,9 @@
 'use server';
 
 import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
+import type { SettingsSiteImageQuery } from "../generated/graphql";
+import { GET_SITE_IMAGE_SETTINGS } from "./graphql_helpers";
+import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { gql } from "graphql-tag";
 
@@ -11,11 +14,13 @@ export async function getAuthCookies() {
     const access_token = cookieStore.get("access_token")?.value;
     const refresh_token = cookieStore.get("refresh_token")?.value;
     const csrfToken = cookieStore.get("csrftoken")?.value;
+    const locale = cookieStore.get("NEXT_LOCALE")?.value;
 
     return {
-        "token": access_token,
-        "refresh": refresh_token,
-        "csrf": csrfToken
+        token: access_token,
+        refresh: refresh_token,
+        csrf: csrfToken,
+        locale
     }
 }
 
@@ -58,7 +63,7 @@ function parseCookie(cookie: string) {
 
 export const fetchWithCookies: typeof fetch = async (url, options) => {
     const cookieStore = await cookies();
-    const { token, csrf } = await getAuthCookies();
+    const { token, csrf, locale } = await getAuthCookies();
 
     const headers = new Headers(options?.headers);
     if (!headers.get("Content-Type")) {
@@ -71,6 +76,10 @@ export const fetchWithCookies: typeof fetch = async (url, options) => {
 
     if (csrf) {
         headers.set("X-CSRFToken", csrf);
+    }
+
+    if (locale) {
+        headers.set("Accept-Language", locale);
     }
 
     const response = await fetch(url, {
@@ -132,11 +141,22 @@ export async function serverGraphQL<T>(query: string, variables: Record<string, 
             success: true
         };
     } catch (error) {
-        // console.error("GraphQL Error:", error);
         return {
             data: {} as T,
             error: error,
             success: false
         };
     }
+}
+
+export async function fetchSiteImage() {
+    return await serverGraphQL<SettingsSiteImageQuery>(GET_SITE_IMAGE_SETTINGS)
+}
+
+export async function revalidateTagName(tag: string) {
+    revalidateTag(tag, 'max');
+}
+
+export async function revalidateTracks() {
+    await revalidateTagName("tracks");
 }

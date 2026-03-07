@@ -294,6 +294,12 @@ sudo nano /etc/nginx/sites-available/bdaya.conf
 this will be our proxy to serve the backend and the frontend, now, add these configs **edit based on your paths**
 
 ```nginx
+upstream nextjs_cluster {
+    server localhost:3000;
+    server localhost:3001;
+    server localhost:3002;
+}
+
 server {
     listen 80;
     server_name localhost;
@@ -364,7 +370,7 @@ server {
     # --- server NextJS ---
     location / {
         include proxy_params;
-        proxy_pass http://localhost:3000;
+        proxy_pass http://nextjs_cluster;
         proxy_send_timeout 30s;
         proxy_read_timeout 30s;
         proxy_connect_timeout 30s;
@@ -375,10 +381,26 @@ server {
     }
 
     # --- media cache ---
-    location ~* \.(ico|png|jpg|jpeg|svg|webp)$ {
+    location ~* \.(png|jpg|jpeg|svg|webp)$ {
         expires 1M;
         add_header Cache-Control "public";
         access_log off;
+    }
+
+    # --- NextJS favicon ---
+    location = /favicon.ico {
+        root /home/kali/BdayaTeam/frontend/public;
+        access_log off;
+        log_not_found off;
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # --- NextJS static ---
+    location /_next/static/ {
+        alias /home/kali/BdayaTeam/frontend/.next/static/;
+        access_log off;
+        expires 2d;
     }
 }
 ```

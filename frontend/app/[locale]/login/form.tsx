@@ -7,30 +7,29 @@ import Box from '@mui/material/Box';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
-import { useAppDispatch, useAppSelector } from '../../utils/hooks';
+import { useAuthStore, useSettingsStore } from '../../utils/store';
 import type { components } from '../../generated/api_types';
 import PasswordField from '../../components/password';
-import { setCredentials } from '../../utils/states';
 import { Link, useRouter } from '@/i18n/navigation';
-import { API } from '../../utils/api.client';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
+import API from '../../utils/api.client';
 import styles from "./login.module.css";
 import { useState } from 'react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 
-
-
 type GetLogIn = components['schemas']['Login'];
 type SendLogIn = components['schemas']['loginRequest'];
 
+export const revalidate = 1000;
+
 export default function LogInForm() {
   const { handleSubmit, register, formState: { errors } } = useForm<SendLogIn>();
-  const siteImage = useAppSelector(state => state.settings.site_image);
+  const siteImage = useSettingsStore(state => state.site_image);
+  const setCredentials = useAuthStore(state => state.setCredentials);
   const [isLoading, setIsloading] = useState<boolean>(false);
   const tr = useTranslations('loginPage');
-  const dispatch = useAppDispatch();
   const router = useRouter();
 
   const onSubmit = async (data: SendLogIn) => {
@@ -49,14 +48,14 @@ export default function LogInForm() {
       {
         loading: tr('loading'),
         success(data) {
-          dispatch(setCredentials({ isLoading: false, isAuthed: true, user: data }));
+          setCredentials({ isLoading: false, isAuthed: true, user: data });
           switch (data.role) {
             case "organizer":
               router.replace(`/${data.role}`);
               break;
               
             default:
-              router.replace(`/${data.role}/${data.track?.track}`);
+              router.replace(`/${data.role}/${data.track?.name}`);
               break;
           };
           return tr("welcome", {username: data.username})
@@ -105,7 +104,7 @@ export default function LogInForm() {
         </Box>
         <Box className='flex gap-4 justify-center items-center' sx={{ width: "100%" }}>
           <LockOutlinedIcon sx={{ color: "white" }} />
-          <PasswordField {...register("password", { required: true, minLength: 8 })}/>
+          <PasswordField {...register("password", { required: true, minLength: {value: 8, message: tr('invalidLength')} })} error={!!errors.password} helperText={errors.password?.message}/>
         </Box>
         <Link href="register" className='text-white'>{tr('noAcc')}</Link>
         <Button type='submit' fullWidth variant='contained' loadingPosition='start' loading={isLoading}>{tr('login')}</Button>

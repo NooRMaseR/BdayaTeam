@@ -1,8 +1,8 @@
 import NavigationCard from '@/app/components/navigation_card';
 import { getTranslations } from 'next-intl/server';
 import Typography from '@mui/material/Typography';
-import { API } from '@/app/utils/api.server';
 import BodyM from '@/app/components/bodyM';
+import API from '@/app/utils/api.server';
 
 export default async function TasksPage() {
     const [tr, { data, response }] = await Promise.all(
@@ -13,7 +13,7 @@ export default async function TasksPage() {
     );
 
     if (!response.ok) {
-        return <Typography component={'h2'} variant='h2'>Somthing Went Wrong with status { response.status }</Typography>
+        return <Typography component={'h2'} variant='h2'>Somthing Went Wrong with status {response.status}</Typography>
     }
     return (
         <BodyM>
@@ -22,8 +22,9 @@ export default async function TasksPage() {
                     <NavigationCard
                         key={task.id}
                         url={`tasks/${task.id}`}
-                        title={tr('task', {number: task.task_number})}
+                        title={tr('task', { number: task.task_number })}
                         desc={task.description}
+                        badgeContent={task.unsigned_tasks_count}
                     />
                 )}
                 <NavigationCard

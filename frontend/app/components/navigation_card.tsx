@@ -1,6 +1,7 @@
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import CardMedia from "@mui/material/CardMedia";
+import Badge from "@mui/material/Badge";
 import Card from "@mui/material/Card";
 
 import { Link } from "@/i18n/navigation";
@@ -12,33 +13,62 @@ type NavigationCardProps = {
   imageUrl?: string | null;
   title: string;
   desc: string | ReactNode;
+  badgeContent?: number;
 };
 
-export default function NavigationCard({ title, desc, imageUrl, url = `#${title}` }: NavigationCardProps) {
-  if (desc instanceof String) {
-
+const RenderLinkOrDiv = ({ url, children }: { url?: string, children: ReactNode }) => {
+  if (!url) {
+    return <div className="h-full block">{children}</div>;
   }
+
+  if (url.startsWith('http')) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className="h-full block">
+        {children}
+      </a>
+    );
+  }
+  return <Link href={url} className="h-full block">{children}</Link>;
+};
+
+
+export default function NavigationCard({ title, desc, imageUrl, url, badgeContent = 0 }: NavigationCardProps) {
   return (
-    <Link href={url} className="h-auto">
-      <Card id={title} className="hover:shadow-xl transition-shadow duration-250 border-t-4 border-transparent hover:border-blue-500 hover:scale-105 cursor-pointer" sx={{ transition: "scale ease-out 250ms, border-color ease-out 250ms;", width: "20rem", height: "19rem" }}>
-        {
-          imageUrl
-            ? <CardMedia sx={{ position: 'relative', width: 'auto', height: "11rem" }}>
-              <Image src={imageUrl} alt={`track ${title} Image`} fill unoptimized />
+    <RenderLinkOrDiv url={url}>
+
+      <Card
+        id={title}
+        className="hover:shadow-xl border-t-4 border-transparent hover:border-blue-500 hover:-translate-y-2 cursor-pointer flex flex-col"
+        sx={{ transition: "translate ease-out 250ms, border-color ease-out 250ms;", width: "20rem", height: "19rem" }}
+      >
+        <Badge className="flex flex-col" badgeContent={badgeContent} color="error" anchorOrigin={{ vertical: "top", horizontal: "left" }} sx={{ mt: "1rem", ml: "1rem"}}>
+
+          {imageUrl && (
+            <CardMedia sx={{ position: 'relative', width: '100%', height: "11rem" }}>
+              <Image
+                src={imageUrl}
+                alt={`${title} Track`}
+                fill
+                style={{ objectFit: 'cover' }}
+                unoptimized
+              />
             </CardMedia>
-            : null
-        }
-        <CardContent className={`flex flex-col items-center text-center p-8 justify-center ${!imageUrl ? 'h-full' : ''}`}>
-          <Typography component={'h5'} variant="h5" sx={{ fontWeight: "bold" }}>{title}</Typography>
-          {
-            desc instanceof String ? (
-              <Typography component={'p'} variant="subtitle1" color="textSecondary" className="leading-relaxed line-clamp-2">
+          )}
+
+          <CardContent className={`flex flex-col items-center text-center p-6 grow justify-center ${!imageUrl ? 'h-full' : ''}`}>
+            <Typography component="h5" variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+              {title}
+            </Typography>
+
+            {typeof desc === 'string' ? (
+              <Typography component="p" variant="subtitle2" color="text.secondary" className="leading-relaxed line-clamp-2">
                 {desc}
               </Typography>
-            ) : desc
-          }
-        </CardContent>
+            ) : (
+              desc
+            )}
+          </CardContent>
+        </Badge>
       </Card>
-    </Link>
-  )
+    </RenderLinkOrDiv>);
 }

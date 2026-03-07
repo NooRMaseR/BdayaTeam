@@ -1,8 +1,13 @@
+from enum import StrEnum
 from django.db import models
 from core.models import Track
 from django.utils import timezone
 
 # Create your models here.
+
+class MemberTechEditType(StrEnum):
+    NOTES = "notes"
+    DEGREE = "degree"
 
 class Task(models.Model):
     task_number = models.PositiveSmallIntegerField()

@@ -24,7 +24,7 @@ def create_user_from_member(sender, instance: member_models.Member, created: boo
             instance.email,
             GENERATED_PASSWORD,
             instance.code,
-            instance.track.track
+            instance.track.name
         )
         
 @receiver(signals.post_delete, sender=core_models.BdayaUser)

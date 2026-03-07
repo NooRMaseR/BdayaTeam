@@ -1,8 +1,8 @@
 import NavigationCard from '@/app/components/navigation_card';
 import { getTranslations } from 'next-intl/server';
 import Typography from '@mui/material/Typography';
-import { API } from '@/app/utils/api.server';
 import BodyM from '@/app/components/bodyM';
+import API from '@/app/utils/api.server';
 
 export default async function TasksPage() {
     const [tr, { data, response }] = await Promise.all(
@@ -18,7 +18,7 @@ export default async function TasksPage() {
     return (
         <BodyM>
             <div className="w-full flex gap-6 justify-center flex-wrap mt-10">
-                {data?.map(task =>
+                {data && data.length > 0 ? data.map(task =>
                     <NavigationCard
                         key={task.id}
                         url={`tasks/${task.id}`}
@@ -28,7 +28,7 @@ export default async function TasksPage() {
                             <Typography>{task.expired ? tr('expired') : ''}</Typography>
                         </div>}
                     />
-                )}
+                ) : <Typography variant='h4' component='h4'>{tr('noTasks')}</Typography>}
             </div>
         </BodyM>
     )

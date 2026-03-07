@@ -3,7 +3,7 @@ import re
 
 
 STUDENT_CODE_VALID = re.compile(r"^\w-\d+$")
-COLLAGE_CODE_VALID = re.compile(r"^[MCA]\d{7}$", re.IGNORECASE)
+COLLAGE_CODE_VALID = re.compile(r"^[MCAE]{1}\d+$", re.IGNORECASE)
 
 def validate_member_code(code: str) -> None:
     if not re.match(STUDENT_CODE_VALID, code):

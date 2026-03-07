@@ -10,23 +10,25 @@ import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
 import List from '@mui/material/List';
 
-import { useAppDispatch, useAppSelector } from '@/app/utils/hooks';
+import { useAuthStore, useSettingsStore } from '@/app/utils/store';
 import { Link, useRouter } from '@/i18n/navigation';
 import LanguageSwitcher from './language_switcher';
-import { API } from '@/app/utils/api.client';
+import { getHomeUrl } from "../utils/api.client";
 import { useTranslations } from 'next-intl';
-import { logout } from '@/app/utils/states';
+import API from '@/app/utils/api.client';
+import { Box } from '@mui/material';
 import { useState } from 'react';
 import Image from 'next/image';
 
 
 export default function Header() {
-  const { isAuthed, user } = useAppSelector((state) => state.auth);
-  const site_image = useAppSelector((state) => state.settings.site_image);
+  const isAuthed = useAuthStore((state) => state.isAuthed);
+  const user = useAuthStore((state) => state.user);
+  const site_image = useSettingsStore((state) => state.site_image);
+  const logout = useAuthStore(state => state.logout)
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
-  const url = user?.role === "member" || user?.role === 'technical' ? `/${user?.role}/${user?.track?.track}` : `/${user?.role}`;
   const tr = useTranslations('header');
-  const dispatch = useAppDispatch();
+  const url = getHomeUrl(user);
   const router = useRouter();
 
 
@@ -36,7 +38,7 @@ export default function Header() {
   const logoutF = async () => {
     const { response } = await API.GET("/api/logout/");
     if (response.ok) {
-      dispatch(logout());
+      logout();
       router.replace("/login");
     }
   }
@@ -47,7 +49,9 @@ export default function Header() {
         <Link href="/">
           {
             site_image
-              ? <Image src={site_image} alt='Team Bdaya' loading='eager' width={100} height={50} unoptimized />
+              ? <Box sx={{ width: "100px", height: "50px", position: "relative" }} >
+                <Image src={site_image} alt='Team Bdaya' loading='eager' fill unoptimized />
+              </Box>
               : <Typography component='h5' variant='h5'>{tr('teamBdaya')}</Typography>
           }
         </Link>
@@ -58,35 +62,32 @@ export default function Header() {
           {
             isAuthed
               ? (
-                <ListItem sx={{ display: { xs: "none", sm: "flex", width: "max-content" }, gap: '1rem' }}>
-                  <Link href={url}>
-                  <Button sx={{width: "max-content"}} id='Home-Button' variant='contained'>{tr('home')}</Button>
-                  </Link>
-                <Button sx={{width: "max-content"}} variant='contained' onClick={logoutF}>{tr('logout')}</Button>
-                </ListItem>
-              )
-              : null
-          }
-          {
-            isAuthed
-              ? (
-                <ListItem sx={{ display: { xs: 'block', sm: 'none', paddingInline: 0 } }}>
-                  <IconButton onClick={openDrawer}>
-                    <MenuIcon sx={{ color: 'white' }} />
-                  </IconButton>
-                  <Drawer open={drawerOpen} keepMounted onClose={closeDrawer} anchor='right'>
-                    <List>
-                      <ListItem>
-                        <Link href={url}>
-                          <Button id='Home-Button'>{tr('home')}</Button>
-                        </Link>
-                      </ListItem>
-                      <ListItem>
-                        <Button onClick={logoutF}>{tr('logout')}</Button>
-                      </ListItem>
-                    </List>
-                  </Drawer>
-                </ListItem>
+                <>
+                  <ListItem sx={{ display: { xs: "none", sm: "flex", width: "max-content" }, gap: '1rem' }}>
+                    <Link href={url}>
+                      <Button sx={{ width: "max-content" }} id='Home-Button' variant='contained'>{tr('home')}</Button>
+                    </Link>
+                    <Button sx={{ width: "max-content" }} variant='contained' onClick={logoutF}>{tr('logout')}</Button>
+                  </ListItem>
+
+                  <ListItem sx={{ display: { xs: 'block', sm: 'none', paddingInline: 0 } }}>
+                    <IconButton onClick={openDrawer}>
+                      <MenuIcon sx={{ color: 'white' }} />
+                    </IconButton>
+                    <Drawer open={drawerOpen} keepMounted onClose={closeDrawer} anchor='right'>
+                      <List>
+                        <ListItem>
+                          <Link href={url}>
+                            <Button id='Home-Button'>{tr('home')}</Button>
+                          </Link>
+                        </ListItem>
+                        <ListItem>
+                          <Button onClick={logoutF}>{tr('logout')}</Button>
+                        </ListItem>
+                      </List>
+                    </Drawer>
+                  </ListItem>
+                </>
               )
               : null
           }

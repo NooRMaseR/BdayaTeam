@@ -50,10 +50,10 @@ class TrackTechnichal(StackedInline):
 
 
 @admin.register(models.Track)
-class CourseAdmin(UnfoldModelAdmin):
-    list_display = ("id", "image", "track", "prefix")
-    list_display_links = ("id", "track")
-    search_fields = ("track", )
+class TrackAdmin(UnfoldModelAdmin):
+    list_display = ("id", "image", "name", "prefix")
+    list_display_links = ("id", "name")
+    search_fields = ("name", )
     inlines = [TrackTechnichal]
     paginator = InfinitePaginator
     list_per_page = 50

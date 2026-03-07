@@ -2,16 +2,14 @@ import type { Metadata } from "next";
 import BodyM from "@/app/components/bodyM";
 import SeeProfileCard from "./see_profile_card";
 import { getTranslations } from "next-intl/server";
-import { serverGraphQL } from "@/app/utils/api_utils";
+import { fetchSiteImage } from "@/app/utils/api_utils";
 import NavigationCard from "../../../components/navigation_card";
-import { GET_SITE_IMAGE_SETTINGS } from "@/app/utils/graphql_helpers";
-import type { SettingsSiteImageQuery } from "@/app/generated/graphql";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [tr, res] = await Promise.all(
     [
       getTranslations('technicalPage'),
-      serverGraphQL<SettingsSiteImageQuery>(GET_SITE_IMAGE_SETTINGS)
+      fetchSiteImage()
     ]
   );
   const site = res.data.allSettings?.siteImage;
@@ -51,6 +49,11 @@ export default async function TechnicalPage({ params }: TechnicalParams) {
           url={`${track}/members`}
           title={tr('members')}
           desc={tr('membersDesc')}
+        />
+        <NavigationCard
+          url={`${track}/members-attendances`}
+          title={tr('membersAtt')}
+          desc={tr('membersAttDesc')}
         />
         <SeeProfileCard />
       </div>

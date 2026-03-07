@@ -1,6 +1,7 @@
 from phonenumber_field.modelfields import PhoneNumberField
+from django.shortcuts import get_object_or_404
+from core.models import BdayaUser, Track
 from technical.models import Task
-from core.models import Track
 from django.db import models
 from core import validators
 
@@ -8,7 +9,8 @@ from core import validators
 
 class MemberStatus(models.TextChoices):
     NORMAL = "normal"
-    WARNING = "warning"
+    WARNING1 = "warning 1"
+    WARNING2 = "warning 2"
     FIRED = "fired"
 
 class Member(models.Model):
@@ -22,8 +24,15 @@ class Member(models.Model):
     joined_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=MemberStatus, default=MemberStatus.NORMAL)
 
+    @property
+    def bdaya_user(self) -> BdayaUser:
+        return get_object_or_404(BdayaUser.objects.only('id', 'email'), email=self.email)
+    
     class Meta:
         ordering = ("-track", "-joined_at")
+        indexes = [
+            models.Index(fields=["track", "joined_at"]),
+        ]
         
     def __str__(self):
         return f'{self.name} - {self.code}'
@@ -37,14 +46,10 @@ class ReciviedTask(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="tasks_sent")
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
     notes = models.TextField(null=True, blank=True)
+    technical_notes = models.TextField(null=True, blank=True)
     degree = models.PositiveSmallIntegerField(null=True, blank=True)
     signed = models.BooleanField(default=False)
     recived_at = models.DateTimeField(auto_now_add=True)
-    
-    def save(self, *args, **kwargs) -> None:
-        if self.signed == False and self.degree is not None:
-            self.signed = True
-        return super().save(*args, **kwargs)
     
     class Meta:
         unique_together = ("task", "member")
@@ -55,5 +60,3 @@ class ReciviedTask(models.Model):
 class ReciviedTaskFile(models.Model):
     recivied_task = models.ForeignKey(ReciviedTask, on_delete=models.CASCADE, related_name="files")
     file = models.FileField(upload_to=task_upload_path, blank=True, null=True)
-    
-    

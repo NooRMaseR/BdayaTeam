@@ -8,15 +8,16 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 
-import { FieldErrors, useForm, UseFormHandleSubmit, UseFormRegister, UseFormSetValue } from 'react-hook-form';
+import { FieldErrors, useForm, UseFormHandleSubmit, UseFormRegister, Controller, type Control } from 'react-hook-form';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import type { components } from '@/app/generated/api_types';
 import { useRouter } from '@/i18n/navigation';
-import { API } from '@/app/utils/api.client';
 import { useTranslations } from 'next-intl';
+import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import dayjs from 'dayjs';
 
 type TaskActionsProps = {
     task: components['schemas']['Task'];
@@ -24,10 +25,10 @@ type TaskActionsProps = {
 }
 
 type DeleteDialogProps = {
-    readonly open: boolean;
+    open: boolean;
     onAccept: () => void;
     onCancel: () => void;
-    readonly taskNumber: number;
+    taskNumber: number;
     isLoading: boolean;
 }
 
@@ -37,44 +38,85 @@ type EditDialogProps = Omit<DeleteDialogProps, 'onAccept'> & {
     onAccept: (data: UpdateTaskProps) => void;
     register: UseFormRegister<UpdateTaskProps>;
     handleSubmit: UseFormHandleSubmit<UpdateTaskProps>;
-    setValue: UseFormSetValue<UpdateTaskProps>;
-    readonly errors: FieldErrors<UpdateTaskProps>;
+    control: Control<UpdateTaskProps>;
+    errors: FieldErrors<UpdateTaskProps>;
 }
 
 function DeleteDialog({ open, onAccept, onCancel, taskNumber, isLoading }: DeleteDialogProps) {
     const tr = useTranslations('taskPage');
     return (
-        <Dialog open={open}>
-            <DialogTitle>{tr('deleteTask', {taskNumber})}</DialogTitle>
+        <Dialog open={open} PaperProps={{ sx: { borderRadius: 2 } }}>
+            <DialogTitle fontWeight="bold" color="error">{tr('deleteTask', {taskNumber})}</DialogTitle>
             <DialogContent>
-                <DialogContentText>{tr('deleteTaskDesc')}</DialogContentText>
-                <DialogContentText>{tr('deleteTaskDesc2')}</DialogContentText>
+                <DialogContentText className="mb-2 text-slate-700">{tr('deleteTaskDesc')}</DialogContentText>
+                <DialogContentText className="text-slate-500 text-sm font-medium">{tr('deleteTaskDesc2')}</DialogContentText>
             </DialogContent>
-            <DialogActions>
-                <Button variant='contained' onClick={onCancel} loading={isLoading}>{tr('cancel')}</Button>
-                <Button color='error' variant='outlined' onClick={onAccept} loading={isLoading}>{tr('delete')}</Button>
+            <DialogActions sx={{ p: 2, pt: 0 }}>
+                <Button onClick={onCancel} disabled={isLoading} color="inherit">{tr('cancel')}</Button>
+                <Button variant='contained' color='error' onClick={onAccept} disabled={isLoading} sx={{ px: 3, borderRadius: 2 }}>
+                    {tr('delete')}
+                </Button>
             </DialogActions>
         </Dialog>
     )
 }
 
-function EditDialog({ open, onAccept, onCancel, taskNumber, isLoading, register, handleSubmit, setValue, errors }: EditDialogProps) {
+function EditDialog({ open, onAccept, onCancel, taskNumber, isLoading, register, handleSubmit, control, errors }: EditDialogProps) {
     const tr = useTranslations('taskPage');
     return (
-        <Dialog open={open} scroll='paper'>
-            <DialogTitle>{tr('editTask', {taskNumber})}</DialogTitle>
-            <DialogContent>
-                <form onSubmit={handleSubmit(onAccept)} id='edit-form' className='flex flex-col gap-4 mt-2 mb-2'>
-                    <TextField label={tr('taskNum')} {...register("task_number")} required fullWidth error={!!errors.task_number} helperText={errors.task_number?.message} />
+        <Dialog open={open} scroll='paper' fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 2 } }}>
+            <DialogTitle fontWeight="bold">{tr('editTask', {taskNumber})}</DialogTitle>
+            <DialogContent dividers>
+                <form onSubmit={handleSubmit(onAccept)} id='edit-form' className='flex flex-col gap-5 py-2'>
+                    <TextField 
+                        label={tr('taskNum')} 
+                        {...register("task_number", { required: true, valueAsNumber: true })} 
+                        required 
+                        fullWidth 
+                        error={!!errors.task_number} 
+                        helperText={errors.task_number?.message} 
+                        type="number"
+                    />
+                    
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DateTimePicker onAccept={(v) => setValue('expires_at', v?.toISOString() || new Date().toISOString())} />
+                        <Controller
+                            control={control}
+                            name='expires_at'
+                            rules={{ required: true }}
+                            render={({ field }) => (
+                                <DateTimePicker
+                                    label={tr('expiresAt')}
+                                    value={field.value ? dayjs(field.value) : null}
+                                    onChange={(newValue) => field.onChange(newValue ? newValue.toISOString() : null)}
+                                    slotProps={{
+                                        textField: {
+                                            required: true,
+                                            fullWidth: true,
+                                            error: !!errors.expires_at,
+                                            helperText: errors.expires_at?.message
+                                        }
+                                    }}
+                                />
+                            )}
+                        />
                     </LocalizationProvider>
-                    <TextField label={tr('taskDesc')} {...register("description")} minRows={4} multiline error={!!errors.description} helperText={errors.description?.message} />
+                    
+                    <TextField 
+                        label={tr('taskDesc')} 
+                        {...register("description", { required: true })} 
+                        required
+                        minRows={4} 
+                        multiline 
+                        error={!!errors.description} 
+                        helperText={errors.description?.message} 
+                    />
                 </form>
             </DialogContent>
-            <DialogActions>
-                <Button variant='contained' loading={isLoading} onClick={onCancel}>{tr('cancel')}</Button>
-                <Button color='success' variant='contained' loading={isLoading} type='submit' form='edit-form'>{tr('edit')}</Button>
+            <DialogActions sx={{ p: 2 }}>
+                <Button disabled={isLoading} onClick={onCancel} color="inherit">{tr('cancel')}</Button>
+                <Button color='primary' variant='contained' disabled={isLoading} type='submit' form='edit-form' sx={{ px: 4, borderRadius: 2 }}>
+                    {tr('edit')}
+                </Button>
             </DialogActions>
         </Dialog>
     )
@@ -85,82 +127,73 @@ export default function TaskActions({ task, track_name }: TaskActionsProps) {
     const [openEditDlg, setOpenEditDlg] = useState<boolean>(false);
     const [DelisLoading, setDelIsloading] = useState<boolean>(false);
     const [EditisLoading, setEditIsloading] = useState<boolean>(false);
+    
     const tr = useTranslations('taskPage');
-    const navigation = useRouter();
-    const { register, handleSubmit, setValue, formState: { errors } } = useForm<UpdateTaskProps>(
-        {
-            defaultValues: {
-                task_number: task.task_number,
-                description: task.description,
-            }
+    const router = useRouter();
+    
+    const { register, control, handleSubmit, formState: { errors } } = useForm<UpdateTaskProps>({
+        defaultValues: {
+            task_number: task.task_number,
+            description: task.description,
+            expires_at: task.expires_at
         }
-    );
-
-    const handleOpenDeleteDlg = () => setOpenDeleteDlg(true);
-    const handleCloseDeleteDlg = () => setOpenDeleteDlg(false);
-
-    const handleOpenEditDlg = () => setOpenEditDlg(true);
-    const handleCloseEditDlg = () => setOpenEditDlg(false);
+    });
 
     const sendDeleteRequest = () => {
         setDelIsloading(true);
-        toast.promise(async () => {
-            const { response } = await API.DELETE('/api/technical/tasks/{task_id}/', { params: { path: { task_id: task.id } } });
-            if (response.ok) {
-                return await Promise.resolve();
-            } else {
-                return await Promise.reject();
-            }
-        },
-            {
-                loading: tr('deleting'),
-                success() {
-                    navigation.replace(`/technical/${track_name}/tasks`);
-                    return tr('deleted');
-                },
-                error: tr('deleted'),
-                finally() {
-                    setDelIsloading(false);
-                },
-            }
-        );
+        
+        const promise = API.DELETE('/api/technical/tasks/{task_id}/', { 
+            params: { path: { task_id: task.id } } 
+        }).then(({ response, error }) => {
+            if (!response.ok) throw error;
+            return response;
+        });
+
+        toast.promise(promise, {
+            loading: tr('deleting'),
+            success: () => {
+                router.replace(`/technical/${track_name}/tasks`);
+                return tr('deleted');
+            },
+            error: tr('error'),
+            finally: () => setDelIsloading(false)
+        });
     };
 
     const sendEditRequest = (data: UpdateTaskProps) => {
         setEditIsloading(true);
-        toast.promise(async () => {
-            const { response } = await API.PUT('/api/technical/tasks/{task_id}/', {
-                params: { path: { task_id: task.id } },
-                body: data
-            });
-            if (response.ok) {
-                return await Promise.resolve();
-            } else {
-                return await Promise.reject();
-            }
-        },
-            {
-                loading: tr('editing'),
-                success() {
-                    handleCloseEditDlg();
-                    navigation.replace(`/technical/${track_name}/tasks`);
-                    return tr('edited');
-                },
-                error: tr('notEdited'),
-                finally() {
-                    setEditIsloading(false);
-                },
-            }
-        );
+        
+        const promise = API.PUT('/api/technical/tasks/{task_id}/', {
+            params: { path: { task_id: task.id } },
+            body: data
+        }).then(({ response, error }) => {
+            if (!response.ok) throw error;
+            return response;
+        });
+
+        toast.promise(promise, {
+            loading: tr('editing'),
+            success: () => {
+                setOpenEditDlg(false);
+                router.refresh(); 
+                return tr('edited');
+            },
+            error: tr('notEdited'),
+            finally: () => setEditIsloading(false)
+        });
     };
 
-
     return (
-        <div className='flex gap-4 ml-4'>
-            <DeleteDialog isLoading={DelisLoading} open={openDeleteDlg} onAccept={sendDeleteRequest} onCancel={handleCloseDeleteDlg} taskNumber={task.task_number} />
-            <EditDialog isLoading={EditisLoading} open={openEditDlg} onAccept={sendEditRequest} onCancel={handleCloseEditDlg} taskNumber={task.task_number} register={register} handleSubmit={handleSubmit} setValue={setValue} errors={errors} />
-            <Button variant='contained' onClick={handleOpenEditDlg}>{tr('edit')}</Button>
-            <Button variant='contained' color='error' onClick={handleOpenDeleteDlg}>{tr('delete')}</Button>
+        <div className='flex flex-wrap gap-3'>
+            <DeleteDialog isLoading={DelisLoading} open={openDeleteDlg} onAccept={sendDeleteRequest} onCancel={() => setOpenDeleteDlg(false)} taskNumber={task.task_number} />
+            <EditDialog isLoading={EditisLoading} open={openEditDlg} onAccept={sendEditRequest} onCancel={() => setOpenEditDlg(false)} taskNumber={task.task_number} register={register} handleSubmit={handleSubmit} control={control} errors={errors} />
+            
+            <Button variant='outlined' color="primary" onClick={() => setOpenEditDlg(true)} sx={{ borderRadius: 2, fontWeight: 'bold' }}>
+                {tr('edit')}
+            </Button>
+            <Button variant='outlined' color='error' onClick={() => setOpenDeleteDlg(true)} sx={{ borderRadius: 2, fontWeight: 'bold' }}>
+                {tr('delete')}
+            </Button>
         </div>
     )
 }
