@@ -38,7 +38,7 @@ class Member(models.Model):
         return f'{self.name} - {self.code}'
 
 
-def task_upload_path(instance: ReciviedTaskFile, filename: str):
+def task_upload_path(instance: ReciviedTaskFile, filename: str) -> str:
     return f"protected/tasks/{instance.recivied_task.member.code}/{instance.recivied_task.task.task_number}/{filename}"
 
 class ReciviedTask(models.Model):
