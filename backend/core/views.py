@@ -16,17 +16,17 @@ from django.core.cache import cache
 from django.shortcuts import get_object_or_404
 
 from .serializers import TrackMSGSerializer, TrackNameOnlyMSGSerializer
+from .caches import TRACKS_CACHE_KEY, track_cache_key
 from .permissions import IsOrganizer, IsSuperUser
+from . import api_schemas, models
 
 from member.models import Member
-from member.auth import RawJsonRenderer
 
 from organizer.models import SiteSetting
 from organizer.api_schemas import SiteSettingsImagesSerializer
 from organizer.serializers import SiteSettingsImagesMSGSerializer
 
 from utils import DEFAULT_CACHE_DURATION, serializer_encoder
-from . import api_schemas, models
 from contextlib import suppress
 
 # Create your views here.
@@ -60,7 +60,6 @@ class CookiesRefreshTokenView(TokenRefreshView):
 class Login(APIView):
     permission_classes = (AllowAny,)
     authentication_classes = []
-    renderer_classes = (RawJsonRenderer,)
 
     @extend_schema(
         tags=("Auth",),
@@ -117,8 +116,9 @@ class Login(APIView):
         refresh_token = str(refresh)
 
         encoded_data = serializer_encoder.encode({
-            "username": user.username, 
-            "role": user.role, 
+            "username": user.username,
+            "is_admin": user.is_superuser,
+            "role": user.role,
             "track": track,
         })
         
@@ -146,12 +146,12 @@ class Login(APIView):
 
 
 class TestAuthCredentials(APIView):
-    renderer_classes = (RawJsonRenderer,)
     serializer_class = inline_serializer(
         name="test_auth",
         fields={
             "username": api_schemas.serializers.CharField(),
             "role": api_schemas.serializers.ChoiceField(models.UserRole),
+            "is_admin": api_schemas.serializers.BooleanField(default=False),
             "track": api_schemas.TrackNameOnlySerializer(),
             "settings": SiteSettingsImagesSerializer(),
         },
@@ -176,6 +176,7 @@ class TestAuthCredentials(APIView):
         
         encoded_data = serializer_encoder.encode({
             "username": request.user.username,
+            "is_admin": request.user.is_superuser,
             "role": request.user.role,
             "track": track,
             "settings": SiteSettingsImagesMSGSerializer.from_model(settings),
@@ -219,7 +220,6 @@ class Register(APIView):
 
     @transaction.atomic
     def post(self, request: Request) -> Response:
-        print(request.COOKIES)
         serializer = api_schemas.RegisterMemberSerializer(data=request.data)
 
         if serializer.is_valid():
@@ -254,8 +254,6 @@ class Tracks(APIView):
     permission_classes = (IsOrganizer,)
     serializer_class = api_schemas.TrackSerializer(many=True)
     parser_classes = (FormParser, MultiPartParser)
-    renderer_classes = (RawJsonRenderer,)
-    CACHE_NAME = "tracks"
 
     def get_permissions(self):
         if self.request.method == "GET":
@@ -263,7 +261,7 @@ class Tracks(APIView):
         return super().get_permissions()
 
     def get(self, request: Request) -> Response:
-        cached = cache.get(self.CACHE_NAME)
+        cached = cache.get(TRACKS_CACHE_KEY)
         if cached:
             return Response(cached)
 
@@ -273,7 +271,7 @@ class Tracks(APIView):
         data = TrackMSGSerializer.from_queryset_values(query_set)
 
         encoded_data = serializer_encoder.encode(data)
-        cache.set(self.CACHE_NAME, encoded_data, DEFAULT_CACHE_DURATION)
+        cache.set(TRACKS_CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
         return Response(encoded_data)
 
     @extend_schema(
@@ -294,19 +292,14 @@ class Tracks(APIView):
         serializer = api_schemas.TrackSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save() # type: ignore
-            cache.delete(self.CACHE_NAME)
+            cache.delete(TRACKS_CACHE_KEY)
             return Response(status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
 class TrackApi(APIView):
-    renderer_classes = (RawJsonRenderer,)
     serializer_class = api_schemas.TrackSerializer
-    
-    @staticmethod
-    def get_cache_key(track_name: str) -> str:
-        return f"Track:{track_name}"
     
     def get_permissions(self):
         if self.request.method == "GET":
@@ -315,7 +308,7 @@ class TrackApi(APIView):
             return [IsSuperUser()]
     
     def get(self, request: Request, track_name: str) -> Response:
-        CACHE_KEY = self.get_cache_key(track_name)
+        CACHE_KEY = track_cache_key(track_name)
         if (data:= cache.get(CACHE_KEY)):
             return Response(data)
         
@@ -326,7 +319,7 @@ class TrackApi(APIView):
         
     def delete(self, request: Request, track_name: str) -> Response:
         get_object_or_404(models.Track, name=track_name).delete()
-        cache.delete_many([Tracks.CACHE_NAME, self.get_cache_key(track_name)])
+        cache.delete_many([TRACKS_CACHE_KEY, track_cache_key(track_name)])
         return Response({}, status=status.HTTP_204_NO_CONTENT)
 
 

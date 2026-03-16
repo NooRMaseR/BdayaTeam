@@ -18,3 +18,5 @@ export type GetMemberGridType = {
     columns: GridColDef[],
     groupModel: GridColumnGroupingModel
 }
+
+export type LocaleOptions = 'en' | 'ar';

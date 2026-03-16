@@ -1,18 +1,21 @@
 'use client';
-
 import { MembersRecivedTaskItem, TaskShowCase } from '../../technical/[track]/tasks/[taskId]/member_task';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import type { components } from '@/app/generated/api_types';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { Link } from '@/i18n/navigation';
 
 type MemberTasksProps = {
     memberProfile: components['schemas']['MemberProfile'];
+    track: string;
 }
 
 type Task = MemberTasksProps['memberProfile']['tasks'][0] | null;
 
-export default function MemberTasks({ memberProfile }: MemberTasksProps) {
+export default function MemberTasks({ memberProfile, track }: MemberTasksProps) {
     const tr = useTranslations('memebersTasksPage');
     const [open, setOpen] = useState<boolean>(false);
     const [selectedTask, setSelecteTask] = useState<Task>(null);
@@ -45,7 +48,7 @@ export default function MemberTasks({ memberProfile }: MemberTasksProps) {
                     task={task}
                     showSigned
                     onClick={() => onClick(task)}
-                    overrideText={{ primary: tr('task', { number: task.task.task_number }) }}
+                    overrideText={{ primary: tr('task', { number: task.task.task_number }), secondary: <Link href={`/member/${track}/tasks/${task.id}/edit`}><IconButton><EditOutlinedIcon /></IconButton></Link> }}
                 />
             )}
         </>

@@ -30,7 +30,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = (
     "localhost",
@@ -100,6 +100,9 @@ SECURE_CSP = {
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         'core.middleware.CookiesJWTAuthentication',
+    ),
+    "DEFAULT_RENDERER_CLASSES": (
+        "core.middleware.RawJsonRenderer",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PARSER_CLASSES": ("rest_framework.parsers.JSONParser",),
@@ -191,26 +194,88 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
             "CONNECTION_POOL_KWARGS": {
-                "max_connections": 300
+                "max_connections": 800
             }
         },
     }
 }
 
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
-   'version': 1,
-   'disable_existing_loggers': False,
-   'handlers': {
-       'console': {
-           'class': 'logging.StreamHandler',
-       },
-   },
-   'loggers': {
-       'django.db': {
-           'level': 'DEBUG',
-           'handlers': ['console'],
-       },
-   },
+    'version': 1,
+    'disable_existing_loggers': False,
+    
+    # 1. FORMATTERS: How the logs look
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        },
+    },
+    
+    # 2. FILTERS: Rules for logging
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    
+    # 3. HANDLERS: Where the logs go
+    'handlers': {
+        # Console output for local dev or standard Gunicorn tracking
+        # Only active when DEBUG=True (dev only)
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "filters": ["require_debug_true"],
+            "formatter": "simple",
+        },
+
+        # Rotates at 10 MB, keeps last 5 files — safe for long-running servers
+        "file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "app.log",
+            "maxBytes": 1024 * 1024 * 10,  # 10 MB
+            "backupCount": 5,
+            "formatter": "verbose",
+            "filters": ["require_debug_false"],  # File handler only in production
+        },
+
+        # Sends ERROR+ emails to ADMINS in settings — only fires in production
+        "mail_admins": {
+            "level": "ERROR",
+            "class": "django.utils.log.AdminEmailHandler",
+            "filters": ["require_debug_false"],
+            "formatter": "verbose",
+        },
+    },
+    
+    # 4. LOGGERS: The entry points
+    'loggers': {
+        # Catch-all for Django's internal routing and DB operations
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        
+        # Specifically catches HTTP 5xx errors
+        'django.request': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
 }
 
 HUEY = {

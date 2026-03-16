@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/member/edit-task/{sent_task_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["member_edit_task_retrieve"];
+        put: operations["member_edit_task_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/member/profile/{member_code}/": {
         parameters: {
             query?: never;
@@ -341,6 +357,8 @@ export interface components {
         };
         Login: {
             username: string;
+            /** @default false */
+            is_admin: boolean;
             role: components["schemas"]["RoleEnum"];
             track: components["schemas"]["TrackNameOnly"] | null;
         };
@@ -462,7 +480,7 @@ export interface components {
             readonly id: number;
             readonly expired: boolean;
             /** @default 0 */
-            unsigned_tasks_count: number;
+            readonly unsigned_tasks_count: number;
             task_number: number;
             /** Format: date-time */
             readonly created_at: string;
@@ -482,8 +500,6 @@ export interface components {
             track: number;
         };
         TaskRequest: {
-            /** @default 0 */
-            unsigned_tasks_count: number;
             task_number: number;
             /** Format: date-time */
             expires_at: string;
@@ -567,6 +583,10 @@ export interface components {
         day_not_found: {
             field_name: string;
         };
+        editMemberSelfTaskRequest: {
+            files?: string[];
+            notes?: string;
+        };
         editMemberTaskRequest: {
             code: string;
             task_id: number;
@@ -605,6 +625,8 @@ export interface components {
         test_auth: {
             username: string;
             role: components["schemas"]["RoleEnum"];
+            /** @default false */
+            is_admin: boolean;
             track: components["schemas"]["TrackNameOnly"];
             settings: components["schemas"]["SiteSettingsImages"];
         };
@@ -674,6 +696,52 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    member_edit_task_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sent_task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecivedTask"];
+                };
+            };
+        };
+    };
+    member_edit_task_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sent_task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": components["schemas"]["editMemberSelfTaskRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["editMemberSelfTaskRequest"];
+            };
+        };
         responses: {
             /** @description No response body */
             200: {

@@ -5,24 +5,16 @@ import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 
 import dayjs, { checkLateStatus } from "@/app/utils/dayjs.client";
-import type { LocaleOptions } from '@/app/utils/api_types_helper';
+import type { TaskViewProps } from '../page';
+import TaskEditForm from './task_edit_form';
 import BodyM from '@/app/components/bodyM';
 import API from '@/app/utils/api.server';
-import TaskForm from './task_form';
 
-export type TaskViewProps = {
-    params: Promise<{
-        locale: LocaleOptions,
-        taskId: number,
-        trackName: string
-    }>;
-}
-
-export default async function TaskViewPage({ params }: TaskViewProps) {
+export default async function TaskViewEditPage({ params }: TaskViewProps) {
     const { locale, trackName, taskId } = await params;
     const [tr, { data: task }] = await Promise.all([
         getTranslations("taskPage"),
-        API.GET('/api/technical/tasks/{task_id}/', { params: { path: { task_id: taskId } } })
+        API.GET('/api/member/edit-task/{sent_task_id}/', { params: { path: { sent_task_id: taskId } } })
     ]);
 
     if (!task) {
@@ -35,7 +27,7 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
         );
     }
 
-    const lateStatus = checkLateStatus(task.expires_at, locale);
+    const lateStatus = checkLateStatus(task.task.expires_at, locale);
     const lateString = tr(lateStatus.status, {time: lateStatus.from})
 
     return (
@@ -46,16 +38,16 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
                     <div className="p-6 md:p-8 bg-blue-50/30">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
                             <Typography variant="h4" fontWeight="800" color="text.primary">
-                                {tr('task')} {task.task_number}
+                                {tr('task')} {task.task.task_number}
                             </Typography>
                             <Chip
-                                label={task.expired ? tr('expired') || 'Expired' : 'Active'}
-                                color={task.expired ? "error" : "success"}
+                                label={task.task.expired ? tr('expired') || 'Expired' : 'Active'}
+                                color={task.task.expired ? "error" : "success"}
                                 className="font-bold uppercase tracking-wide"
                             />
                         </div>
                         <Typography variant="subtitle2" color="text.secondary" className="font-medium">
-                            {tr('expires')}: {dayjs(task.expires_at).locale(locale).format("MMMM D, YYYY • h:mm A")}
+                            {tr('expires')}: {dayjs(task.task.expires_at).locale(locale).format("MMMM D, YYYY • h:mm A")}
                         </Typography>
                     </div>
 
@@ -66,7 +58,7 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
                             {tr('desc')}
                         </Typography>
                         <Typography variant="body1" className="mt-2 whitespace-pre-wrap leading-relaxed text-slate-700">
-                            {task.description}
+                            {task.task.description}
                         </Typography>
                     </div>
                 </Paper>
@@ -75,14 +67,14 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 3, px: 1 }}>
                         {tr('sub')}
                     </Typography>
-                    {task.expired && (
+                    {task.task.expired && (
                         <Paper elevation={0} className="p-6 text-center border border-red-100 bg-red-50/50 rounded-2xl">
                             <Typography color="error" fontWeight="medium">
                                 {lateString}.
                             </Typography>
                         </Paper>
                     )}
-                    <TaskForm task={task} track_name={trackName} />
+                    <TaskEditForm task={task} track_name={trackName} />
                 </div>
             </div>
         </BodyM>

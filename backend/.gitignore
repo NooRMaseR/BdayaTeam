@@ -18,3 +18,4 @@ static_files/
 media_files/
 localhost*.pem
 test.rest
+logs/

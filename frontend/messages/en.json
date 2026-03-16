@@ -271,6 +271,7 @@
         "submited": "Submited Tasks",
         "sub": "Submission",
         "late": "Late {time}",
+        "onTime": "Early {time}",
         "attach": "Attach Files",
         "taskSub": "Task submitted successfully!",
         "taxkSubEx": "Submission failed: This task has expired",

@@ -8,6 +8,7 @@ import DialogContent from '@mui/material/DialogContent';
 import NavigationCard from '../../components/navigation_card';
 import DialogContentText from '@mui/material/DialogContentText';
 
+import { useAuthStore } from '@/app/utils/store';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import API from '../../utils/api.client';
@@ -47,6 +48,7 @@ export default function ResetAll() {
     const [open, setOpen] = React.useState<boolean>(false);
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
     const navigation = useRouter();
+    const isSuperUser = useAuthStore(state => state.user?.is_admin);
     const tr = useTranslations('organizerPage');
 
     const openDialog = () => setOpen(true);
@@ -78,7 +80,7 @@ export default function ResetAll() {
         });
     };
 
-    return (
+    return (isSuperUser &&
         <>
             <ResetDialog open={open} isLoading={isLoading} onReset={handleReset} onCancel={closeDialog} />
             <div onClick={openDialog}>

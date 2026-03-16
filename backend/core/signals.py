@@ -8,7 +8,7 @@ from . import models as core_models
 @receiver(signals.post_save, sender=member_models.Member)
 def create_user_from_member(sender, instance: member_models.Member, created: bool, **kwargs):
     if created:
-        GENERATED_PASSWORD = f"{instance.code}_{instance.collage_code}"
+        GENERATED_PASSWORD = f"{instance.code}@{instance.collage_code}"
         
         user = core_models.BdayaUser(
             username=instance.name,

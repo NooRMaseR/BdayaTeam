@@ -6,7 +6,7 @@ export default async function DaysPage({ params }: { params: Promise<{ track: st
     const { track } = await params;
     const { data } = await API.GET(`/api/organizer/attendance/{track_name}/days/`, {
         params: { path: { track_name: track } },
-        next: { revalidate: 300 }
+        next: { revalidate: 300, tags: [`${track}_days`] }
     });
 
     return (

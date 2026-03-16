@@ -43,7 +43,7 @@ type MembersRecivedTaskItemProps = {
     task: MemberTaskItemProps['tasksRecived'][0];
     onClick: (task: MemberTaskItemProps['tasksRecived'][0]) => void;
     showSigned?: boolean;
-    overrideText?: { primary?: string, secondary?: string }
+    overrideText?: { primary?: React.ReactNode, secondary?: React.ReactNode }
 }
 
 type SignTask = components['schemas']['TaskSigningRequest'];
@@ -132,7 +132,7 @@ export function TaskShowCase({ open, task, onSuccess, onClose, editable = true }
                     </div>
                 </div>
 
-                {/* Right Side */}
+                {/* Right Side (info) */}
                 <div className="w-full md:w-96 bg-white border-t md:border-t-0 md:border-l border-slate-200 flex flex-col h-auto md:h-full shadow-none md:shadow-[-4px_0_24px_-16px_rgba(0,0,0,0.1)]">
                     <div className="p-6 flex-1 md:overflow-y-auto">
 
