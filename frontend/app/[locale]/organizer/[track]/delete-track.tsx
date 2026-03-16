@@ -10,6 +10,7 @@ import Button from '@mui/material/Button';
 
 import NavigationCard from '@/app/components/navigation_card';
 import { revalidateTracks } from '@/app/utils/api_utils';
+import { useAuthStore } from '@/app/utils/store';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import API from '@/app/utils/api.client';
@@ -25,6 +26,7 @@ export default function DeleteTrack({ name }: DeleteTrackProps) {
     const openDialog = () => setOpen(true);
     const closeDialog = () => setOpen(false);
     const navigation = useRouter();
+    const isSuperUser = useAuthStore(st => st.user?.is_admin);
     const tr = useTranslations('trackPage');
 
     const performDeleteTrack = async () => {
@@ -60,7 +62,7 @@ export default function DeleteTrack({ name }: DeleteTrackProps) {
         
     };
 
-    return (
+    return (isSuperUser &&
         <>
             <Dialog open={open} aria-hidden={open}>
                 <DialogTitle variant='h6'>

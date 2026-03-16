@@ -41,32 +41,33 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
 
     const handleOrg = async (newRow: GridRowModel, oldRow: GridRowModel, changedKey: any) => await toast.promise<GridRowModel>(async () => {
 
-        const changedValue = newRow[changedKey];
-        const isAttendance: boolean = Object.values(AttendanceStatus).includes(changedValue);
-        const hasExcuse: boolean = changedKey.endsWith("_excuse");
+            const changedValue = newRow[changedKey];
+            const isAttendance: boolean = Object.values(AttendanceStatus).includes(changedValue);
+            const hasExcuse: boolean = changedKey.endsWith("_excuse");
 
-        const { response } = await API.POST(`/api/organizer/members/{track_name}/`, {
-            params: { path: { track_name: track } },
-            body: {
-                code: newRow.code,
-                field: changedKey.replace(hasExcuse ? "_excuse" : "_date", ''),
-                value: hasExcuse ? newRow[changedKey.replace("_excuse", "_date")] : changedValue,
-                type: isAttendance || hasExcuse ? "attendance" : "data",
-                excuse: hasExcuse ? newRow[changedKey] : null
+            const { response } = await
+                    API.POST(`/api/organizer/members/{track_name}/`, {
+                        params: { path: { track_name: track } },
+                        body: {
+                            code: newRow.code,
+                            field: changedKey.replace(hasExcuse ? "_excuse" : "_date", ''),
+                            value: hasExcuse ? newRow[changedKey.replace("_excuse", "_date")] : changedValue,
+                            type: isAttendance || hasExcuse ? "attendance" : "data",
+                            excuse: hasExcuse ? newRow[changedKey] : null
+                        }
+                    });
+
+            if (response.ok) {
+                return newRow;
             }
-        });
-
-        if (response.ok) {
-            return newRow;
-        }
-        return oldRow;
-    },
-        {
-            loading: tr('saving'),
-            success: tr('saved'),
-            error: tr('notSaved'),
-        }
-    ).unwrap();
+            return oldRow;
+        },
+            {
+                loading: tr('saving'),
+                success: tr('saved'),
+                error: tr('notSaved'),
+            }
+        ).unwrap();
 
     const handleTech = async (newRow: GridRowModel, oldRow: GridRowModel, changedKey: any) => await toast.promise<GridRowModel>(async () => {
 
@@ -74,15 +75,16 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
         const taskID = parseInt(changedKey?.replace("task_deg_", '').replace('task_notes_', ''));
         const changedField = changedKey.includes('deg_') ? "degree" : "notes";
 
-        const { response } = await API.POST(`/api/technical/members/{track_name}/with-tasks`, {
-            params: { path: { track_name: track } },
-            body: {
-                code: newRow.code,
-                task_id: taskID,
-                field: changedField,
-                value: changedValue,
-            }
-        });
+        const { response } = await
+                API.POST(`/api/technical/members/{track_name}/with-tasks`, {
+                    params: { path: { track_name: track } },
+                    body: {
+                        code: newRow.code,
+                        task_id: taskID,
+                        field: changedField,
+                        value: changedValue,
+                    }
+                });
 
         if (response.ok) {
             toast.success(tr('saved'));
@@ -102,7 +104,7 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
         const changedKey = Object.keys(newRow).find(
             (key) => newRow[key] !== oldRow[key]
         );
-        
+
         if (!changedKey) return oldRow;
 
         if (forTech) {

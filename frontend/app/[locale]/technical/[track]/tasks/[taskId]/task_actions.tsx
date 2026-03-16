@@ -13,11 +13,11 @@ import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import type { components } from '@/app/generated/api_types';
 import { useRouter } from '@/i18n/navigation';
+import dayjs from '@/app/utils/dayjs.client';
 import { useTranslations } from 'next-intl';
 import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import dayjs from 'dayjs';
 
 type TaskActionsProps = {
     task: components['schemas']['Task'];

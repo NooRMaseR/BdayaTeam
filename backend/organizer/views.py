@@ -16,11 +16,8 @@ from core.models import Track
 from core.api_schemas import RegisterMemberSerializer
 from core.permissions import IsOrganizer, IsTechnicalOrOrganizer
 
-from organizer.serializers import AttendanceDayMSGSerializer, SiteSettingsMSGSerializer
-
 from member.serializers import TrackNameOnlyMSGSerializer, MemberORGMSGSerializer
 from member.api_schemas import MemberSerializer
-from member.auth import RawJsonRenderer
 from member.models import Member
 
 from django.http import Http404
@@ -30,8 +27,14 @@ from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 
-from .api_schemas import AttendanceDaysSerializer, SiteSettingsSerializer
 from utils import DEFAULT_CACHE_DURATION, serializer_encoder
+from .api_schemas import AttendanceDaysSerializer, SiteSettingsSerializer
+from .serializers import AttendanceDayMSGSerializer, SiteSettingsMSGSerializer
+from .caches import (
+    SETTINGS_CACHE_KEY, 
+    attendance_cache_key, 
+    members_by_organizer_cache_key
+)
 from .models import (
     Attendance,
     AttendanceStatus,
@@ -42,14 +45,11 @@ from .models import (
 
 # Create your views here.
 
-class Members(APIView):
+class BaseOrganizerAPIView(APIView):
     permission_classes = (IsOrganizer,)
-    renderer_classes = (RawJsonRenderer,)
-    serializer_class = None
 
-    @staticmethod
-    def get_cache_key(track_name: str) -> str:
-        return f"members_{track_name}"
+class Members(BaseOrganizerAPIView):
+    serializer_class = None
 
     def get_permissions(self):
         if self.request.method == "GET":
@@ -67,7 +67,7 @@ class Members(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        CACHE_KEY = self.get_cache_key(track_name)
+        CACHE_KEY = members_by_organizer_cache_key(track_name)
         if cached_data := cache.get(CACHE_KEY):
             return Response(cached_data)
 
@@ -181,7 +181,7 @@ class Members(APIView):
         excuse: str | None = request.data.get("excuse")  # type: ignore
         code: str = request.data.get("code")  # type: ignore
         TRACK = track_name.replace("%20", " ")
-        CACHE_KEY = self.get_cache_key(track_name)
+        CACHE_KEY = members_by_organizer_cache_key(track_name)
 
         try:
             req_type: MemberEditType = MemberEditType(request.data.get("type"))  # type: ignore
@@ -217,7 +217,7 @@ class Members(APIView):
             case MemberEditType.DATA:
                 if field == "track":
                     self.move_member_to_another_track(code, TRACK, str(value))
-                    cache.delete_many([CACHE_KEY, self.get_cache_key(str(value))])
+                    cache.delete_many([CACHE_KEY, members_by_organizer_cache_key(str(value))])
                     return Response()
                 else:
                     settings = SiteSetting.get_solo()
@@ -235,23 +235,17 @@ class Members(APIView):
         return Response()
 
 
-class AttendanceDayApi(APIView):
+class AttendanceDayApi(BaseOrganizerAPIView):
     serializer_class = AttendanceDaysSerializer(many=True)
-    permission_classes = (IsTechnicalOrOrganizer,)
-    renderer_classes = (RawJsonRenderer,)
 
     def get_permissions(self):
         if self.request.method == "GET":
             return [IsTechnicalOrOrganizer()]
         return super().get_permissions()
 
-    @staticmethod
-    def get_cache_key(track: str) -> str:
-        return f"attendance_days_{track}"
-
     def get(self, request: Request, track_name: str) -> Response:
         TRACK = track_name.replace("%20", " ")
-        CACHE_KEY = self.get_cache_key(TRACK)
+        CACHE_KEY = attendance_cache_key(TRACK)
 
         if data := cache.get(CACHE_KEY):
             return Response(data)
@@ -289,7 +283,8 @@ class AttendanceDayApi(APIView):
             encoded_data = serializer_encoder.encode(
                 AttendanceDayMSGSerializer(id=attendance.pk, day=attendance.day)
             )
-            cache.delete(self.get_cache_key(TRACK))
+            
+            cache.delete(attendance_cache_key(TRACK))
             return Response(
                 encoded_data,
                 status=status.HTTP_201_CREATED,
@@ -311,7 +306,7 @@ class AttendanceDayApi(APIView):
         TRACK = track_name.replace("%20", " ")
 
         get_object_or_404(AttendanceAllowedDay, day=day, track__name=TRACK).delete()
-        cache.delete(self.get_cache_key(TRACK))
+        cache.delete(attendance_cache_key(TRACK))
         return Response()
 
     @extend_schema(
@@ -345,20 +340,13 @@ class AttendanceDayApi(APIView):
 
         attendace.day = new_day # type: ignore
         attendace.save()
-        cache.delete(self.get_cache_key(TRACK))
+        cache.delete(attendance_cache_key(TRACK))
         return Response()
 
 
-class SettingsApi(APIView):
+class SettingsApi(BaseOrganizerAPIView):
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = SiteSettingsSerializer
-    permission_classes = (IsOrganizer,)
-    CACHE_KEY = "settings"
-
-    def get_renderers(self):
-        if self.request.method == "GET":
-            return [RawJsonRenderer()]
-        return super().get_renderers()
 
     def get_permissions(self):
         if self.request.method == "GET":
@@ -366,20 +354,25 @@ class SettingsApi(APIView):
         return super().get_permissions()
 
     def get(self, request: Request) -> Response:
-        if cached := cache.get(self.CACHE_KEY):
+        if cached := cache.get(SETTINGS_CACHE_KEY):
             return Response(cached)
 
         site = SiteSetting.get_solo()
         encoded_data = SiteSettingsMSGSerializer.from_model(site).encode()
-        cache.set(self.CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
+        cache.set(SETTINGS_CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
         return Response(encoded_data)
 
     def put(self, request: Request) -> Response:
         obj = SiteSetting.get_solo()
-        serializer = SiteSettingsSerializer(obj, data=request.data, partial=True)
+        data = request.data
+        
+        if not request.user.is_superuser:
+            data.pop("is_register_enabled") # type: ignore
+        
+        serializer = SiteSettingsSerializer(obj, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            cache.delete(self.CACHE_KEY)
+            cache.delete(SETTINGS_CACHE_KEY)
             return Response(serializer.data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

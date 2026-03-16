@@ -58,7 +58,7 @@ class OrganizerAPITests(APITestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        self.member.refresh_from_db()
+        self.member.refresh_from_db() # type: ignore
         self.assertEqual(self.member.bonus, 5)
     
     def test_update_invalid_member_data(self):

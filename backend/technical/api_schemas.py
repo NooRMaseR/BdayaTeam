@@ -6,7 +6,7 @@ from . import models
 class TaskSerializer(serializers.ModelSerializer):
     track = serializers.PrimaryKeyRelatedField(read_only=True)
     expired = serializers.BooleanField(read_only=True)
-    unsigned_tasks_count = serializers.IntegerField(default=0)
+    unsigned_tasks_count = serializers.IntegerField(default=0, read_only=True)
     
     def validate(self, attrs):
         track = self.context.get('track')

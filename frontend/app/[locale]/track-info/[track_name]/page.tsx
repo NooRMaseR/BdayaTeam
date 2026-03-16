@@ -4,6 +4,7 @@ import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 
 import type { Get_Track_ImageQuery } from '@/app/generated/graphql';
+import type { LocaleOptions } from '@/app/utils/api_types_helper';
 import { GET_TRACK_IMAGE } from '@/app/utils/graphql_helpers';
 import { serverGraphQL } from '@/app/utils/api_utils';
 import BodyM from '@/app/components/bodyM';
@@ -12,7 +13,7 @@ import API from '@/app/utils/api.server';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 
-type Props = {params: Promise<{ track_name: string, locale: 'en' | "ar" }>}
+type Props = {params: Promise<{ track_name: string, locale: LocaleOptions }>}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { track_name } = await params;

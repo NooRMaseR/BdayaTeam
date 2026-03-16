@@ -19,6 +19,7 @@ class TrackNameOnlySerializer(serializers.ModelSerializer):
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
+    is_admin = serializers.BooleanField(default=False)
     role = serializers.ChoiceField(models.UserRole)
     track = TrackNameOnlySerializer(allow_null=True)
 

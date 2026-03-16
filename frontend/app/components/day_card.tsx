@@ -19,13 +19,14 @@ import Button from '@mui/material/Button';
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import type { components } from '../generated/api_types';
+import { revalidateTagName } from '../utils/api_utils';
 import DeleteIcon from "@mui/icons-material/Delete";
 import { DatePicker } from "@mui/x-date-pickers";
+import dayjs from '@/app/utils/dayjs.client';
 import { useTranslations } from 'next-intl';
 import API from '@/app/utils/api.client';
 import { toast } from 'sonner';
 import React from 'react';
-import dayjs from 'dayjs';
 
 type AttendanceDay = components['schemas']['AttendanceDays'];
 type DayCardProps = {
@@ -48,6 +49,7 @@ function DayCard({ day, onDelete, track_name }: DayCardProps) {
             });
             if (response.ok) {
                 setDlgOpen(false);
+                await revalidateTagName(`${track_name}_days`);
                 return await Promise.resolve(dayState);
             }
             return await Promise.reject(dayState);
@@ -104,13 +106,14 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
             if (response.ok) {
                 setDlgDate(pre => ({ open: false, date: pre.date }));
                 setDays(pre => [...pre, data!])
+                await revalidateTagName(`${track}_days`);
                 return await Promise.resolve(dlgDate.date);
             }
             return await Promise.reject(dlgDate.date);
         },
             {
                 loading: tr('adding'),
-                success: (date) => tr('dayCreated', {date: date || ''}),
+                success: (date) => tr('dayCreated', { date: date || '' }),
                 error: tr('wrong'),
             }
         );
@@ -129,6 +132,7 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
             if (res.response.ok) {
                 setConfDlgOpen(false);
                 setDays(pre => pre.filter(p => p.day != confDlgDate));
+                await revalidateTagName(`${track}_days`);
                 return await Promise.resolve();
             }
             return await Promise.reject();

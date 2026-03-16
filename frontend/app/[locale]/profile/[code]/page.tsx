@@ -117,7 +117,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ code: 
                             {tr('sent')}
                         </Typography>
                         <div className='flex flex-wrap gap-6 justify-start'>
-                            <MemberTasks memberProfile={user} />
+                            <MemberTasks memberProfile={user} track={user.track.name} />
                         </div>
                     </div>
                     

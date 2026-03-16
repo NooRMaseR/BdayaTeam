@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 from core.middleware import GraphQLAuthMiddleware
 from graphene_django.views import GraphQLView
 from django.urls import path, include
-from django.conf import settings
+# from django.conf import settings
 from django.contrib import admin
 
 
@@ -36,9 +36,9 @@ urlpatterns = [
     path('api/i18n/', include('django.conf.urls.i18n')),
 ]
 
-if settings.DEBUG:
-    from debug_toolbar.toolbar import debug_toolbar_urls
-    from django.conf.urls.static import static
+# if settings.DEBUG:
+#     from debug_toolbar.toolbar import debug_toolbar_urls
+#     from django.conf.urls.static import static
     
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += debug_toolbar_urls()
+#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+#     urlpatterns += debug_toolbar_urls()

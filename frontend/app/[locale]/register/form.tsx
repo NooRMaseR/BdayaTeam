@@ -57,7 +57,7 @@ export default function RegisterForm({ tracks, canRegister = false }: RegisterFo
       );
 
       if (response.ok && body) {
-        setCredentials({ isLoading: false, isAuthed: true, user: { username: body.name, role: "member", track: body.track } });
+        setCredentials({ isLoading: false, isAuthed: true, user: { username: body.name, role: "member", track: body.track, is_admin: false } });
         router.replace(`/member/${body.track?.name}`);
         return await Promise.resolve(body);
       } else {

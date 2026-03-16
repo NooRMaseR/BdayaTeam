@@ -4,13 +4,14 @@ import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 
+import type { LocaleOptions } from '@/app/utils/api_types_helper';
 import MembersRecivedTasks from './member_task';
+import dayjs from '@/app/utils/dayjs.client';
 import BodyM from '@/app/components/bodyM';
 import API from '@/app/utils/api.server';
 import TaskActions from './task_actions';
-import dayjs from 'dayjs';
 
-export default async function TaskViewPage({ params }: { params: Promise<{locale: "en" | 'ar', taskId: number, track: string }> }) {
+export default async function TaskViewPage({ params }: { params: Promise<{locale: LocaleOptions, taskId: number, track: string }> }) {
     const {locale, track, taskId } = await params;
     const [tr, currentTasks, recived] = await Promise.all([
         getTranslations('taskPage'),

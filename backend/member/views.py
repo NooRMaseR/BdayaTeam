@@ -13,6 +13,7 @@ from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
 from django.db.models.functions import Coalesce
 from django.utils.decorators import method_decorator
+from django.core.files.uploadedfile import UploadedFile
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.db.models import (
     PositiveSmallIntegerField,
@@ -26,41 +27,42 @@ from django.db.models import (
     F,
 )
 
-from core.models import UserRole
 from core.permissions import IsMember
+from core.models import Track, UserRole
 from organizer.models import Attendance, AttendanceStatus
 
-from member.auth import RawJsonRenderer
-from member.serializers import MemberProfileMSGSerializer
+from . import api_schemas, models
+from .caches import member_profile_cache_key, tasks_cache_key
+from .serializers import MemberProfileMSGSerializer, RecivedTaskMSGSerializer
 
+from technical.caches import members_by_technicals_cache_key, task_view_cache_key, tasks_from_memebrs_cache_key, technical_tasks_cache_key
 from technical.serializers import TaskMSGSerializer
 from technical.api_schemas import TaskSerializer
 from technical.models import Task
 
 from utils import SAFE_MIMETYPES, serializer_encoder, DEFAULT_CACHE_DURATION
-from . import api_schemas, models
-import mimetypes, os
+import mimetypes, os, logging
 
 # Create your views here.
 
-class Tasks(APIView):
+logger = logging.getLogger("member")
+
+class BaseMemberAPIView(APIView):
+    permission_classes = (IsMember,)
+
+class Tasks(BaseMemberAPIView):
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = TaskSerializer(many=True)
-    renderer_classes = (RawJsonRenderer,)
-    permission_classes = (IsMember,)
-    
-    @staticmethod
-    def get_cache_key(member_id: int):
-        return f"member_tasks_{member_id}"
     
     def get(self, request: Request) -> Response:
-        CACHE_KEY = self.get_cache_key(request.user.id)
+        TRACK: Track = request.user.track
+        CACHE_KEY = tasks_cache_key(TRACK.name, request.user.id)
         if (data:=cache.get(CACHE_KEY)):
             return Response(data)
         
         tasks = (
             Task.objects
-            .filter(track=request.user.track)
+            .filter(track=TRACK)
             .annotate(
                 expired=ExpressionWrapper(
                     Q(expires_at__lte=timezone.now()),
@@ -112,17 +114,20 @@ class Tasks(APIView):
     )
     @transaction.atomic
     def post(self, request: Request) -> Response:
-        from technical.views import Tasks as TechnicalTasksView, TaskView
-        
         TASK_ID: int | None = request.data.get("task_id") # type: ignore
         member: models.Member = request.user.member
+        TRACK: Track = request.user.track
+        
+        if TASK_ID is None:
+            return Response({"details": "task_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
         task = get_object_or_404(models.Task.objects.only("id", "created_at", "expires_at"), id=TASK_ID)
         
         try:
             rec_task = models.ReciviedTask.objects.create(
                 task=task, # type: ignore
                 member=member,
-                track=request.user.track,
+                track=TRACK,
                 notes=request.data.get("notes") # type: ignore
             )
             oc_files = (models.ReciviedTaskFile(recivied_task=rec_task, file=f) for f in request.data.getlist("file")) # type: ignore
@@ -130,22 +135,22 @@ class Tasks(APIView):
             
             cache.delete_many(
                 [
-                    self.get_cache_key(request.user.id),
-                    TaskView.get_cache_key(TASK_ID) if TASK_ID else "",
-                    MemberProfile.get_cache_key(member.code),
-                    TechnicalTasksView.get_cache_key(request.user.track.name),
-                    f"members_tech_{request.user.track.name}",
+                    tasks_cache_key(TRACK.name, request.user.id),
+                    task_view_cache_key(TASK_ID),
+                    member_profile_cache_key(member.code),
+                    technical_tasks_cache_key(TRACK.name),
+                    members_by_technicals_cache_key(TRACK.name),
                 ]
             )
-            cache.delete_pattern(f"technical_recived_tasks_{request.user.track.name}*") # type: ignore
+            cache.delete_pattern(f"technical_recived_tasks_{TRACK.name}*") # type: ignore
             return Response({}, status=status.HTTP_201_CREATED)
         
         except IntegrityError as e:
-            print(repr(e))
+            logger.warning(repr(e))
             return Response({"details": "this task already exists"}, status=status.HTTP_400_BAD_REQUEST)
         
         except Exception as e:
-            print(f"ex: {repr(e)}")
+            logger.error(repr(e))
             return Response({"details": "somthing went wrong, please try again"}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -177,7 +182,6 @@ class ProtectedTask(APIView):
 
 class MemberProfile(APIView):
     serializer_class = api_schemas.MemberProfileSerializer
-    renderer_classes = (RawJsonRenderer,)
     
     def get_sub_queries(self):
         absents_subquery = Subquery(
@@ -222,23 +226,19 @@ class MemberProfile(APIView):
             ),
         )
     
-    @staticmethod
-    def get_cache_key(code: str):
-        return f"member_profile_{code}"
-    
     def get(self, request: Request, member_code: str) -> Response:
         query = self.get_sub_queries()
         
         match request.user.role:
             case UserRole.MEMBER:
-                if (data:=cache.get(self.get_cache_key(request.user.member.code))):
+                if (data:=cache.get(member_profile_cache_key(request.user.member.code))):
                     return Response(data)
                 member = get_object_or_404(
                     query,
                     email=request.user.email
                 )
             case _:
-                if (data:=cache.get(self.get_cache_key(member_code))):
+                if (data:=cache.get(member_profile_cache_key(member_code))):
                     return Response(data)
                 member = get_object_or_404(
                     query,
@@ -247,6 +247,82 @@ class MemberProfile(APIView):
         
         data = MemberProfileMSGSerializer.from_model(member)
         encoded_data = data.encode()
-        cache.set(self.get_cache_key(data.code), encoded_data, 1800) # 30 minutes
+        cache.set(member_profile_cache_key(data.code), encoded_data, 1800) # 30 minutes
         return Response(encoded_data)
 
+
+class EditMemberSentTask(BaseMemberAPIView):
+    serializer_class = api_schemas.RecivedTaskSerializer()
+    parser_classes = (MultiPartParser, FormParser)
+    
+    def get(self, request: Request, sent_task_id: int) -> Response:
+        task = get_object_or_404(
+            models.ReciviedTask.objects
+            .select_related("task", "member", "track")
+            .prefetch_related("files")
+            .defer(
+                "task__track",
+                "member__email",
+                "member__collage_code",
+                "member__phone_number",
+                "member__bonus",
+                "member__track",
+                "member__joined_at",
+                "member__status",
+            ), 
+            id=sent_task_id, 
+            member__email=request.user.email
+        )
+        task_serialized_encoded = RecivedTaskMSGSerializer.from_model(task).encode()
+        return Response(task_serialized_encoded)
+    
+    @extend_schema(
+        request=inline_serializer(
+            "editMemberSelfTask",
+            {
+                "files": api_schemas.serializers.ListField(
+                    child=api_schemas.serializers.FileField(),
+                    required=False
+                ),
+                "notes": api_schemas.serializers.CharField(required=False)
+            }
+        ),
+        responses={
+            200: None
+        }
+    )
+    @transaction.atomic
+    def put(self, request: Request, sent_task_id: int) -> Response:
+        
+        task = get_object_or_404(models.ReciviedTask.objects.only("notes", "signed", "member_code", "task_id").select_related("member", "task"), id=sent_task_id, member__email=request.user.email)
+        notes: str | None = request.data.get("notes") # type: ignore
+        files: list[UploadedFile] | None = request.FILES.getlist("files") # type: ignore
+        needs_save: bool = False
+        update_fields: set[str] = {"signed"}
+        
+        if notes is not None:
+            task.notes = notes
+            update_fields.add("notes")
+            needs_save = True
+        
+        if files:
+            models.ReciviedTaskFile.objects.filter(recivied_task=task).delete()
+            task_files = (
+                models.ReciviedTaskFile(recivied_task=task, file=file)
+                for file in files
+            )
+            models.ReciviedTaskFile.objects.bulk_create(task_files)
+            needs_save = True
+        
+        if needs_save:
+            task.signed = False
+            task.save(update_fields=update_fields)
+            cache.delete_many(
+                [
+                    member_profile_cache_key(task.member.code),
+                    tasks_from_memebrs_cache_key(request.user.track, task.task.pk)
+                ]
+            )
+        
+        return Response()
+        

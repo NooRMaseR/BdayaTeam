@@ -8,6 +8,7 @@ import Switch from '@mui/material/Switch';
 import type { components } from '@/app/generated/api_types';
 import GroupTitled from '@/app/components/group_titled';
 import FilePicker from '@/app/components/file_picker';
+import { useAuthStore } from '@/app/utils/store';
 import { useTranslations } from 'next-intl';
 import BodyM from '@/app/components/bodyM';
 import API from '@/app/utils/api.client';
@@ -18,6 +19,7 @@ type Settings = components['schemas']['SiteSettingsRequest'];
 
 export default function SettingsClient({ recivedSettings }: { recivedSettings: Settings }) {
     const tr = useTranslations('settingsPage');
+    const isAdmin = useAuthStore(state => state.user?.is_admin);
     const [settings, setSettings] = React.useState<Settings>(recivedSettings);
     
     const [siteImageFile, setSiteImageFile] = React.useState<File | null>(null);
@@ -75,7 +77,7 @@ export default function SettingsClient({ recivedSettings }: { recivedSettings: S
         const submissionPromise = API.PUT("/api/organizer/settings/", {
             body: (() => {
                 const fd = new FormData();
-                fd.append("is_register_enabled", String(settings.is_register_enabled));
+                if (isAdmin) fd.append("is_register_enabled", String(settings.is_register_enabled));
                 
                 settings.organizer_can_edit?.forEach(v => fd.append("organizer_can_edit", v));
                 
@@ -120,12 +122,15 @@ export default function SettingsClient({ recivedSettings }: { recivedSettings: S
                     </Typography>
                 </div>
 
-                <GroupTitled title={tr('access')}>
-                    <FormControlLabel 
-                        control={<Switch color="primary" checked={!!settings.is_register_enabled} onChange={handleRegisterToggle} />} 
-                        label={<Typography fontWeight="medium">{tr('memberCan')}</Typography>} 
-                    />
-                </GroupTitled>
+                {
+                    isAdmin &&
+                        <GroupTitled title={tr('access')}>
+                            <FormControlLabel 
+                                control={<Switch color="primary" checked={!!settings.is_register_enabled} onChange={handleRegisterToggle} />} 
+                                label={<Typography fontWeight="medium">{tr('memberCan')}</Typography>} 
+                            />
+                        </GroupTitled>
+                }
                 
                 <GroupTitled title={tr('orgEdit')} caption={tr('orgEditDesc')} >
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-6">

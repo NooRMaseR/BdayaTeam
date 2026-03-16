@@ -45,7 +45,8 @@ export default function AuthLoader({ children }: { children: React.ReactNode }) 
                     user: {
                         role: authResponse.value.data.role,
                         username: authResponse.value.data.username,
-                        track: authResponse.value.data.track
+                        track: authResponse.value.data.track,
+                        is_admin: authResponse.value.data.is_admin
                     }
                 });
                 setIsLoading(false);
