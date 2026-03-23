@@ -229,9 +229,7 @@ class TasksFromMembers(BaseTechnicalAPIView):
             .prefetch_related("files")
             .defer(
                 "task__track",
-                "member__email",
                 "member__collage_code",
-                "member__phone_number",
                 "member__bonus",
                 "member__track",
                 "member__joined_at",
@@ -305,7 +303,7 @@ class Members(BaseTechnicalAPIView):
                     "prefetched_tasks"
                 )
             )
-            .defer('joined_at')
+            .select_related("bdaya_user")
             .order_by("joined_at")
             .filter(track=track_obj)
         )

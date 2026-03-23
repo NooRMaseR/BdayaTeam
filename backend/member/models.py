@@ -1,5 +1,3 @@
-from phonenumber_field.modelfields import PhoneNumberField
-from django.shortcuts import get_object_or_404
 from core.models import BdayaUser, Track
 from technical.models import Task
 from django.db import models
@@ -14,27 +12,33 @@ class MemberStatus(models.TextChoices):
     FIRED = "fired"
 
 class Member(models.Model):
+    bdaya_user = models.OneToOneField(BdayaUser, on_delete=models.CASCADE, related_name="member")
     code = models.CharField(max_length=10, primary_key=True, unique=True, blank=True, validators=[validators.validate_member_code])
-    name = models.CharField(max_length=200)
-    email = models.EmailField(unique=True)
     collage_code = models.CharField(max_length=9, unique=True, validators=[validators.validate_collage_code])
-    phone_number = PhoneNumberField(region="EG", unique=True) # type: ignore
     bonus = models.SmallIntegerField(default=0)
     track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name='members')
     joined_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=MemberStatus, default=MemberStatus.NORMAL)
 
     @property
-    def bdaya_user(self) -> BdayaUser:
-        return get_object_or_404(BdayaUser.objects.only('id', 'email'), email=self.email)
+    def email(self) -> str:
+        return self.bdaya_user.email
+
+    @property
+    def name(self) -> str:
+        return self.bdaya_user.username
     
+    @property
+    def phone_number(self) -> str:
+        return self.bdaya_user.phone_number
+
     class Meta:
         ordering = ("-track", "-joined_at")
         indexes = [
             models.Index(fields=["track", "joined_at"]),
         ]
         
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.name} - {self.code}'
 
 

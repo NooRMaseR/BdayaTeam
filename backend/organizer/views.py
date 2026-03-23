@@ -83,6 +83,7 @@ class Members(BaseOrganizerAPIView):
                     Attendance.objects.select_related("date"),
                 )
             )
+            .select_related("bdaya_user")
             .defer("joined_at")
             .filter(track=target_track)
             .order_by("joined_at")
@@ -95,7 +96,7 @@ class Members(BaseOrganizerAPIView):
 
     def move_member_to_another_track(self, code: str, current_track: str, move_to_track: str) -> None:
         member = get_object_or_404(
-            Member.objects.defer("code", "bonus", "name", "joined_at"),
+            Member.objects.select_related("bdaya_user").only("collage_code", "bdaya_user__name", "bdaya_user__email", "bdaya_user__phone_number"),
             code=code,
             track__name=current_track,
         )
@@ -190,7 +191,7 @@ class Members(BaseOrganizerAPIView):
                 {"details": "Bad request type"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        member: Member = get_object_or_404(Member, code=code)
+        member: Member = get_object_or_404(Member.objects.only('code'), code=code)
         
         match req_type:
             case MemberEditType.ATTENDANCE:

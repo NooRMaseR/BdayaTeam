@@ -55,7 +55,7 @@ class TrackMSGSerializer(BaseMSGSerializer[Track], frozen=True):
     image: str
 
     @classmethod
-    def from_model(cls, model: Track):
+    def from_model(cls, model: Track) -> Self:
         return cls(
             id=model.pk,
             name=model.name,

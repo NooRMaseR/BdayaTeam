@@ -100,18 +100,14 @@ class Login(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if user.is_technical:
+        if not user.is_organizer:
             track = TrackNameOnlyMSGSerializer.from_model(user.track) # type: ignore
-        elif user.is_member:
-            with suppress(Member.DoesNotExist):
-                member =  (
-                    Member.objects.only("code", "track_id", "track__name")
-                    .select_related("track")
-                    .get(email=user.email)
-                )
-                track = TrackNameOnlyMSGSerializer.from_model(member.track)  # type: ignore
         
         refresh = RefreshToken.for_user(user)
+        refresh['role'] = user.role
+        if user.is_member and hasattr(user, "member"):
+            refresh['code'] = user.member.code # type: ignore
+            
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
 
@@ -142,7 +138,6 @@ class Login(APIView):
         
         csrf.get_token(request._request)
         return response
-        
 
 
 class TestAuthCredentials(APIView):

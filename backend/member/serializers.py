@@ -26,10 +26,10 @@ class MemberORGMSGSerializer(MemberBaseMSG, frozen=True):
     def from_model(cls, model: Member) -> Self:
         return cls(
             code=model.code,
-            name=model.name,
-            email=model.email,
+            name=model.bdaya_user.username,
+            email=model.bdaya_user.email,
             collage_code=model.collage_code,
-            phone_number=model.phone_number,
+            phone_number=model.bdaya_user.phone_number,
             status=model.status,
             bonus=model.bonus,
             track=TrackNameOnlyMSGSerializer.from_model(model.track),
@@ -41,10 +41,10 @@ class MemberORGMSGSerializer(MemberBaseMSG, frozen=True):
         return [
             cls(
                 code=model.code,
-                name=model.name,
-                email=model.email,
+                name=model.bdaya_user.username,
+                email=model.bdaya_user.email,
                 collage_code=model.collage_code,
-                phone_number=model.phone_number,
+                phone_number=model.bdaya_user.phone_number,
                 status=model.status,
                 bonus=model.bonus,
                 track=track,
@@ -81,10 +81,10 @@ class MemberTechnicalMSGSerializer(MemberBaseMSG, frozen=True):
     def from_model(cls, model: Member) -> Self:
         return cls(
             code=model.code,
-            name=model.name,
-            email=model.email,
+            name=model.bdaya_user.username,
+            email=model.bdaya_user.email,
             collage_code=model.collage_code,
-            phone_number=model.phone_number,
+            phone_number=model.bdaya_user.phone_number,
             bonus=model.bonus,
             track=TrackNameOnlyMSGSerializer.from_model(model.track),
             status=model.status,
@@ -96,10 +96,10 @@ class MemberTechnicalMSGSerializer(MemberBaseMSG, frozen=True):
         return [
             cls(
                 code=model.code,
-                name=model.name,
-                email=model.email,
+                name=model.bdaya_user.username,
+                email=model.bdaya_user.email,
                 collage_code=model.collage_code,
-                phone_number=model.phone_number,
+                phone_number=model.bdaya_user.phone_number,
                 bonus=model.bonus,
                 track=track,
                 status=model.status,
@@ -115,7 +115,7 @@ class MemberMSGSerializerForTask(BaseMSGSerializer[Member], frozen=True):
 
     @classmethod
     def from_model(cls, model: Member) -> Self:
-        return cls(model.code, model.name)
+        return cls(model.code, model.bdaya_user.username)
 
 
 class RecivedFile(BaseMSGSerializer[ReciviedTaskFile], frozen=True):
@@ -172,7 +172,7 @@ class MemberProfileMSGSerializer(BaseMSGSerializer[Member], frozen=True):
             track=TrackNameOnlyMSGSerializer.from_model(model.track),
             total_tasks_sent=model.total_tasks_sent,  # type: ignore
             missing_tasks=model.missing_tasks,  # type: ignore
-            name=model.name,
+            name=model.bdaya_user.username,
             code=model.code,
             status=model.status,
             tasks=RecivedTaskMSGSerializer.from_queryset(model.tasks_prefetched),  # type: ignore

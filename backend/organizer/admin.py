@@ -9,6 +9,8 @@ from unfold.paginator import InfinitePaginator
 from unfold.contrib.forms.widgets import ArrayWidget
 from django.contrib.postgres.fields import ArrayField
 from unfold.admin import ModelAdmin as UnfoldModelAdmin
+from unfold.contrib.filters.admin.choice_filters import ChoicesCheckboxFilter
+from unfold.contrib.filters.admin.dropdown_filters import RelatedDropdownFilter
 
 # Register your models here.
 @admin.register(models.SiteSetting)
@@ -31,6 +33,11 @@ class AttendanceAdmin(UnfoldModelAdmin):
     search_fields = ("member__name", "member__code")
     paginator = InfinitePaginator
     list_per_page = 50
+    list_filter = (
+        ("member__track", RelatedDropdownFilter),
+        ("status", ChoicesCheckboxFilter),
+    )
+    list_filter_submit = True
     
     def get_member_track(self, obj: models.Attendance) -> Track:
         return obj.member.track

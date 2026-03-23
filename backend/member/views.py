@@ -27,8 +27,8 @@ from django.db.models import (
     F,
 )
 
+from core.models import Track
 from core.permissions import IsMember
-from core.models import Track, UserRole
 from organizer.models import Attendance, AttendanceStatus
 
 from . import api_schemas, models
@@ -73,7 +73,7 @@ class Tasks(BaseMemberAPIView):
                 id__in=Subquery(
                     models.ReciviedTask.objects
                     .only("id", "task_id")
-                    .filter(member__email=request.user.email)
+                    .filter(member__code=request.auth.get("code"))
                     .values("task_id")
                 )
             )
@@ -207,7 +207,6 @@ class MemberProfile(APIView):
             'tasks_sent',
             queryset=models.ReciviedTask.objects.select_related(
                 'task',
-                'member',
                 'track',
             ).prefetch_related(
                 'files'
@@ -215,7 +214,7 @@ class MemberProfile(APIView):
             to_attr='tasks_prefetched' 
         )
 
-        return models.Member.objects.select_related("track").prefetch_related(tasks_prefetch).annotate(
+        return models.Member.objects.select_related("track", 'bdaya_user').prefetch_related(tasks_prefetch).annotate(
             absents=Coalesce(absents_subquery, 0),
             total_tasks_sent=Coalesce(tasks_sent_subquery, 0),
             total_tasks=Count("track__tasks")
@@ -227,23 +226,20 @@ class MemberProfile(APIView):
         )
     
     def get(self, request: Request, member_code: str) -> Response:
-        query = self.get_sub_queries()
+
+        if request.user.is_member:
+            target_code = request.auth.get("code") 
+        else:
+            target_code = member_code
         
-        match request.user.role:
-            case UserRole.MEMBER:
-                if (data:=cache.get(member_profile_cache_key(request.user.member.code))):
-                    return Response(data)
-                member = get_object_or_404(
-                    query,
-                    email=request.user.email
-                )
-            case _:
-                if (data:=cache.get(member_profile_cache_key(member_code))):
-                    return Response(data)
-                member = get_object_or_404(
-                    query,
-                    code=member_code
-                )
+        if (cached_data := cache.get(member_profile_cache_key(target_code))):
+            return Response(cached_data)
+        
+        query = self.get_sub_queries()
+        member = get_object_or_404(
+            query,
+            code=target_code
+        )
         
         data = MemberProfileMSGSerializer.from_model(member)
         encoded_data = data.encode()
@@ -258,20 +254,18 @@ class EditMemberSentTask(BaseMemberAPIView):
     def get(self, request: Request, sent_task_id: int) -> Response:
         task = get_object_or_404(
             models.ReciviedTask.objects
-            .select_related("task", "member", "track")
+            .select_related("task", "member__bdaya_user", "track")
             .prefetch_related("files")
             .defer(
                 "task__track",
-                "member__email",
                 "member__collage_code",
-                "member__phone_number",
                 "member__bonus",
                 "member__track",
                 "member__joined_at",
                 "member__status",
             ), 
             id=sent_task_id, 
-            member__email=request.user.email
+            member__code=request.auth.get("code")
         )
         task_serialized_encoded = RecivedTaskMSGSerializer.from_model(task).encode()
         return Response(task_serialized_encoded)

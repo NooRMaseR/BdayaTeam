@@ -63,8 +63,8 @@ class CookiesJWTAuthentication(JWTAuthentication):
         try:
             user = (
                 self.user_model.objects
-                .only("id", "email", "password", "username", "role", "is_active", "is_superuser", "track_id", "track__name")
-                .select_related("track")
+                .defer("track__prefix", "is_staff", "joined_at", "last_login", "track__en_description", "track__ar_description", "track__image","member__joined_at", "member__status",)
+                .select_related("track", 'member')
                 .get(**{api_settings.USER_ID_FIELD: user_id}) # type: ignore
             )
         except self.user_model.DoesNotExist as e:

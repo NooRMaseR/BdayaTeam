@@ -56,7 +56,6 @@ INSTALLED_APPS = (
     "graphene_django",
     "corsheaders",
     "rest_framework",
-    "rest_framework.authtoken",
     "drf_spectacular",
     "drf_spectacular_sidecar",
     "phonenumber_field",

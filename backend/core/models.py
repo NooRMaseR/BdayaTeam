@@ -55,7 +55,7 @@ class TrackCounter(models.Model):
 class BdayaUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=50)
-    phone_number = PhoneNumberField(region="EG") # type: ignore
+    phone_number = PhoneNumberField(region="EG", unique=True) # type: ignore
     role = models.CharField(max_length=15, choices=UserRole, default=UserRole.MEMBER)
     track = models.ForeignKey(Track, on_delete=models.SET_NULL, blank=True, null=True)
     is_active = models.BooleanField(default=True)
@@ -79,11 +79,6 @@ class BdayaUser(AbstractBaseUser, PermissionsMixin):
     def is_member(self) -> bool:
         return self.role == UserRole.MEMBER
     
-    @property
-    def member(self):
-        from member.models import Member
-        return get_object_or_404(Member.objects.only("code"), email=self.email)
-    
     def clean(self) -> None:
         if (self.is_technical or self.is_member) and self.track is None:
             raise ValidationError(f"Track is required for {self.role} role")
@@ -91,5 +86,5 @@ class BdayaUser(AbstractBaseUser, PermissionsMixin):
             raise ValidationError(f"an {self.role} cannot have a track")
         return super().clean()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.username
