@@ -58,6 +58,27 @@ const Transition = React.forwardRef(function Transition(
 export function TaskShowCase({ open, task, onSuccess, onClose, editable = true }: TaskShowCaseProps) {
     const tr = useTranslations('taskPage');
     const { register, handleSubmit } = useForm<SignTask>();
+    const onCloseRef = React.useRef(onClose);
+
+    React.useEffect(() => {
+        onCloseRef.current = onClose;
+    }, [onClose]);
+
+    React.useEffect(() => {
+        if (!open) return;
+
+        window.history.pushState({ dialogOpen: true }, '');
+
+        const handlePopState = () => {
+            onCloseRef.current();
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+            if (window.history.state.dialogOpen) window.history.back();
+        }
+    }, [open])
 
     const handleForm = async (dataToSend: SignTask) => {
         if (!task) {

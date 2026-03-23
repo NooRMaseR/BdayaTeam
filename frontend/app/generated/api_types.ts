@@ -333,18 +333,18 @@ export interface components {
             /** Format: date */
             day: string;
         };
-        AttendenceSmall: {
-            date: components["schemas"]["AttendanceSmallDays"];
-            status: components["schemas"]["AttendenceSmallStatusEnum"];
-            excuse_reason?: string | null;
-        };
         /**
          * @description * `present` - Present
          *     * `absent` - Absent
          *     * `excused` - Excused
          * @enum {string}
          */
-        AttendenceSmallStatusEnum: "present" | "absent" | "excused";
+        AttendanceStatusEnum: "present" | "absent" | "excused";
+        AttendenceSmall: {
+            date: components["schemas"]["AttendanceSmallDays"];
+            status: components["schemas"]["AttendanceStatusEnum"];
+            excuse_reason?: string | null;
+        };
         /**
          * @description * `notes` - notes
          *     * `degree` - degree
@@ -366,19 +366,20 @@ export interface components {
             code?: string;
             readonly track: components["schemas"]["TrackNameOnly"];
             readonly attendances: components["schemas"]["AttendenceSmall"][];
-            name: string;
+            readonly name: string;
             /** Format: email */
-            email: string;
+            readonly email: string;
+            readonly phone_number: string;
             collage_code: string;
-            phone_number: string;
             bonus?: number;
-            status?: components["schemas"]["StatusB01Enum"];
+            status?: components["schemas"]["MemberStatusEnum"];
+            bdaya_user: number;
         };
         MemberProfile: {
-            name: string;
+            readonly name: string;
             code?: string;
             readonly track: components["schemas"]["TrackNameOnly"];
-            status?: components["schemas"]["StatusB01Enum"];
+            status?: components["schemas"]["MemberStatusEnum"];
             readonly absents: number;
             total_tasks_sent: number;
             missing_tasks: number;
@@ -386,19 +387,28 @@ export interface components {
         };
         MemberSerializerForTask: {
             code?: string;
-            name: string;
+            readonly name: string;
         };
+        /**
+         * @description * `normal` - Normal
+         *     * `warning 1` - Warning1
+         *     * `warning 2` - Warning2
+         *     * `fired` - Fired
+         * @enum {string}
+         */
+        MemberStatusEnum: "normal" | "warning 1" | "warning 2" | "fired";
         MemberTechnical: {
             code?: string;
             readonly tasks: components["schemas"]["RecivedTaskSmall"][];
             readonly track: components["schemas"]["TrackNameOnly"];
-            name: string;
             /** Format: email */
-            email: string;
+            readonly email: string;
+            readonly name: string;
+            readonly phone_number: string;
             collage_code: string;
-            phone_number: string;
             bonus?: number;
-            status?: components["schemas"]["StatusB01Enum"];
+            status?: components["schemas"]["MemberStatusEnum"];
+            bdaya_user: number;
         };
         RecivedTask: {
             readonly id: number;
@@ -432,11 +442,11 @@ export interface components {
         };
         RegisterMemberRequest: {
             request_track_id: number;
-            name: string;
             /** Format: email */
             email: string;
-            collage_code: string;
+            name: string;
             phone_number: string;
+            collage_code: string;
         };
         /**
          * @description * `member` - member
@@ -468,14 +478,6 @@ export interface components {
             /** Format: binary */
             hero_image?: string | null;
         };
-        /**
-         * @description * `normal` - Normal
-         *     * `warning 1` - Warning1
-         *     * `warning 2` - Warning2
-         *     * `fired` - Fired
-         * @enum {string}
-         */
-        StatusB01Enum: "normal" | "warning 1" | "warning 2" | "fired";
         Task: {
             readonly id: number;
             readonly expired: boolean;
@@ -578,6 +580,9 @@ export interface components {
             details: string;
         };
         bad_day: {
+            field_name: string;
+        };
+        bad_day_creation: {
             field_name: string;
         };
         day_not_found: {
@@ -939,7 +944,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["bad_day"];
+                    "application/json": components["schemas"]["bad_day_creation"];
                 };
             };
         };

@@ -1,4 +1,5 @@
 from technical.api_schemas import TaskNoTrackSerializer, TaskSmallSerializer
+from phonenumber_field.serializerfields import PhoneNumberField
 from organizer.api_schemas import AttendenceSmallSerializer
 from core.api_schemas import TrackNameOnlySerializer
 from rest_framework import serializers
@@ -7,6 +8,9 @@ from . import models
 class MemberSerializer(serializers.ModelSerializer):
     track = TrackNameOnlySerializer(read_only=True)
     attendances = AttendenceSmallSerializer(read_only=True, many=True)
+    name = serializers.CharField(read_only=True)
+    email = serializers.EmailField(read_only=True)
+    phone_number = PhoneNumberField(read_only=True, region="EG")
     
     class Meta:
         model = models.Member
@@ -30,6 +34,10 @@ class RecivedTaskSmallSerializer(serializers.ModelSerializer):
 class MemberTechnicalSerializer(serializers.ModelSerializer):
     tasks = RecivedTaskSmallSerializer(read_only=True, many=True)
     track = TrackNameOnlySerializer(read_only=True)
+    email = serializers.EmailField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    phone_number = PhoneNumberField(read_only=True)
+    
     class Meta:
         model = models.Member
         exclude = ('joined_at',)

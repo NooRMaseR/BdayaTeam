@@ -126,6 +126,10 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_DIST": "SIDECAR",
     "SWAGGER_UI_FAVICON_HREFF": "SIDECAR",
     "REDOC_DIST": "SIDECAR",
+    "ENUM_NAME_OVERRIDES": {
+        'MemberStatusEnum': 'member.models.MemberStatus',
+        'AttendanceStatusEnum': 'organizer.models.AttendanceStatus',
+    },
 }
 
 GRAPHENE = {
@@ -376,4 +380,4 @@ SESSION_COOKIE_SECURE = True  #! True in production (HTTPS)
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-X_FRAME_OPTIONS = "SAMEORIGIN"
+X_FRAME_OPTIONS = "DENY"

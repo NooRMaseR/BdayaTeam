@@ -27,7 +27,6 @@ from organizer.api_schemas import SiteSettingsImagesSerializer
 from organizer.serializers import SiteSettingsImagesMSGSerializer
 
 from utils import DEFAULT_CACHE_DURATION, serializer_encoder
-from contextlib import suppress
 
 # Create your views here.
 
@@ -156,17 +155,9 @@ class TestAuthCredentials(APIView):
     def get(self, request: Request) -> Response:
         track: TrackNameOnlyMSGSerializer | None = None
 
-        if request.user.is_technical:
+        if not request.user.is_organizer:
             track = TrackNameOnlyMSGSerializer.from_model(request.user.track)
-        elif request.user.is_member:
-            with suppress(Member.DoesNotExist):
-                member = (
-                    Member.objects.only("code", "track_id", 'track__name')
-                    .select_related("track")
-                    .get(email=request.user.email)
-                )
-                track = TrackNameOnlyMSGSerializer.from_model(member.track)
-
+        
         settings = SiteSetting.get_solo()
         
         encoded_data = serializer_encoder.encode({
