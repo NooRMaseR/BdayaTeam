@@ -1,3 +1,4 @@
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from phonenumber_field.serializerfields import PhoneNumberField
 from django.utils.translation import gettext_lazy as _
 from rest_framework.validators import UniqueValidator
@@ -128,3 +129,15 @@ class ForbiddenOnlyMember(serializers.Serializer):
 
 class ForbiddenOnlyOrganizer(serializers.Serializer):
     details = serializers.CharField(default="Only organizers Allowed")
+
+class CookiesJWTAuthenticationScheme(OpenApiAuthenticationExtension):
+    target_class = 'core.middleware.CookiesJWTAuthentication' 
+    name = 'cookieAuth'
+    
+    def get_security_definition(self, auto_schema) -> dict[str, str]:
+        return {
+            'type': 'apiKey',
+            'in': 'cookie',
+            'name': 'access_token',
+            'description': 'JWT access token stored in HttpOnly cookie'
+        }

@@ -45,7 +45,7 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
             API.GET(`/api/organizer/members/{track_name}/`, { params: { path: { track_name: track } } }),
             API.GET(`/api/organizer/attendance/{track_name}/days/`, { params: { path: { track_name: track } } }),
             fetchTracks(),
-            !safe ? serverGraphQL<SeeOrganizerCanEditQuery>(EDITABLE_FIELDS) : {data: {allSettings: {organizerCanEdit: [] as string[]}}} 
+            !safe ? serverGraphQL<SeeOrganizerCanEditQuery>(EDITABLE_FIELDS) : { data: { allSettings: { organizerCanEdit: [] as string[] } } }
         ]
     );
 
@@ -70,7 +70,7 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
             row[`${att.date.day}_date`] = att.status;
             row[`${att.date.day}_excuse`] = att.excuse_reason;
         });
-        
+
         return row;
     }) || [];
 
@@ -79,7 +79,7 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
     const columns: GridColDef[] = [
         { align: "center", headerAlign: "center", field: "code", headerName: tr("code"), editable: editableFields.data.allSettings?.organizerCanEdit.includes("code"), pinnable: true, cellClassName: 'sticky left-0 z-3 dark:bg-(--dark-color) bg-white' },
         { field: "name", headerName: tr("name"), width: 200, editable: editableFields.data.allSettings?.organizerCanEdit.includes("name") },
-        { align: "center", headerAlign: "center", field: "status", headerName: tr("status"), width: 100, editable: editableFields.data.allSettings?.organizerCanEdit.includes("status"), type: 'singleSelect', valueOptions: Object.values(MemberStatus).map((status) => ({label: tr(status), value: status})) },
+        { align: "center", headerAlign: "center", field: "status", headerName: tr("status"), width: 100, editable: editableFields.data.allSettings?.organizerCanEdit.includes("status"), type: 'singleSelect', valueOptions: Object.values(MemberStatus).map((status) => ({ label: tr(status), value: status })) },
         { align: "center", headerAlign: "center", field: "bonus", headerName: tr("bonus"), editable: editableFields.data.allSettings?.organizerCanEdit.includes("bonus"), type: "number" },
         { align: "center", headerAlign: "center", field: "track", headerName: tr("trackName"), editable: editableFields.data.allSettings?.organizerCanEdit.includes("track"), type: "singleSelect", valueOptions: tracksNameArray },
         { field: "phone", headerName: tr("phone"), width: 200, editable: editableFields.data.allSettings?.organizerCanEdit.includes("phone") },

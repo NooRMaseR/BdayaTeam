@@ -264,7 +264,7 @@ class AttendanceDayApi(BaseOrganizerAPIView):
         responses={
             201: AttendanceDaysSerializer,
             400: inline_serializer(
-                name="bad_day", fields={"field_name": serializers.CharField()}
+                name="bad_day_creation", fields={"field_name": serializers.CharField()}
             ),
         },
     )

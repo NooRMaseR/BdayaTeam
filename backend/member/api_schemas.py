@@ -8,9 +8,9 @@ from . import models
 class MemberSerializer(serializers.ModelSerializer):
     track = TrackNameOnlySerializer(read_only=True)
     attendances = AttendenceSmallSerializer(read_only=True, many=True)
-    email = serializers.EmailField(read_only=True)
     name = serializers.CharField(read_only=True)
-    phone_number = PhoneNumberField(read_only=True)
+    email = serializers.EmailField(read_only=True)
+    phone_number = PhoneNumberField(read_only=True, region="EG")
     
     class Meta:
         model = models.Member

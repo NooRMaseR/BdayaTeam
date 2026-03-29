@@ -165,7 +165,7 @@ class ProtectedTask(APIView):
         document = get_object_or_404(models.ReciviedTaskFile.objects.only("id", 'file', "file_name", "recivied_task__member__bdaya_user__email").select_related('recivied_task__member__bdaya_user'), id=task_id)
         
         # check if it's an organizer or technical to get the file or check if the user is a member and it's the same member that uplouded this task
-        if (request.user.is_member and document.recivied_task.member.email != request.user.email):
+        if (request.user.is_member and document.recivied_task.member.bdaya_user.email != request.user.email):
             return Response(status=status.HTTP_404_NOT_FOUND)
         
         content_type, _ = mimetypes.guess_type(document.file.url)
@@ -178,7 +178,7 @@ class ProtectedTask(APIView):
         return Response(
             headers={
                 "X-Accel-Redirect": nginx_url,
-                'Content-Disposition': f'{disposition_type}; filename="{os.path.basename(document.file_name)}"'
+                'Content-Disposition': f'{disposition_type}; filename="{document.file_name}"'
             },
             content_type=final_content_type
         )

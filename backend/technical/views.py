@@ -125,7 +125,8 @@ class Tasks(BaseTechnicalAPIView):
 
 
 class TaskView(APIView):
-
+    serializer_class = None
+    
     def get_permissions(self):
         if self.request.method == "GET":
             return [IsTechnicalOrMember()]
