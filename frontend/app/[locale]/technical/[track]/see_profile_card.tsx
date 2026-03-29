@@ -3,10 +3,10 @@
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
 import Button from '@mui/material/Button';
 
+import LocaledTextField from '@/app/components/localed_textField';
 import NavigationCard from '@/app/components/navigation_card';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
@@ -33,7 +33,7 @@ export default function SeeProfileCard() {
                 <DialogTitle>{tr('enterMemberCode')}</DialogTitle>
                 <form onSubmit={seeMember}>
                     <DialogContent sx={{marginBlock: '1rem'}}>
-                        <TextField onChange={handleOnChange} label={tr('memberCode')} required fullWidth />
+                        <LocaledTextField onChange={handleOnChange} label={tr('memberCode')} required fullWidth />
                     </DialogContent>
                     <DialogActions>
                         <Button variant='contained' onClick={handleCloseDialog}>{tr('cancel')}</Button>

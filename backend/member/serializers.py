@@ -121,10 +121,11 @@ class MemberMSGSerializerForTask(BaseMSGSerializer[Member], frozen=True):
 class RecivedFile(BaseMSGSerializer[ReciviedTaskFile], frozen=True):
     id: int
     file_url: str
+    file_name: str
 
     @classmethod
     def from_model(cls, model: ReciviedTaskFile) -> Self:
-        return cls(model.pk, model.file.url)
+        return cls(model.pk, model.file.url, model.file_name)
 
 
 class RecivedTaskMSGSerializer(BaseMSGSerializer[ReciviedTask], frozen=True):

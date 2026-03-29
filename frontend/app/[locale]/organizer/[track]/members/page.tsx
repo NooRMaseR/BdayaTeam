@@ -77,7 +77,7 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
     const tracksNameArray: string[] = tracksRes.data?.map((track) => track.name) || [];
 
     const columns: GridColDef[] = [
-        { align: "center", headerAlign: "center", field: "code", headerName: tr("code"), editable: editableFields.data.allSettings?.organizerCanEdit.includes("code"), pinnable: true, cellClassName: 'sticky left-0 z-3 bg-white' },
+        { align: "center", headerAlign: "center", field: "code", headerName: tr("code"), editable: editableFields.data.allSettings?.organizerCanEdit.includes("code"), pinnable: true, cellClassName: 'sticky left-0 z-3 dark:bg-(--dark-color) bg-white' },
         { field: "name", headerName: tr("name"), width: 200, editable: editableFields.data.allSettings?.organizerCanEdit.includes("name") },
         { align: "center", headerAlign: "center", field: "status", headerName: tr("status"), width: 100, editable: editableFields.data.allSettings?.organizerCanEdit.includes("status"), type: 'singleSelect', valueOptions: Object.values(MemberStatus).map((status) => ({label: tr(status), value: status})) },
         { align: "center", headerAlign: "center", field: "bonus", headerName: tr("bonus"), editable: editableFields.data.allSettings?.organizerCanEdit.includes("bonus"), type: "number" },

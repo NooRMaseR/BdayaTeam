@@ -44,7 +44,15 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+.color-trans {
+  transition-property: background-color color;
+  transition-duration: 400ms;
+  transition-timing-function: ease-out;
+}
+
 :root {
+  --team-color: #193cb8;
+  --dark-color: #292929;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

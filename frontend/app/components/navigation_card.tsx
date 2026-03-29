@@ -31,15 +31,14 @@ const RenderLinkOrDiv = ({ url, children }: { url?: string, children: ReactNode 
   return <Link href={url} className="h-full block">{children}</Link>;
 };
 
-
 export default function NavigationCard({ title, desc, imageUrl, url, badgeContent = 0 }: NavigationCardProps) {
   return (
     <RenderLinkOrDiv url={url}>
-
       <Card
         id={title}
-        className="hover:shadow-xl border-t-4 border-transparent hover:border-blue-500 hover:-translate-y-2 cursor-pointer flex flex-col"
-        sx={{ transition: "translate ease-out 250ms, border-color ease-out 250ms;", width: "20rem", height: "19rem" }}
+        // Added dark mode specific hover borders (blue-400) and softer shadows (shadow-black/50)
+        className="hover:shadow-xl dark:hover:shadow-2xl dark:hover:shadow-black/50 border-t-4 border-transparent hover:border-blue-500 dark:hover:border-blue-400 hover:-translate-y-2 cursor-pointer flex flex-col"
+        sx={{ transition: "translate ease-out 250ms, border-color ease-out 250ms, box-shadow ease-out 250ms", width: "20rem", height: "19rem" }}
       >
         <Badge className="flex flex-col" badgeContent={badgeContent} color="error" anchorOrigin={{ vertical: "top", horizontal: "left" }} sx={{ mt: "1rem", ml: "1rem"}}>
 
@@ -51,6 +50,8 @@ export default function NavigationCard({ title, desc, imageUrl, url, badgeConten
                 fill
                 style={{ objectFit: 'cover' }}
                 unoptimized
+                // Dark Mode fix: Dropped the opacity and brightness slightly so images don't blind the user at night
+                className="dark:opacity-90 dark:brightness-90 transition-all duration-300" 
               />
             </CardMedia>
           )}
@@ -61,6 +62,7 @@ export default function NavigationCard({ title, desc, imageUrl, url, badgeConten
             </Typography>
 
             {typeof desc === 'string' ? (
+              // MUI's color="text.secondary" automatically handles dark mode text colors!
               <Typography component="p" variant="subtitle2" color="text.secondary" className="leading-relaxed line-clamp-2">
                 {desc}
               </Typography>
@@ -70,5 +72,6 @@ export default function NavigationCard({ title, desc, imageUrl, url, badgeConten
           </CardContent>
         </Badge>
       </Card>
-    </RenderLinkOrDiv>);
+    </RenderLinkOrDiv>
+  );
 }

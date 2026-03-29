@@ -1,6 +1,5 @@
 'use client';
 
-import TextField  from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 
@@ -8,6 +7,7 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 import { useAuthStore, useSettingsStore } from '../../utils/store';
+import LocaledTextField from '@/app/components/localed_textField';
 import type { components } from '../../generated/api_types';
 import PasswordField from '../../components/password';
 import { Link, useRouter } from '@/i18n/navigation';
@@ -70,18 +70,33 @@ export default function LogInForm() {
 
   return (
     <div className={`flex justify-center items-center ${styles.div}`}>
-      <form onSubmit={handleSubmit(onSubmit)} className={`flex justify-center items-center flex-col p-7 mx-4 gap-4 w-full max-w-md bg-[#ebe7e721] border-2 border-solid border-[#c5c3c34a] rounded-lg ${styles.form}`}>
+      <form 
+        onSubmit={handleSubmit(onSubmit)}
+        className={`flex justify-center items-center flex-col p-8 mx-4 gap-5 w-full max-w-md dark:bg-slate-900/90 backdrop-blur-md border border-gray-200 dark:border-slate-700 shadow-2xl rounded-xl transition-colors duration-300 ${styles.form}`}
+      >
         {
           siteImage
             ? <Link href="/">
-            <Image src={siteImage} alt='Team Bdaya' width={150} height={150} loading='eager' unoptimized />
+              <Image 
+                src={siteImage} 
+                alt='Team Bdaya' 
+                width={150} 
+                height={150} 
+                loading='eager' 
+                unoptimized 
+                className="dark:brightness-90 transition-all duration-300"
+              />
             </Link>
             : null
         }
-        <h2 className='text-white text-2xl'>{tr('login')}</h2>
+        
+        <h2 className='text-2xl font-bold text-white'>
+          {tr('login')}
+        </h2>
+        
         <Box className="flex gap-4 justify-center items-center" sx={{ width: "100%" }}>
-          <EmailOutlinedIcon sx={{ color: "white" }} />
-          <TextField
+          <EmailOutlinedIcon sx={{color: "white"}} />
+          <LocaledTextField
             {...register(
               "email", {
               required: true,
@@ -99,17 +114,39 @@ export default function LogInForm() {
             helperText={errors.email?.message}
             fullWidth
             required
-            sx={{ bgcolor: "whitesmoke", borderRadius: "0.5rem" }}
+            className='text-white!'
+            sx={{ borderRadius: "0.5rem", ".MuiInputLabel-root": { color: "#d9d9d9" }, "input": { color: "white" } }}
+            />
+        </Box>
+        
+        <Box className='flex gap-4 justify-center items-center' sx={{ width: "100%" }}>
+          <LockOutlinedIcon sx={{color: "white"}} />
+          <PasswordField 
+            {...register("password", { required: true, minLength: {value: 8, message: tr('invalidLength')} })} 
+            error={!!errors.password} 
+            helperText={errors.password?.message}
+            sx={{ borderRadius: "0.5rem", ".MuiInputLabel-root": { color: "#d9d9d9" }, "input": { color: "white" } }}
           />
         </Box>
-        <Box className='flex gap-4 justify-center items-center' sx={{ width: "100%" }}>
-          <LockOutlinedIcon sx={{ color: "white" }} />
-          <PasswordField {...register("password", { required: true, minLength: {value: 8, message: tr('invalidLength')} })} error={!!errors.password} helperText={errors.password?.message}/>
-        </Box>
-        <Link href="register" className='text-white'>{tr('noAcc')}</Link>
-        <Button type='submit' fullWidth variant='contained' loadingPosition='start' loading={isLoading}>{tr('login')}</Button>
+        
+        <Link 
+          href="register" 
+          className='text-sm font-medium text-white'
+        >
+          {tr('noAcc')}
+        </Link>
+        
+        <Button 
+          type='submit' 
+          fullWidth 
+          variant='contained' 
+          loadingPosition='start' 
+          loading={isLoading}
+          sx={{ mt: 1, py: 1.5, borderRadius: '0.5rem', fontWeight: 'bold' }}
+        >
+          {tr('login')}
+        </Button>
       </form>
     </div>
   )
 }
-

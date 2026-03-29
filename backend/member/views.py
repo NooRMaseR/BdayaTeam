@@ -12,9 +12,7 @@ from django.http import HttpResponse
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
 from django.db.models.functions import Coalesce
-from django.utils.decorators import method_decorator
 from django.core.files.uploadedfile import UploadedFile
-from django.views.decorators.clickjacking import xframe_options_exempt
 from django.db.models import (
     PositiveSmallIntegerField,
     ExpressionWrapper,
@@ -35,10 +33,15 @@ from . import api_schemas, models
 from .caches import member_profile_cache_key, tasks_cache_key
 from .serializers import MemberProfileMSGSerializer, RecivedTaskMSGSerializer
 
-from technical.caches import members_by_technicals_cache_key, task_view_cache_key, tasks_from_memebrs_cache_key, technical_tasks_cache_key
-from technical.serializers import TaskMSGSerializer
-from technical.api_schemas import TaskSerializer
 from technical.models import Task
+from technical.api_schemas import TaskSerializer
+from technical.serializers import TaskMSGSerializer
+from technical.caches import (
+    members_by_technicals_cache_key,
+    tasks_from_memebrs_cache_key,
+    technical_tasks_cache_key,
+    task_view_cache_key,
+)
 
 from utils import SAFE_MIMETYPES, serializer_encoder, DEFAULT_CACHE_DURATION
 import mimetypes, os, logging
@@ -154,12 +157,12 @@ class Tasks(BaseMemberAPIView):
             return Response({"details": "somthing went wrong, please try again"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@method_decorator(xframe_options_exempt, name='dispatch')
+# @method_decorator(xframe_options_exempt, name='dispatch')
 class ProtectedTask(APIView):
     serializer_class = None
     
     def get(self, request: Request, task_id: int) -> HttpResponse:
-        document = get_object_or_404(models.ReciviedTaskFile.objects.only("id", 'file', "recivied_task__member__email").select_related('recivied_task__member'), id=task_id)
+        document = get_object_or_404(models.ReciviedTaskFile.objects.only("id", 'file', "file_name", "recivied_task__member__bdaya_user__email").select_related('recivied_task__member__bdaya_user'), id=task_id)
         
         # check if it's an organizer or technical to get the file or check if the user is a member and it's the same member that uplouded this task
         if (request.user.is_member and document.recivied_task.member.email != request.user.email):
@@ -175,7 +178,7 @@ class ProtectedTask(APIView):
         return Response(
             headers={
                 "X-Accel-Redirect": nginx_url,
-                'Content-Disposition': f'{disposition_type}; filename="{os.path.basename(document.file.name)}"'
+                'Content-Disposition': f'{disposition_type}; filename="{os.path.basename(document.file_name)}"'
             },
             content_type=final_content_type
         )

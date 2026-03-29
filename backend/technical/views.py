@@ -279,7 +279,8 @@ class TasksFromMembers(BaseTechnicalAPIView):
 
 
 class Members(BaseTechnicalAPIView):
-
+    serializer_class = None
+    
     @extend_schema(responses={200: MemberTechnicalSerializer(many=True)})
     def get(self, request: Request, track_name: str) -> Response:
         TRACK = track_name.replace("%20", " ")

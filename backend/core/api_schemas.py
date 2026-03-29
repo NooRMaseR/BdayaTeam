@@ -36,16 +36,14 @@ class RegisterMemberSerializer(serializers.ModelSerializer):
     track = TrackNameOnlySerializer(read_only=True)
 
     email = serializers.EmailField(
-        write_only=True,
         validators=[
             UniqueValidator(
                 queryset=models.BdayaUser.objects.all(), message=_("email_exists")
             )
         ],
     )
-    name = serializers.CharField(write_only=True)
+    name = serializers.CharField()
     phone_number = PhoneNumberField(
-        write_only=True,
         validators=[
             UniqueValidator(
                 queryset=models.BdayaUser.objects.all(), message=_("phone_exists")

@@ -1,7 +1,9 @@
 'use client';
-import { MembersRecivedTaskItem, TaskShowCase } from '../../technical/[track]/tasks/[taskId]/member_task';
+
+import { MembersRecivedTaskItem } from '../../technical/[track]/tasks/[taskId]/member_task';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import type { components } from '@/app/generated/api_types';
+import TaskShowCase from '@/app/components/task_show_case';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { useAuthStore } from '@/app/utils/store';

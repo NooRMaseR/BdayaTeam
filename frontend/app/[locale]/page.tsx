@@ -45,10 +45,9 @@ export default async function HomePage({params} : {params: Promise<{locale: stri
       params
     ]
   );
-  
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900 color-trans">
       <NormalAnimation
         component='section'
         className='relative bg-sky-500 py-24 overflow-hidden aspect-16/10'
@@ -62,21 +61,23 @@ export default async function HomePage({params} : {params: Promise<{locale: stri
         }
       </NormalAnimation>
 
-      <section className={`relative bg-blue-700 text-white py-8 px-4 overflow-hidden`}>
+      {/* Hero Section */}
+      <section className={`relative bg-blue-700 dark:bg-blue-900 text-white py-8 px-4 overflow-hidden transition-colors duration-300`}>
         <Container maxWidth="lg" className="relative z-10 text-center">
           <Chip
             label={tr('excellence', { years })}
             color="secondary"
             className="mb-6 font-bold uppercase tracking-wider"
-            icon={<VerifiedUserIcon />}
+            sx={{color: "white"}}
+            icon={<VerifiedUserIcon sx={{color: 'white'}} />}
           />
 
           <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
             {tr('nextGen')} <br />
-            <span className="text-blue-300">{tr('teamBdaya')}</span>
+            <span className="text-blue-300 dark:text-blue-400">{tr('teamBdaya')}</span>
           </h1>
 
-          <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10">
+          <p className="text-lg md:text-xl text-blue-50 dark:text-gray-200 max-w-2xl mx-auto mb-10">
             {tr('join')} <strong>{tr('teamBdaya')}</strong>. {tr('takeStep')}
           </p>
 
@@ -86,10 +87,10 @@ export default async function HomePage({params} : {params: Promise<{locale: stri
         </Container>
       </section>
 
-
-      <section className="bg-white py-10 shadow-sm border-b border-gray-100">
+      {/* Stats Section */}
+      <section className="py-10 shadow-sm border-b border-gray-100 dark:border-slate-800 dark:bg-slate-900 transition-colors duration-300">
         <Container maxWidth="lg">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-gray-100">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-gray-100 dark:divide-slate-800">
             <StatItem number={`${years - 1}+`} label={tr('exp')} />
             <StatItem number="10k+" label={tr('std')} />
             <StatItem number="100%" label={tr('freeC')} />
@@ -98,12 +99,12 @@ export default async function HomePage({params} : {params: Promise<{locale: stri
         </Container>
       </section>
 
-
-      <section className="py-20">
+      {/* Available Tracks Section */}
+      <section className="py-20 dark:bg-slate-900 transition-colors duration-300">
         <Container maxWidth="lg">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">{ tr('avlTracks') }</h2>
-            <div className="w-20 h-1 bg-blue-600 mx-auto rounded"></div>
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">{ tr('avlTracks') }</h2>
+            <div className="w-20 h-1 bg-blue-600 dark:bg-blue-500 mx-auto rounded"></div>
           </div>
 
           <div className="flex justify-center flex-wrap gap-6">
@@ -120,52 +121,51 @@ export default async function HomePage({params} : {params: Promise<{locale: stri
         </Container>
       </section>
 
-
-      <section className="bg-gray-100 py-20">
+      {/* About Section (Who we are) */}
+      <section className="bg-gray-100 dark:bg-slate-800 py-20 transition-colors duration-300">
         <Container maxWidth="lg" className="flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1">
             <Image
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+              src="/photo.webp"
               alt="Team Collaboration"
-              className="rounded-2xl shadow-2xl"
+              className="rounded-2xl shadow-2xl dark:shadow-black/50 dark:opacity-90 transition-opacity"
               width={700}
               height={700}
             />
           </div>
           <div className="flex-1 space-y-8">
-            <p className="text-blue-600 font-bold tracking-widest">
+            <p className="text-blue-600 dark:text-blue-400 font-bold tracking-widest">
               {tr('who')}
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
               {tr('by')}, <br /> {tr('for')}.
             </h2>
-            <p className="text-gray-600 text-lg leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
               {tr('bdayaStarted', {years})}
             </p>
-            <p className="text-gray-600 text-lg leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
               {tr('weProvide')}
             </p>
           </div>
         </Container>
       </section>
 
-
-      <footer className="bg-gray-900 text-gray-400 py-12 border-t border-gray-800">
+      {/* Footer Section */}
+      <footer className="bg-gray-900 dark:bg-black text-gray-400 py-12 border-t border-gray-800 dark:border-gray-900 transition-colors duration-300">
         <Container maxWidth="lg" className="text-center">
           <p>&copy; {new Date().getFullYear()} {tr('teamBdaya')}. {tr('rights')}.</p>
-          <p className="text-sm mt-2">{tr('empowring')}</p>
+          <p className="text-sm mt-2 dark:text-gray-500">{tr('empowring')}</p>
         </Container>
       </footer>
     </div>
   );
 }
 
-
 function StatItem({ number, label }: { number: string, label: string }) {
   return (
     <div className="p-4">
-      <div className="text-3xl md:text-4xl font-bold text-blue-600 mb-1">{number}</div>
-      <div className="text-sm text-gray-500 uppercase tracking-wide font-medium">{label}</div>
+      <div className="text-3xl md:text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">{number}</div>
+      <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">{label}</div>
     </div>
   )
 }

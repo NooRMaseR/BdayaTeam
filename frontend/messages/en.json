@@ -40,7 +40,10 @@
     "header": {
         "teamBdaya": "Team Bdaya",
         "home": "Home",
-        "logout": "Logout"
+        "logout": "Logout",
+        "logoutConf": "Are you sure you want to logout ?",
+        "cancel": "Cancel",
+        "?": "?"
     },
     "registerPage": {
         "regClosed": "Registeration is Closed",

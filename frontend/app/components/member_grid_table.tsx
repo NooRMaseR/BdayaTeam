@@ -136,8 +136,9 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
     };
 
     return (
-        <div className='h-[87svh]'>
+        <div className='h-[87svh] color-trans'>
             <DataGrid
+                className='color-trans'
                 rows={memoRows}
                 columns={memoColumns}
                 label={tr('trackHead', { track: trackReadableName })}

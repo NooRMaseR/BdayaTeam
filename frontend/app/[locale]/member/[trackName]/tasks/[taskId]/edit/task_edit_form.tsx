@@ -5,10 +5,10 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 
+import LocaledTextField from '@/app/components/localed_textField';
 import type { components } from '@/app/generated/api_types';
 import { useForm, useWatch } from 'react-hook-form';
 import { useRouter } from '@/i18n/navigation';
@@ -126,7 +126,7 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
                     <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
                         {tr('notes')}
                     </Typography>
-                    <TextField 
+                    <LocaledTextField 
                         placeholder={tr('notes')}
                         {...register("notes")} 
                         minRows={4}

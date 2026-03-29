@@ -366,16 +366,17 @@ export interface components {
             code?: string;
             readonly track: components["schemas"]["TrackNameOnly"];
             readonly attendances: components["schemas"]["AttendenceSmall"][];
-            name: string;
             /** Format: email */
-            email: string;
+            readonly email: string;
+            readonly name: string;
+            readonly phone_number: string;
             collage_code: string;
-            phone_number: string;
             bonus?: number;
             status?: components["schemas"]["StatusB01Enum"];
+            bdaya_user: number;
         };
         MemberProfile: {
-            name: string;
+            readonly name: string;
             code?: string;
             readonly track: components["schemas"]["TrackNameOnly"];
             status?: components["schemas"]["StatusB01Enum"];
@@ -386,19 +387,20 @@ export interface components {
         };
         MemberSerializerForTask: {
             code?: string;
-            name: string;
+            readonly name: string;
         };
         MemberTechnical: {
             code?: string;
             readonly tasks: components["schemas"]["RecivedTaskSmall"][];
             readonly track: components["schemas"]["TrackNameOnly"];
-            name: string;
             /** Format: email */
-            email: string;
+            readonly email: string;
+            readonly name: string;
+            readonly phone_number: string;
             collage_code: string;
-            phone_number: string;
             bonus?: number;
             status?: components["schemas"]["StatusB01Enum"];
+            bdaya_user: number;
         };
         RecivedTask: {
             readonly id: number;
@@ -416,7 +418,8 @@ export interface components {
         RecivedTaskFile: {
             readonly id: number;
             /** Format: uri */
-            file?: string | null;
+            file: string;
+            file_name: string;
         };
         RecivedTaskSmall: {
             readonly id: number;
@@ -428,15 +431,18 @@ export interface components {
         RegisterMember: {
             readonly code: string;
             readonly track: components["schemas"]["TrackNameOnly"];
+            /** Format: email */
+            email: string;
             name: string;
+            phone_number: string;
         };
         RegisterMemberRequest: {
             request_track_id: number;
-            name: string;
             /** Format: email */
             email: string;
-            collage_code: string;
+            name: string;
             phone_number: string;
+            collage_code: string;
         };
         /**
          * @description * `member` - member

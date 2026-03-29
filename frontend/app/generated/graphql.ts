@@ -32,10 +32,7 @@ export type MemberType = {
   bonus: Scalars['Int']['output'];
   code: Scalars['String']['output'];
   collageCode: Scalars['String']['output'];
-  email: Scalars['String']['output'];
   joinedAt: Scalars['DateTime']['output'];
-  name: Scalars['String']['output'];
-  phoneNumber: Scalars['String']['output'];
   status: MemberMemberStatusChoices;
   track: TrackType;
 };
