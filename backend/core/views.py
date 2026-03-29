@@ -211,8 +211,12 @@ class Register(APIView):
         if serializer.is_valid():
             instance: Member = serializer.save() # type: ignore
             user = get_object_or_404(models.BdayaUser.objects.only('id'), email=instance.email)
+            
             refresh = RefreshToken.for_user(user)
-        
+            refresh['role'] = user.role
+            if user.is_member and hasattr(user, "member"):
+                refresh['code'] = user.member.code # type: ignore
+                
             cache.delete_pattern("*member*") # type: ignore
             response = Response(serializer.data, status=status.HTTP_201_CREATED)
 

@@ -426,7 +426,8 @@ export interface components {
         RecivedTaskFile: {
             readonly id: number;
             /** Format: uri */
-            file?: string | null;
+            file: string;
+            file_name: string;
         };
         RecivedTaskSmall: {
             readonly id: number;
@@ -438,7 +439,10 @@ export interface components {
         RegisterMember: {
             readonly code: string;
             readonly track: components["schemas"]["TrackNameOnly"];
+            /** Format: email */
+            email: string;
             name: string;
+            phone_number: string;
         };
         RegisterMemberRequest: {
             request_track_id: number;

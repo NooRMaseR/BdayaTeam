@@ -41,6 +41,7 @@ export default async function MemberTrackPage({ params }: ParamsProps ) {
         ]
     );
     const trackName = paramsPromise.trackName.replaceAll("%20", ' ');
+    
     return (
         <BodyM>
             <div className="flex justify-center items-center min-h-[calc(100vh-105px)] flex-wrap gap-6">

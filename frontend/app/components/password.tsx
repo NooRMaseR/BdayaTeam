@@ -1,10 +1,13 @@
 'use client';
 
-import { IconButton, InputAdornment, TextField, TextFieldProps } from '@mui/material';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import { useTranslations } from 'next-intl';
 import React from 'react';
+import { useTranslations } from 'next-intl';
+import TextField from '@mui/material/TextField';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import type { TextFieldProps } from '@mui/material/TextField';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 const PasswordField = React.forwardRef<HTMLDivElement, TextFieldProps>((props, ref) => {
     const [hidden, setHidden] = React.useState<boolean>(true);
@@ -20,7 +23,7 @@ const PasswordField = React.forwardRef<HTMLDivElement, TextFieldProps>((props, r
                 input: {
                     endAdornment: (
                         <InputAdornment position='end'>
-                            <IconButton onClick={handelHidden}>
+                            <IconButton onClick={handelHidden} sx={{color: "white"}}>
                                 {hidden ? <VisibilityIcon /> : <VisibilityOffIcon />}
                             </IconButton>
                         </InputAdornment>
@@ -30,7 +33,7 @@ const PasswordField = React.forwardRef<HTMLDivElement, TextFieldProps>((props, r
             label={tr('password')}
             fullWidth
             required
-            sx={{ bgcolor: "whitesmoke", borderRadius: "0.5rem" }}
+            sx={{ borderRadius: "0.5rem" }}
             {...props}
         />
     );

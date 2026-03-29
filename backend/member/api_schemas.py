@@ -50,7 +50,7 @@ class MemberSerializerForTask(serializers.ModelSerializer):
 class RecivedTaskFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.ReciviedTaskFile
-        fields = ("id", "file")
+        fields = ("id", "file", "file_name")
 
 class RecivedTaskSerializer(serializers.ModelSerializer):
     task = TaskNoTrackSerializer(read_only=True)

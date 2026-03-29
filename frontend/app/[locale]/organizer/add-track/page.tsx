@@ -1,8 +1,7 @@
 'use client';
 
-import TextField  from '@mui/material/TextField';
-import Button from '@mui/material/Button';
 
+import LocaledTextField from '@/app/components/localed_textField';
 import type { components } from '@/app/generated/api_types';
 import { revalidateTracks } from '@/app/utils/api_utils';
 import GroupTitled from '@/app/components/group_titled';
@@ -10,6 +9,7 @@ import FilePicker from '@/app/components/file_picker';
 import { useTranslations } from 'next-intl';
 import BodyM from '@/app/components/bodyM';
 import { useForm } from 'react-hook-form';
+import Button from '@mui/material/Button';
 import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -100,14 +100,14 @@ export default function AddTrackPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <div className="md:col-span-3">
-                                <TextField label={tr('name')} {...register("name", { required: true })} required fullWidth error={!!errors.name} helperText={errors.name?.message} />
+                                <LocaledTextField label={tr('name')} {...register("name", { required: true })} required fullWidth error={!!errors.name} helperText={errors.name?.message} />
                             </div>
                             <div className="md:col-span-1">
-                                <TextField label={tr('pre')} {...register("prefix", { required: true, maxLength: {value: 2, message: tr("err_max_pre")} })} required fullWidth error={!!errors.prefix} helperText={errors.prefix?.message} />
+                                <LocaledTextField label={tr('pre')} {...register("prefix", { required: true, maxLength: {value: 2, message: tr("err_max_pre")} })} required fullWidth error={!!errors.prefix} helperText={errors.prefix?.message} />
                             </div>
                         </div>
-                        <TextField label={tr('en_desc')} {...register("en_description", { required: true })} required minRows={3} multiline fullWidth error={!!errors.en_description} helperText={errors.en_description?.message} />
-                        <TextField label={tr('ar_desc')} {...register("ar_description", { required: true })} required minRows={3} multiline fullWidth error={!!errors.ar_description} helperText={errors.ar_description?.message} />
+                        <LocaledTextField label={tr('en_desc')} {...register("en_description", { required: true })} required minRows={3} multiline fullWidth error={!!errors.en_description} helperText={errors.en_description?.message} />
+                        <LocaledTextField label={tr('ar_desc')} {...register("ar_description", { required: true })} required minRows={3} multiline fullWidth error={!!errors.ar_description} helperText={errors.ar_description?.message} />
  
                         <div className="flex justify-end mt-4">
                             <Button

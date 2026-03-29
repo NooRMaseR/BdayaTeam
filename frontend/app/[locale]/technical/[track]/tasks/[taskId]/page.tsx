@@ -60,7 +60,7 @@ export default async function TaskViewPage({ params }: { params: Promise<{locale
 
                     <Divider />
 
-                    <div className="p-6 md:p-8 bg-slate-50/50">
+                    <div className="p-6 md:p-8 dark:bg-(--dark-color) bg-slate-50/50">
                         <Typography variant="overline" color="primary" fontWeight="bold">
                             {tr('desc')}
                         </Typography>

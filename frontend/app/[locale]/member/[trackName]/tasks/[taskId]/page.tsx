@@ -36,8 +36,8 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
     }
 
     const lateStatus = checkLateStatus(task.expires_at, locale);
-    const lateString = tr(lateStatus.status, {time: lateStatus.from})
-
+    const lateString = tr(lateStatus.status, { time: lateStatus.from })
+    
     return (
         <BodyM>
             <div className="max-w-3xl mx-auto py-8 px-4 flex flex-col gap-6 mt-8">
@@ -65,7 +65,7 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
                         <Typography variant="overline" color="primary" fontWeight="bold">
                             {tr('desc')}
                         </Typography>
-                        <Typography variant="body1" className="mt-2 whitespace-pre-wrap leading-relaxed text-slate-700">
+                        <Typography variant="body1" className="mt-2 whitespace-pre-wrap leading-relaxed dark:text-gray-300 text-slate-700">
                             {task.description}
                         </Typography>
                     </div>

@@ -68,14 +68,12 @@
     Member {
         code CharField
         attendances ForeignKey
+        bdaya_user OneToOneField
         tasks_sent ForeignKey
         track ForeignKey
         bonus SmallIntegerField
         collage_code CharField
-        email CharField
         joined_at DateTimeField
-        name CharField
-        phone_number CharField
         status CharField
     }
     ReciviedTask {
@@ -88,17 +86,20 @@
         notes TextField
         recived_at DateTimeField
         signed BooleanField
+        technical_notes TextField
     }
     ReciviedTaskFile {
         id BigAutoField
         recivied_task ForeignKey
         file FileField
+        file_name CharField
     }
     Track ||--|{ Member : has
     Task ||--|{ ReciviedTask : has
     Member ||--|{ ReciviedTask : has
     Track ||--|{ ReciviedTask : has
     ReciviedTask ||--|{ ReciviedTaskFile : has
+    BdayaUser ||--|| Member : has
         </div>
         <a href="/home/kali/BdayaTeam/backend/erd_index.html">Back to Index</a>
     </div>

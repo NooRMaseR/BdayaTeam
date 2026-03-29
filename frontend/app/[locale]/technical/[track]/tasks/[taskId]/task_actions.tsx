@@ -4,17 +4,17 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 
-import { FieldErrors, useForm, UseFormHandleSubmit, UseFormRegister, Controller, type Control } from 'react-hook-form';
+import { type FieldErrors, useForm, UseFormHandleSubmit, UseFormRegister, Controller, type Control } from 'react-hook-form';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import LocaledTextField from '@/app/components/localed_textField';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import type { components } from '@/app/generated/api_types';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import dayjs from '@/app/utils/dayjs.client';
-import { useTranslations } from 'next-intl';
 import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -63,12 +63,14 @@ function DeleteDialog({ open, onAccept, onCancel, taskNumber, isLoading }: Delet
 
 function EditDialog({ open, onAccept, onCancel, taskNumber, isLoading, register, handleSubmit, control, errors }: EditDialogProps) {
     const tr = useTranslations('taskPage');
+    const locale = useLocale();
+
     return (
-        <Dialog open={open} scroll='paper' fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 2 } }}>
+        <Dialog open={open} scroll='paper' fullWidth maxWidth="sm" slotProps={{paper: { sx: { borderRadius: 2 } }}}>
             <DialogTitle fontWeight="bold">{tr('editTask', {taskNumber})}</DialogTitle>
             <DialogContent dividers>
                 <form onSubmit={handleSubmit(onAccept)} id='edit-form' className='flex flex-col gap-5 py-2'>
-                    <TextField 
+                    <LocaledTextField
                         label={tr('taskNum')} 
                         {...register("task_number", { required: true, valueAsNumber: true })} 
                         required 
@@ -78,15 +80,17 @@ function EditDialog({ open, onAccept, onCancel, taskNumber, isLoading, register,
                         type="number"
                     />
                     
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={locale}>
                         <Controller
                             control={control}
                             name='expires_at'
                             rules={{ required: true }}
                             render={({ field }) => (
                                 <DateTimePicker
-                                    label={tr('expiresAt')}
+                                    label={tr('expires')}
                                     value={field.value ? dayjs(field.value) : null}
+                                    ampm={true}
+                                    format='DD/MM/YYYY hh:mm a'
                                     onChange={(newValue) => field.onChange(newValue ? newValue.toISOString() : null)}
                                     slotProps={{
                                         textField: {
@@ -101,7 +105,7 @@ function EditDialog({ open, onAccept, onCancel, taskNumber, isLoading, register,
                         />
                     </LocalizationProvider>
                     
-                    <TextField 
+                    <LocaledTextField 
                         label={tr('taskDesc')} 
                         {...register("description", { required: true })} 
                         required
