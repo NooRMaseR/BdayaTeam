@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import AuthLoader from "../components/authLoader";
 import { NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
-import { LoadingProvider, RegisterThemeProvider } from "./clientProviders";
+import { LoadingProvider, RegisterNextThemeProvider, RegisterThemeProvider } from "./clientProviders";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL || "https://localhost"),
@@ -48,21 +48,21 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
   const messages = await getMessages({ locale });
 
   return (
-    <html lang={locale} dir={locale === 'ar' ? "rtl" : 'ltr'}>
-      <body>
-        {/* <StoreProvider> */}
-          <LoadingProvider>
+    <html lang={locale} dir={locale === 'ar' ? "rtl" : 'ltr'} suppressHydrationWarning>
+      <body className="color-trans dark:bg-(--dark-color)">
+        <LoadingProvider>
+          <RegisterNextThemeProvider attribute='class' defaultTheme="system" enableSystem>
             <NextIntlClientProvider messages={messages}>
-              <AuthLoader>
-                <RegisterThemeProvider>
+              <RegisterThemeProvider>
+                <AuthLoader>
                   <Header />
                   <Toaster />
                   {children}
-                </RegisterThemeProvider>
-              </AuthLoader>
+                </AuthLoader>
+              </RegisterThemeProvider>
             </NextIntlClientProvider>
-          </LoadingProvider>
-        {/* </StoreProvider> */}
+          </RegisterNextThemeProvider>
+        </LoadingProvider>
       </body>
     </html>
   );

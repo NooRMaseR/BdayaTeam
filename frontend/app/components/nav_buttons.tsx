@@ -49,8 +49,8 @@ export default function NavButtons() {
                     variant="contained"
                     size="large"
                     color="secondary"
-                    endIcon={<ArrowForwardIcon />}
-                    sx={{ borderRadius: '50px' }}
+                    endIcon={<ArrowForwardIcon sx={{color: "white"}} />}
+                    sx={{ borderRadius: '50px', color: "white" }}
                 >
                     {tr('register')}
                 </Button>

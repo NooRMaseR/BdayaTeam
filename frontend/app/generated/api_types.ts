@@ -366,13 +366,13 @@ export interface components {
             code?: string;
             readonly track: components["schemas"]["TrackNameOnly"];
             readonly attendances: components["schemas"]["AttendenceSmall"][];
-            readonly name: string;
             /** Format: email */
             readonly email: string;
+            readonly name: string;
             readonly phone_number: string;
             collage_code: string;
             bonus?: number;
-            status?: components["schemas"]["MemberStatusEnum"];
+            status?: components["schemas"]["StatusB01Enum"];
             bdaya_user: number;
         };
         MemberProfile: {
@@ -407,7 +407,7 @@ export interface components {
             readonly phone_number: string;
             collage_code: string;
             bonus?: number;
-            status?: components["schemas"]["MemberStatusEnum"];
+            status?: components["schemas"]["StatusB01Enum"];
             bdaya_user: number;
         };
         RecivedTask: {
@@ -426,7 +426,8 @@ export interface components {
         RecivedTaskFile: {
             readonly id: number;
             /** Format: uri */
-            file?: string | null;
+            file: string;
+            file_name: string;
         };
         RecivedTaskSmall: {
             readonly id: number;
@@ -438,7 +439,10 @@ export interface components {
         RegisterMember: {
             readonly code: string;
             readonly track: components["schemas"]["TrackNameOnly"];
+            /** Format: email */
+            email: string;
             name: string;
+            phone_number: string;
         };
         RegisterMemberRequest: {
             request_track_id: number;

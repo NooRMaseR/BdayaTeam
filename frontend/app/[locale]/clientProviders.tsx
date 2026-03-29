@@ -5,9 +5,11 @@ import { useLocale } from 'next-intl';
 import createCache from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
 import rtlPlugin from '@mui/stylis-plugin-rtl';
-import { type ReactNode, useMemo } from 'react';
+import React, { type ReactNode, useMemo } from 'react';
 import { ProgressProvider } from '@bprogress/next/app';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider as NextThemeProvider, useTheme, type ThemeProviderProps } from 'next-themes';
+import { CssBaseline } from '@mui/material';
 
 
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
@@ -26,6 +28,16 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
 export function RegisterThemeProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
   const isAr = locale === 'ar';
+  
+  // 1. GRAB THE DARK MODE STATE
+  const { resolvedTheme } = useTheme(); 
+  const [mounted, setMounted] = React.useState(false);
+
+  // 2. PREVENT HYDRATION MISMATCH
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const cache = useMemo(() => {
     return createCache({
       key: isAr ? 'muirtl' : 'mui',
@@ -36,17 +48,31 @@ export function RegisterThemeProvider({ children }: { children: ReactNode }) {
   const theme = useMemo(() => {
     return createTheme({
       direction: isAr ? 'rtl' : 'ltr',
+      
+      palette: {
+        mode: resolvedTheme === 'dark' ? 'dark' : 'light',
+      },
+      
       typography: {
         fontFamily: isAr ? 'var(--font-arabic), Arial' : 'Arial',
       },
     });
-  }, [isAr]);
+  }, [isAr, resolvedTheme]);
+
+  if (!mounted) {
+      return <div style={{ visibility: 'hidden' }}>{children}</div>;
+  }
 
   return (
     <CacheProvider value={cache}>
       <ThemeProvider theme={theme}>
+        <CssBaseline /> 
         {children}
       </ThemeProvider>
     </CacheProvider>
   );
+}
+
+export function RegisterNextThemeProvider({ children, ...props }: ThemeProviderProps) {
+  return <NextThemeProvider {...props}>{ children }</NextThemeProvider>
 }

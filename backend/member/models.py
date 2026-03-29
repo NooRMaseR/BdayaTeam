@@ -2,6 +2,7 @@ from core.models import BdayaUser, Track
 from technical.models import Task
 from django.db import models
 from core import validators
+import os
 
 # Create your models here.
 
@@ -63,4 +64,10 @@ class ReciviedTask(models.Model):
     
 class ReciviedTaskFile(models.Model):
     recivied_task = models.ForeignKey(ReciviedTask, on_delete=models.CASCADE, related_name="files")
-    file = models.FileField(upload_to=task_upload_path, blank=True, null=True)
+    file = models.FileField(upload_to=task_upload_path)
+    file_name = models.CharField(max_length=100)
+    
+    def save(self, *args, **kwargs) -> None:
+        if self.file:
+            self.file_name = os.path.basename(self.file.name)
+        return super().save(*args, **kwargs)

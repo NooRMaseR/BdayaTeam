@@ -1,5 +1,6 @@
 import relativeTime from 'dayjs/plugin/relativeTime';
 import dayjs from 'dayjs';
+import 'dayjs/locale/ar';
 
 dayjs.extend(relativeTime);
 

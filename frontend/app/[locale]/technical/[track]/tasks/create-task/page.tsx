@@ -1,15 +1,15 @@
 'use client';
 
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
 
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import LocaledTextField from '@/app/components/localed_textField';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import type { components } from '@/app/generated/api_types';
 import GroupTitled from '@/app/components/group_titled';
+import { useLocale, useTranslations } from 'next-intl';
 import { useForm, Controller } from 'react-hook-form';
 import dayjs from '@/app/utils/dayjs.client';
-import { useTranslations } from 'next-intl';
+import Button from '@mui/material/Button';
 import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -20,6 +20,7 @@ export default function AddTaskPage() {
     const { register, control, handleSubmit, setError, reset, formState: { errors } } = useForm<FormCreateTask>();
     const [isLoading, setIsloading] = useState<boolean>(false);
     const tr = useTranslations('tasksPage');
+    const locale = useLocale();
 
     const onSubmit = async (data: FormCreateTask) => {
         setIsloading(true);
@@ -55,7 +56,7 @@ export default function AddTaskPage() {
                 <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6'>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <TextField 
+                        <LocaledTextField
                             label={tr('taskNum')} 
                             {...register("task_number", { required: true, valueAsNumber: true })} 
                             required 
@@ -66,7 +67,7 @@ export default function AddTaskPage() {
                             inputMode='numeric' 
                         />
 
-                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={locale}>
                             <Controller
                                 control={control}
                                 name='expires_at'
@@ -75,6 +76,8 @@ export default function AddTaskPage() {
                                     <DateTimePicker
                                         label={tr('expiresAt')}
                                         value={field.value ? dayjs(field.value) : null}
+                                        ampm={true}
+                                        format='DD/MM/YYYY hh:mm a'
                                         onChange={(newValue) => {
                                             field.onChange(newValue ? newValue.toISOString() : null);
                                         }}
@@ -92,7 +95,7 @@ export default function AddTaskPage() {
                         </LocalizationProvider>
                     </div>
 
-                    <TextField 
+                    <LocaledTextField
                         label={tr('taskDesc')} 
                         {...register("description", { required: true })} 
                         required

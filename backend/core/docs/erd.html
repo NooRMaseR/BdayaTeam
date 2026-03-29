@@ -73,10 +73,11 @@
         reciviedtask ForeignKey
         tasks ForeignKey
         trackcounter OneToOneField
-        description TextField
+        ar_description TextField
+        en_description TextField
         image FileField
+        name CharField
         prefix CharField
-        track CharField
     }
     TrackCounter {
         id BigAutoField
@@ -85,9 +86,9 @@
     }
     BdayaUser {
         id BigAutoField
-        auth_token OneToOneField
         groups ManyToManyField
         logentry ForeignKey
+        member OneToOneField
         track ForeignKey
         user_permissions ManyToManyField
         email CharField
@@ -105,7 +106,7 @@
     Permission }|--o{ BdayaUser : has
     Track ||--o{ BdayaUser : has
     TrackCounter ||--o| Track : has
-    Token ||--o| BdayaUser : has
+    Member ||--o| BdayaUser : has
         </div>
         <a href="/home/kali/BdayaTeam/backend/erd_index.html">Back to Index</a>
     </div>

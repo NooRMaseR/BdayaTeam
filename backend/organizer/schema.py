@@ -43,14 +43,14 @@ class Query(graphene.ObjectType):
         if USER.is_anonymous:
             raise Exception("not authed")
         elif USER.is_member:
-            return USER.member # type: ignore
+            return gql_optimizer.query(Member.objects.filter(bdaya_user__email=USER.email), info).first()
         
         qs = Member.objects.all()
         if code:
             qs = qs.filter(code=code)
         
         if email:
-            qs = qs.filter(email=email)
+            qs = qs.filter(bdaya_user__email=email)
             
         return gql_optimizer.query(qs, info).first()
     
