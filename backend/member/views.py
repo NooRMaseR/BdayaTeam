@@ -43,8 +43,11 @@ from technical.caches import (
     task_view_cache_key,
 )
 
+
 from utils import SAFE_MIMETYPES, serializer_encoder, DEFAULT_CACHE_DURATION
-import mimetypes, os, logging
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+import mimetypes, logging
 
 # Create your views here.
 
@@ -124,7 +127,7 @@ class Tasks(BaseMemberAPIView):
         if TASK_ID is None:
             return Response({"details": "task_id is required"}, status=status.HTTP_400_BAD_REQUEST)
         
-        task = get_object_or_404(models.Task.objects.only("id", "created_at", "expires_at"), id=TASK_ID)
+        task = get_object_or_404(models.Task.objects.only("id", "task_number", "created_at", "expires_at"), id=TASK_ID)
         
         try:
             rec_task = models.ReciviedTask.objects.create(
@@ -146,6 +149,19 @@ class Tasks(BaseMemberAPIView):
                 ]
             )
             cache.delete_pattern(f"technical_recived_tasks_{TRACK.name}*") # type: ignore
+            
+            channel_layer = get_channel_layer()
+            group_name = f"technical_{TRACK.name.replace(' ', '_')}_notifications"
+            
+            async_to_sync(channel_layer.group_send)( # type: ignore
+                group_name,
+                {
+                    "type": "broadcast_technical",
+                    "data": {
+                        "message": f"Member {request.user.username} sent task {task.task_number}"
+                    }
+                }
+            )
             return Response({}, status=status.HTTP_201_CREATED)
         
         except IntegrityError as e:

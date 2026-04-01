@@ -63,6 +63,7 @@ INSTALLED_APPS = (
     "imagekit",
     "solo",
     "django_cleanup.apps.CleanupConfig",
+    'channels',
     "core",
     "technical",
     "organizer",
@@ -162,7 +163,7 @@ TEMPLATES = (
     },
 )
 
-WSGI_APPLICATION = "BdayaTeam.wsgi.application"
+ASGI_APPLICATION = "BdayaTeam.asgi.application"
 
 
 # Database
@@ -200,6 +201,15 @@ CACHES = {
                 "max_connections": 800
             }
         },
+    }
+}
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': (('127.0.0.1', 6379),)
+        }
     }
 }
 

@@ -70,7 +70,7 @@ export default async function TaskViewPage({ params }: { params: Promise<{locale
                     </div>
                 </Paper>
                 
-                {recived.data && <MembersRecivedTasks tasksRecived={recived.data} />}
+                {recived.data && <MembersRecivedTasks tasksRecived={recived.data} track={track} />}
             </div>
         </BodyM>
     )

@@ -24,6 +24,7 @@ import React from 'react';
 
 export type MemberTaskItemProps = {
     tasksRecived: components['schemas']['RecivedTask'][];
+    track?: string;
 }
 
 export type TaskShowCaseProps = {

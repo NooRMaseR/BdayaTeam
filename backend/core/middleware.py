@@ -5,6 +5,10 @@ from rest_framework_simplejwt.settings import api_settings
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import Token
 from rest_framework.renderers import BaseRenderer
+from django.http import SimpleCookie
+
+from channels.middleware import BaseMiddleware
+from channels.db import database_sync_to_async
 
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AnonymousUser
@@ -85,6 +89,39 @@ class CookiesJWTAuthentication(JWTAuthentication):
 
         return user
 
+@database_sync_to_async
+def get_user_from_socket(token) -> BdayaUser | AnonymousUser:
+    auth = CookiesJWTAuthentication()
+    
+    try:
+        token = auth.get_validated_token(token)
+        user = auth.get_user(token)
+        return user
+    except:
+        return AnonymousUser()
+
+class JWTSocketMiddleware(BaseMiddleware):
+    async def __call__(self, scope, receive, send): # type: ignore
+        headers = dict(scope.get('headers', []))
+        scope['user'] = AnonymousUser()  # type: ignore
+        
+        if headers.get(b'cookie'):
+            cookie_str = headers[b'cookie'].decode()
+            cookie_parser = SimpleCookie(cookie_str)
+            
+            token = cookie_parser.get('access_token')
+            if token:
+                scope['user'] = await get_user_from_socket(token.value) # type: ignore
+        
+        if scope['user'].is_anonymous:
+            await send({
+                "type": "websocket.close",
+                "code": 4001 # 4001 is standard for Unauthorized
+            }) # type: ignore
+            return
+        
+        return await super().__call__(scope, receive, send)
+
 
 class RawJsonRenderer(BaseRenderer):
     media_type = "application/json"
@@ -95,3 +132,4 @@ class RawJsonRenderer(BaseRenderer):
             return data
             
         return serializer_encoder.encode(data)
+    

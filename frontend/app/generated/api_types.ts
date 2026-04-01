@@ -366,13 +366,13 @@ export interface components {
             code?: string;
             readonly track: components["schemas"]["TrackNameOnly"];
             readonly attendances: components["schemas"]["AttendenceSmall"][];
+            readonly name: string;
             /** Format: email */
             readonly email: string;
-            readonly name: string;
             readonly phone_number: string;
             collage_code: string;
             bonus?: number;
-            status?: components["schemas"]["StatusB01Enum"];
+            status?: components["schemas"]["MemberStatusEnum"];
             bdaya_user: number;
         };
         MemberProfile: {
@@ -407,7 +407,7 @@ export interface components {
             readonly phone_number: string;
             collage_code: string;
             bonus?: number;
-            status?: components["schemas"]["StatusB01Enum"];
+            status?: components["schemas"]["MemberStatusEnum"];
             bdaya_user: number;
         };
         RecivedTask: {

@@ -1,3 +1,4 @@
+from typing import Any, Literal, TypedDict
 from rest_framework import serializers
 from . import models
 
@@ -30,5 +31,12 @@ class SiteSettingsImagesSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.SiteSetting
         fields = ("site_image", "hero_image")
+   
+class OrganizerBroudCastData(TypedDict):
+    code: str
+    changedKey: str
+    changedValue: Any
     
-        
+class OrganizerBroudCast(TypedDict):
+    type: Literal["edit"]
+    data: OrganizerBroudCastData

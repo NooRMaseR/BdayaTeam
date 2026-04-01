@@ -1,5 +1,9 @@
 # instructions for Backend
 
+```bash
+bunx wscat -c wss://localhost/ws/edit-member/Python/ -n -H "Cookie: access_token="
+```
+
 ## Postgresql
 
 to install postgresql run these commands in your terminal in order
@@ -140,20 +144,23 @@ uv run manage.py createsuperuser
 run the server by using this command
 
 ```bash
-uv run gunicorn BdayaTeam.wsgi --workers 4 --max-requests 1000 --max-requests-jitter 2500 --worker-connections 1000 --timeout 30 --keep-alive 2 --worker-class gevent
+uv run gunicorn \
+        --workers 5 \
+        --worker-connections 600 \
+        --timeout 30 \
+        --keep-alive 2 \
+        --worker-class uvicorn.workers.UvicornWorker \
+        --bind unix:/run/gunicorn.sock \
+        BdayaTeam.asgi:application
 ```
 
 **`--worker`** how many wokrers would you need
-
-**`--max-requests`** how many requests to restart a worker after, this helps avoid memory leaks
-
-**`--max-requests-jitter`** adds a random number to each worker to they don't restart all workers at the same time
 
 **`--worker-connections`** how many coonections to accept for each worker
 
 to open `swagger-UI` open this url `http://127.0.0.1:8000/api/schema/swagger-ui/`
 
-to open the `admin panel` open this url `http://127.0.0.1:8000/admin/`
+to open the `admin panel` open this url `http://127.0.0.1:8000/api/admin/`
 
 ## Redis
 
@@ -266,7 +273,14 @@ After=network.target
 User=kali
 Group=www-data
 WorkingDirectory=/home/kali/BdayaTeam/backend/
-ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/gunicorn BdayaTeam.wsgi --workers 4 --max-requests 1000 --max-requests-jitter 100 --worker-connections 2500 --timeout 30 --keep-alive 2 --worker-class gevent --bind unix:/run/gunicorn.sock
+ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/gunicorn \
+        --workers 5 \
+        --worker-connections 600 \
+        --timeout 30 \
+        --keep-alive 2 \
+        --worker-class uvicorn.workers.UvicornWorker \
+        --bind unix:/run/gunicorn.sock \
+        BdayaTeam.asgi:application
 
 [Install]
 WantedBy=multi-user.target

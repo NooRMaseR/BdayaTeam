@@ -81,7 +81,7 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                     </Typography>
                     
                     {!selectedFiles || selectedFiles.length === 0 ? (
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl hover:bg-slate-50 hover:border-blue-500 transition-colors cursor-pointer group">
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl dark:hover:bg-(--dark-color) hover:bg-slate-50 hover:border-blue-500 transition-colors cursor-pointer group">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <CloudUploadIcon className="w-8 h-8 mb-2 text-slate-400 group-hover:text-blue-500 transition-colors" />
                                 <Typography variant="body2" color="text.secondary">
@@ -96,7 +96,7 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                             />
                         </label>
                     ) : (
-                        <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 flex flex-col gap-2">
+                        <div className="border border-slate-200 rounded-xl p-4 dark:bg-(--dark-color) bg-slate-50 flex flex-col gap-2">
                             <div className="flex justify-between items-center mb-2">
                                 <Typography variant="caption" fontWeight="bold" color="text.secondary" className="uppercase tracking-wider">
                                     {selectedFiles.length} File(s) Selected
@@ -107,7 +107,7 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                             </div>
                             <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
                                 {Array.from(selectedFiles).map((file, i) => (
-                                    <div key={i} className="flex items-center gap-2 bg-white border border-slate-200 p-2 rounded-lg">
+                                    <div key={i} className="flex items-center gap-2 dark:bg-(--dark-color) bg-white border border-slate-200 p-2 rounded-lg">
                                         <AttachFileIcon fontSize="small" className="text-slate-400" />
                                         <Typography variant="body2" className="truncate flex-1 font-medium">
                                             {(file as unknown as File).name}
