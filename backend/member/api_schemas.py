@@ -1,98 +1,68 @@
-from technical.api_schemas import TaskNoTrackSerializer, TaskSmallSerializer
-from phonenumber_field.serializerfields import PhoneNumberField
-from organizer.api_schemas import AttendenceSmallSerializer
-from core.api_schemas import TrackNameOnlySerializer
-from rest_framework import serializers
+from organizer.api_schemas import AttendanceSmallResponse
+from core.api_schemas import SimpleTrackSchema
+from datetime import datetime
+from pydantic import EmailStr
+from ninja import Schema
 from . import models
 
-class MemberSerializer(serializers.ModelSerializer):
-    track = TrackNameOnlySerializer(read_only=True)
-    attendances = AttendenceSmallSerializer(read_only=True, many=True)
-    name = serializers.CharField(read_only=True)
-    email = serializers.EmailField(read_only=True)
-    phone_number = PhoneNumberField(read_only=True, region="EG")
+class MemebrResponse(Schema):
+    track: SimpleTrackSchema
+    attendances: list[AttendanceSmallResponse]
+    name: str
+    email: EmailStr
+    phone_number: str
+    code: str
+    collage_code: str
+    bonus: int
+    status: models.MemberStatus
     
     class Meta:
         model = models.Member
         exclude = ('joined_at',)
         
-
-class RecivedTaskSmallSerializer(serializers.ModelSerializer):
-    member_code = serializers.CharField(read_only=True)
-    task = TaskSmallSerializer(read_only=True)
+class TaskResponse(Schema):
+    id: int
+    task_number: int
+    created_at: datetime
+    expires_at: datetime
+    description: str
+    expired: bool
+    unsigned_tasks_count: int
     
-    class Meta:
-        model = models.ReciviedTask
-        fields = (
-            "id",
-            "task",
-            "member_code",
-            "technical_notes",
-            "degree"
-        )
-
-class MemberTechnicalSerializer(serializers.ModelSerializer):
-    tasks = RecivedTaskSmallSerializer(read_only=True, many=True)
-    track = TrackNameOnlySerializer(read_only=True)
-    email = serializers.EmailField(read_only=True)
-    name = serializers.CharField(read_only=True)
-    phone_number = PhoneNumberField(read_only=True)
+class TaskRequest(Schema):
+    task_id: int
+    notes: str | None = None
     
-    class Meta:
-        model = models.Member
-        exclude = ('joined_at',)
-
-class MemberSerializerForTask(serializers.ModelSerializer):
-    class Meta:
-        model = models.Member
-        fields = ('code', 'name')
-
-class RecivedTaskFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.ReciviedTaskFile
-        fields = ("id", "file", "file_name")
-
-class RecivedTaskSerializer(serializers.ModelSerializer):
-    task = TaskNoTrackSerializer(read_only=True)
-    member = MemberSerializerForTask(read_only=True)
+class MemberProfileName(Schema):
+    code: str
+    name: str
     
-    files = serializers.ListField(
-        child=serializers.FileField(),
-        required=False,
-        write_only=True
-    )
+class RecivedFileResponse(Schema):
+    id: int
+    file: str
+    file_name: str
 
-    files_url = RecivedTaskFileSerializer(many=True)
+class RecivedTaskMember(Schema):
+    id: int
+    task: TaskResponse
+    member: MemberProfileName
+    track: SimpleTrackSchema
+    files_url: list[RecivedFileResponse]
+    notes: str | None = None
+    degree: int
+    signed: bool
+    recived_at: datetime
+    technical_notes: str | None = None
+
+class MemberProfileResponse(Schema):
+    absents: int
+    track: SimpleTrackSchema
+    total_tasks_sent: int
+    missing_tasks: int
+    name: str
+    code: str
+    status: models.MemberStatus
+    tasks: list[RecivedTaskMember]
     
-    class Meta:
-        model = models.ReciviedTask
-        fields = '__all__'
-        
-    def create(self, validated_data):
-        files = validated_data.pop("files")
-        recive_task = models.ReciviedTask.objects.create(**validated_data)
-        oc_files = (models.ReciviedTaskFile(task=recive_task, file=f) for f in files)
-        
-        models.ReciviedTaskFile.objects.bulk_create(oc_files)
-        return recive_task
-
-
-class MemberProfileSerializer(serializers.ModelSerializer):
-    absents = serializers.IntegerField(read_only=True)
-    track = TrackNameOnlySerializer(read_only=True)
-    total_tasks_sent = serializers.IntegerField()
-    missing_tasks = serializers.IntegerField()
-    tasks = RecivedTaskSerializer(read_only=True, many=True)
-    
-    class Meta:
-        model = models.Member
-        fields = (
-            "name",
-            "code",
-            "track",
-            "status",
-            "absents",
-            "total_tasks_sent",
-            "missing_tasks",
-            "tasks"
-        )
+class MemberTaskUpdateRequest(Schema):
+    notes: str

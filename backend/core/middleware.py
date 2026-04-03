@@ -1,19 +1,23 @@
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.utils import get_md5_hash_password
-from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.tokens import Token, AccessToken
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework_simplejwt.tokens import Token
-from rest_framework.renderers import BaseRenderer
-from django.http import SimpleCookie
 
 from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
 
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AnonymousUser
+from django.http import SimpleCookie
+from django.core.cache import cache
+
 from utils import serializer_encoder
 from .models import BdayaUser
+
+from ninja.renderers import BaseRenderer as NinjaBaseRenderer
+from ninja_extra.security import AsyncAPIKeyCookie
 
 class GraphQLAuthMiddleware:
 
@@ -88,6 +92,52 @@ class CookiesJWTAuthentication(JWTAuthentication):
                 )
 
         return user
+    
+class AsyncCookiesJWTAuth(AsyncAPIKeyCookie):
+    param_name = "access_token"
+
+    async def authenticate(self, request, key):
+        
+        if not key:
+            header = request.headers.get("Authorization")
+            if header and header.startswith("Bearer"):
+                key = header.split(" ")[1]
+
+        if not key:
+            return None
+
+        try:
+            validated_token = AccessToken(key) # type: ignore
+            user_id = validated_token[api_settings.USER_ID_CLAIM] # type: ignore
+        except (TokenError, KeyError) as e:
+            return None
+        
+        cache_key = f"auth_user_{user_id}"
+        user = await cache.aget(cache_key)
+        
+        if not user:
+            try:
+                user = await (
+                    BdayaUser.objects
+                    .defer("track__prefix", "is_staff", "joined_at", "last_login", "track__en_description", "track__ar_description", "track__image", "member__joined_at", "member__status")
+                    .select_related("track", "member")
+                    .aget(**{api_settings.USER_ID_FIELD: user_id}) # type: ignore
+                )
+            except BdayaUser.DoesNotExist:
+                return None
+
+            # Security Checks
+            if api_settings.CHECK_USER_IS_ACTIVE and not user.is_active:
+                return None
+
+            if api_settings.CHECK_REVOKE_TOKEN:
+                if validated_token.get(api_settings.REVOKE_TOKEN_CLAIM) != get_md5_hash_password(user.password): # type: ignore
+                    return None
+            
+            await cache.aset(cache_key, user, 3600)
+
+        request.user = user
+        return user
 
 @database_sync_to_async
 def get_user_from_socket(token) -> BdayaUser | AnonymousUser:
@@ -116,18 +166,17 @@ class JWTSocketMiddleware(BaseMiddleware):
         if scope['user'].is_anonymous:
             await send({
                 "type": "websocket.close",
-                "code": 4001 # 4001 is standard for Unauthorized
+                "code": 4001
             }) # type: ignore
             return
         
         return await super().__call__(scope, receive, send)
 
 
-class RawJsonRenderer(BaseRenderer):
+class RawJsonMSGRenderer(NinjaBaseRenderer):
     media_type = "application/json"
-    format = 'json'
     
-    def render(self, data, accepted_media_type=None, renderer_context=None) -> bytes:
+    def render(self, request, data, *, response_status) -> bytes:
         if isinstance(data, bytes):
             return data
             

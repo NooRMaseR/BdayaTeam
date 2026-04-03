@@ -49,9 +49,17 @@ class Attendance(models.Model):
     def __str__(self):
         return f"{self.member.name}"
 
+class OrganizerEditableFields(models.TextChoices):
+    NAME = "name"
+    STATUS = "status"
+    TRACK = "track"
+    BONUS = "bonus"
+    EMAIL = "email"
+    PHONE = "phone"
+
 class SiteSetting(SingletonModel):
     is_register_enabled = models.BooleanField(default=True)
-    organizer_can_edit = ArrayField(models.CharField(max_length=30), default=list, blank=True)
+    organizer_can_edit = ArrayField(models.CharField(max_length=30, choices=OrganizerEditableFields), default=list, blank=True)
     site_image = ProcessedImageField(upload_to="public/site", format="webP", null=True, blank=True) # type: ignore
     hero_image = ProcessedImageField(upload_to="public/hero", format="webP", null=True, blank=True) # type: ignore
     

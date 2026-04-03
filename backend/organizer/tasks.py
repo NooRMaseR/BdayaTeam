@@ -5,7 +5,7 @@ from huey.contrib.djhuey import db_periodic_task
 from .models import Attendance, AttendanceAllowedDay, AttendanceStatus
 
 @db_periodic_task(crontab(hour='22', minute='0'), retries=3, retry_delay=10)
-def make_rest_members_absents():
+def make_rest_members_absents() -> str:
     today = timezone.now().date()
     today_obj = AttendanceAllowedDay.objects.filter(day=today).first()
     

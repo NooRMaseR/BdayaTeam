@@ -12,7 +12,7 @@ import { Link } from '@/i18n/navigation';
 import { useState } from 'react';
 
 type MemberTasksProps = {
-    memberProfile: components['schemas']['MemberProfile'];
+    memberProfile: components['schemas']['MemberProfileResponse'];
     track: string;
 }
 

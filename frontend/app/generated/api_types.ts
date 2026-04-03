@@ -13,7 +13,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["login_create"];
+        /** Login */
+        post: operations["auth_login_7c6d9a61"];
         delete?: never;
         options?: never;
         head?: never;
@@ -27,120 +28,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["logout_retrieve"];
+        /** Logout */
+        get: operations["auth_logout_cadf20f4"];
         put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/member/edit-task/{sent_task_id}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["member_edit_task_retrieve"];
-        put: operations["member_edit_task_update"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/member/profile/{member_code}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["member_profile_retrieve"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/member/protected_media/tasks/{task_id}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["member_protected_media_tasks_retrieve"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/member/tasks/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["member_tasks_list"];
-        put?: never;
-        post: operations["member_tasks_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/organizer/attendance/{track_name}/days/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["organizer_attendance_days_list"];
-        put: operations["organizer_attendance_days_update"];
-        post: operations["organizer_attendance_days_create"];
-        delete: operations["organizer_attendance_days_destroy"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/organizer/members/{track_name}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["organizer_members_list"];
-        put?: never;
-        post: operations["organizer_members_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/organizer/settings/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["organizer_settings_retrieve"];
-        put: operations["organizer_settings_update"];
         post?: never;
         delete?: never;
         options?: never;
@@ -157,106 +47,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["register_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/reset/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** @description Very Dangores, Deletes all tracks and members and tasks and technicals. */
-        delete: operations["reset_destroy"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/technical/members/{track_name}/with-tasks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["technical_members_with_tasks_list"];
-        put?: never;
-        post: operations["technical_members_with_tasks_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/technical/tasks/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Get the Tasks that are related to the technical track */
-        get: operations["technical_tasks_list"];
-        put?: never;
-        post: operations["technical_tasks_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/technical/tasks/{task_id}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Get the Tasks that are related to the technical track */
-        get: operations["technical_tasks_retrieve"];
-        put: operations["technical_tasks_update"];
-        post?: never;
-        delete: operations["technical_tasks_destroy"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/technical/tasks/recived/{task_id}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["technical_tasks_recived_list"];
-        put?: never;
-        post: operations["technical_tasks_recived_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/test-auth/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["test_auth_retrieve"];
-        put?: never;
-        post?: never;
+        /** Register */
+        post: operations["auth_register_bb613c24"];
         delete?: never;
         options?: never;
         head?: never;
@@ -272,11 +64,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * @description Takes a refresh type JSON web token and returns an access type JSON web
-         *     token if the refresh token is valid.
-         */
-        post: operations["token_refresh_create"];
+        /** Refresh Tokens */
+        post: operations["auth_refresh_tokens_8a854b3c"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/test-auth/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Test Auth */
+        get: operations["auth_test_auth_fca66276"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -290,9 +96,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["tracks_list"];
+        /** Get All */
+        get: operations["tracks_get_all_e85c7866"];
         put?: never;
-        post: operations["tracks_create"];
+        /** Create */
+        post: operations["tracks_create_4438b6cd"];
         delete?: never;
         options?: never;
         head?: never;
@@ -306,10 +114,231 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["tracks_retrieve"];
+        /** Get One */
+        get: operations["tracks_get_one_d3b5617e"];
         put?: never;
         post?: never;
-        delete: operations["tracks_destroy"];
+        /** Delete */
+        delete: operations["tracks_delete_1edee6ce"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reset-all/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Reset All
+         * @description Very Dangores, Deletes all tracks and members and tasks and technicals.
+         */
+        delete: operations["resetall_reset_all_f525d948"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizer/members/{track_name}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Track Members */
+        get: operations["members_get_track_members_d35bc240"];
+        put?: never;
+        /** Edit Member Grid */
+        post: operations["members_edit_member_grid_e71efd2d"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizer/attendance/{track_name}/days/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Attendance Days */
+        get: operations["attendancedaysconrtoller_get_attendance_days_e5836d51"];
+        /** Update Day */
+        put: operations["attendancedaysconrtoller_update_day_03b58827"];
+        /** Create Day */
+        post: operations["attendancedaysconrtoller_create_day_35e88528"];
+        /** Delete Day */
+        delete: operations["attendancedaysconrtoller_delete_day_2f830751"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizer/settings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Settings */
+        get: operations["settings_get_settings_33a05a1b"];
+        /** Update Settings */
+        put: operations["settings_update_settings_a4e35375"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/member/tasks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get All */
+        get: operations["tasks_get_all_4ec9bef9"];
+        put?: never;
+        /** Submit Task */
+        post: operations["tasks_submit_task_181e8450"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/member/protected_media/tasks/{task_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Protected File */
+        get: operations["protectedtask_get_protected_file_491b5990"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/member/profile/{member_code}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Profile */
+        get: operations["memberprofile_get_profile_d322d0b1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/member/edit-task/{sent_task_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Editable Task */
+        get: operations["memberedittask_get_editable_task_61ec318c"];
+        /** Update My Task */
+        put: operations["memberedittask_update_my_task_fb13ee88"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/technical/tasks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get All */
+        get: operations["technicaltasks_get_all_88595abc"];
+        put?: never;
+        /** Add Task */
+        post: operations["technicaltasks_add_task_93f60f43"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/technical/tasks/{task_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get One */
+        get: operations["technicaltasks_get_one_48248021"];
+        /** Update Task */
+        put: operations["technicaltasks_update_task_c0d7ca92"];
+        post?: never;
+        /** Delete Task */
+        delete: operations["technicaltasks_delete_task_058dca3a"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/technical/tasks/{task_id}/recived/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Recived Tasks From Members */
+        get: operations["technicaltasks_get_recived_tasks_from_members_e1b6c58b"];
+        put?: never;
+        /** Sign Task */
+        post: operations["technicaltasks_sign_task_d11a7672"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/technical/members/{track_name}/with-tasks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Members */
+        get: operations["technicalmembers_get_members_ee0b10b2"];
+        /** Update Member Task */
+        put: operations["technicalmembers_update_member_task_a440b67e"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -319,335 +348,425 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        AttendanceDays: {
-            readonly id: number;
-            /** Format: date */
-            day: string;
-        };
-        AttendanceDaysRequest: {
-            /** Format: date */
-            day: string;
-        };
-        AttendanceSmallDays: {
-            readonly id: number;
-            /** Format: date */
-            day: string;
-        };
-        /**
-         * @description * `present` - Present
-         *     * `absent` - Absent
-         *     * `excused` - Excused
-         * @enum {string}
-         */
-        AttendanceStatusEnum: "present" | "absent" | "excused";
-        AttendenceSmall: {
-            date: components["schemas"]["AttendanceSmallDays"];
-            status: components["schemas"]["AttendanceStatusEnum"];
-            excuse_reason?: string | null;
-        };
-        /**
-         * @description * `notes` - notes
-         *     * `degree` - degree
-         * @enum {string}
-         */
-        FieldEnum: "notes" | "degree";
-        ForbiddenOnlyTechnical: {
-            /** @default Only technicals Allowed */
-            details: string;
-        };
-        Login: {
+        /** LoginResponse */
+        LoginResponse: {
+            /** Username */
             username: string;
-            /** @default false */
+            /** Is Admin */
             is_admin: boolean;
-            role: components["schemas"]["RoleEnum"];
-            track: components["schemas"]["TrackNameOnly"] | null;
+            role: components["schemas"]["UserRole"];
+            track?: components["schemas"]["SimpleTrackSchema"] | null;
         };
-        Member: {
-            code?: string;
-            readonly track: components["schemas"]["TrackNameOnly"];
-            readonly attendances: components["schemas"]["AttendenceSmall"][];
-            readonly name: string;
-            /** Format: email */
-            readonly email: string;
-            readonly phone_number: string;
-            collage_code: string;
-            bonus?: number;
-            status?: components["schemas"]["MemberStatusEnum"];
-            bdaya_user: number;
-        };
-        MemberProfile: {
-            readonly name: string;
-            code?: string;
-            readonly track: components["schemas"]["TrackNameOnly"];
-            status?: components["schemas"]["MemberStatusEnum"];
-            readonly absents: number;
-            total_tasks_sent: number;
-            missing_tasks: number;
-            readonly tasks: components["schemas"]["RecivedTask"][];
-        };
-        MemberSerializerForTask: {
-            code?: string;
-            readonly name: string;
+        /** SimpleTrackSchema */
+        SimpleTrackSchema: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
         };
         /**
-         * @description * `normal` - Normal
-         *     * `warning 1` - Warning1
-         *     * `warning 2` - Warning2
-         *     * `fired` - Fired
+         * UserRole
          * @enum {string}
          */
-        MemberStatusEnum: "normal" | "warning 1" | "warning 2" | "fired";
-        MemberTechnical: {
-            code?: string;
-            readonly tasks: components["schemas"]["RecivedTaskSmall"][];
-            readonly track: components["schemas"]["TrackNameOnly"];
-            /** Format: email */
-            readonly email: string;
-            readonly name: string;
-            readonly phone_number: string;
-            collage_code: string;
-            bonus?: number;
-            status?: components["schemas"]["MemberStatusEnum"];
-            bdaya_user: number;
-        };
-        RecivedTask: {
-            readonly id: number;
-            readonly task: components["schemas"]["TaskNoTrack"];
-            readonly member: components["schemas"]["MemberSerializerForTask"];
-            files_url: components["schemas"]["RecivedTaskFile"][];
-            notes?: string | null;
-            technical_notes?: string | null;
-            degree?: number | null;
-            signed?: boolean;
-            /** Format: date-time */
-            readonly recived_at: string;
-            track: number;
-        };
-        RecivedTaskFile: {
-            readonly id: number;
-            /** Format: uri */
-            file: string;
-            file_name: string;
-        };
-        RecivedTaskSmall: {
-            readonly id: number;
-            readonly task: components["schemas"]["TaskSmall"];
-            readonly member_code: string;
-            technical_notes?: string | null;
-            degree?: number | null;
-        };
-        RegisterMember: {
-            readonly code: string;
-            readonly track: components["schemas"]["TrackNameOnly"];
-            /** Format: email */
-            email: string;
-            name: string;
-            phone_number: string;
-        };
-        RegisterMemberRequest: {
-            request_track_id: number;
-            /** Format: email */
-            email: string;
-            name: string;
-            phone_number: string;
-            collage_code: string;
-        };
-        /**
-         * @description * `member` - member
-         *     * `technical` - technical
-         *     * `organizer` - organizer
-         * @enum {string}
-         */
-        RoleEnum: "member" | "technical" | "organizer";
-        SiteSettings: {
-            readonly id: number;
-            is_register_enabled?: boolean;
-            organizer_can_edit?: string[];
-            /** Format: uri */
-            site_image?: string | null;
-            /** Format: uri */
-            hero_image?: string | null;
-        };
-        SiteSettingsImages: {
-            /** Format: uri */
-            site_image?: string | null;
-            /** Format: uri */
-            hero_image?: string | null;
-        };
-        SiteSettingsRequest: {
-            is_register_enabled?: boolean;
-            organizer_can_edit?: string[];
-            /** Format: binary */
-            site_image?: string | null;
-            /** Format: binary */
-            hero_image?: string | null;
-        };
-        Task: {
-            readonly id: number;
-            readonly expired: boolean;
-            /** @default 0 */
-            readonly unsigned_tasks_count: number;
-            task_number: number;
-            /** Format: date-time */
-            readonly created_at: string;
-            /** Format: date-time */
-            expires_at: string;
-            description: string;
-        };
-        TaskNoTrack: {
-            readonly id: number;
-            readonly expired: boolean;
-            task_number: number;
-            /** Format: date-time */
-            readonly created_at: string;
-            /** Format: date-time */
-            expires_at: string;
-            description: string;
-            track: number;
-        };
-        TaskRequest: {
-            task_number: number;
-            /** Format: date-time */
-            expires_at: string;
-            description: string;
-        };
-        TaskSigningRequest: {
-            degree: number;
-            technical_notes?: string;
-        };
-        TaskSmall: {
-            readonly id: number;
-            task_number: number;
-        };
-        TokenRefresh: {
-            readonly access: string;
-            refresh: string;
-        };
-        TokenRefreshRequest: {
-            refresh: string;
-        };
-        Track: {
-            readonly id: number;
-            name: string;
-            en_description: string;
-            ar_description: string;
-            /** Format: uri */
-            image: string;
-        };
-        TrackNameOnly: {
-            readonly id: number;
-            name: string;
-        };
-        TrackNameOnlyRequest: {
-            name: string;
-        };
-        TrackRequest: {
-            name: string;
-            prefix: string;
-            en_description: string;
-            ar_description: string;
-            /** Format: binary */
-            image: string;
-        };
-        /**
-         * @description * `attendance` - attendance
-         *     * `data` - data
-         * @enum {string}
-         */
-        TypeEnum: "attendance" | "data";
-        "bad-register": {
-            /**
-             * @default [
-             *       "an error for email"
-             *     ]
-             */
-            email: unknown[];
-        };
-        "bad-task": {
-            /**
-             * @default [
-             *       "field error message"
-             *     ]
-             */
-            field: unknown[];
-        };
-        "bad-track": {
-            /**
-             * @default [
-             *       "an error with this field"
-             *     ]
-             */
-            field: unknown[];
-        };
-        badTask: {
-            /** @default error here */
+        UserRole: "member" | "technical" | "organizer";
+        /** ErrorResponse */
+        ErrorResponse: {
+            /** Details */
             details: string;
         };
-        bad_day: {
-            field_name: string;
-        };
-        bad_day_creation: {
-            field_name: string;
-        };
-        day_not_found: {
-            field_name: string;
-        };
-        editMemberSelfTaskRequest: {
-            files?: string[];
-            notes?: string;
-        };
-        editMemberTaskRequest: {
-            code: string;
-            task_id: number;
-            field: components["schemas"]["FieldEnum"];
-            value: string;
-        };
-        "email-is-incorrect": {
-            /** @default No BdayaUser matches the given query */
-            details: string;
-        };
-        loginRequest: {
-            /** Format: email */
+        /** LoginRequest */
+        LoginRequest: {
+            /**
+             * Email
+             * Format: email
+             */
             email: string;
+            /** Password */
             password: string;
         };
-        "password-is-incorrect": {
-            /** @default invalid email or password */
-            details: string;
-        };
-        patchMemberRequest: {
+        /** RegisterResponse */
+        RegisterResponse: {
+            /** Code */
             code: string;
-            field: string;
-            value: string;
-            type: components["schemas"]["TypeEnum"];
-            excuse: string;
+            track: components["schemas"]["SimpleTrackSchema"];
+            /** Email */
+            email: string;
+            /** Name */
+            name: string;
         };
-        "task-member-inputRequest": {
-            task_id: number;
-            file?: string[];
-            notes?: string;
+        /** PydanticErrorCtx */
+        PydanticErrorCtx: {
+            /** Error */
+            error: string;
         };
-        taskExpired: {
-            /** @default task is expired */
-            details: string;
+        /** PydanticErrorItem */
+        PydanticErrorItem: {
+            /** Type */
+            type: string;
+            /** Loc */
+            loc: (string | number)[];
+            /** Msg */
+            msg: string;
+            ctx: components["schemas"]["PydanticErrorCtx"];
         };
-        test_auth: {
+        /** PydanticErrorResponse */
+        PydanticErrorResponse: {
+            /** Detail */
+            detail: components["schemas"]["PydanticErrorItem"][];
+        };
+        /** RegisterRequest */
+        RegisterRequest: {
+            /** Request Track Id */
+            request_track_id: number;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Name */
+            name: string;
+            /** Phone Number */
+            phone_number: string;
+            /** Collage Code */
+            collage_code: string;
+        };
+        /** RefreshTokenRequest */
+        RefreshTokenRequest: {
+            /** Refresh */
+            refresh?: string | null;
+        };
+        /** SettingsImagesResponse */
+        SettingsImagesResponse: {
+            /** Site Image */
+            site_image: string | null;
+            /** Hero Image */
+            hero_image: string | null;
+        };
+        /** TestAuthResponse */
+        TestAuthResponse: {
+            /** Username */
             username: string;
-            role: components["schemas"]["RoleEnum"];
-            /** @default false */
+            role: components["schemas"]["UserRole"];
+            /** Is Admin */
             is_admin: boolean;
-            track: components["schemas"]["TrackNameOnly"];
-            settings: components["schemas"]["SiteSettingsImages"];
+            track: components["schemas"]["SimpleTrackSchema"] | null;
+            settings: components["schemas"]["SettingsImagesResponse"];
         };
-        updateDayRequest: {
+        /** TrackSchema */
+        TrackSchema: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** En Description */
+            en_description: string;
+            /** Ar Description */
+            ar_description: string;
+            /** Image */
+            image: string;
+        };
+        /** TrackCreateSchema */
+        TrackCreateSchema: {
+            /** Name */
+            name: string;
+            /** Prefix */
+            prefix: string;
+            /** En Description */
+            en_description: string;
+            /** Ar Description */
+            ar_description: string;
+        };
+        /** AttendaceDayResponse */
+        AttendaceDayResponse: {
+            /** Id */
+            id: number;
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+        };
+        /** AttendanceSmallResponse */
+        AttendanceSmallResponse: {
+            date: components["schemas"]["AttendaceDayResponse"];
+            status: components["schemas"]["AttendanceStatus"];
+            /** Excuse Reason */
+            excuse_reason: string;
+        };
+        /**
+         * AttendanceStatus
+         * @enum {string}
+         */
+        AttendanceStatus: "present" | "absent" | "excused";
+        /**
+         * MemberStatus
+         * @enum {string}
+         */
+        MemberStatus: "normal" | "warning 1" | "warning 2" | "fired";
+        /** MemebrResponse */
+        MemebrResponse: {
+            track: components["schemas"]["SimpleTrackSchema"];
+            /** Attendances */
+            attendances: components["schemas"]["AttendanceSmallResponse"][];
+            /** Name */
+            name: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Phone Number */
+            phone_number: string;
+            /** Code */
+            code: string;
+            /** Collage Code */
+            collage_code: string;
+            /** Bonus */
+            bonus: number;
+            status: components["schemas"]["MemberStatus"];
+        };
+        /** MemberEditGridRequest */
+        MemberEditGridRequest: {
+            type: components["schemas"]["MemberEditType"];
+            /** Field */
+            field: string;
+            /** Value */
+            value: string | components["schemas"]["AttendanceStatus"];
+            /** Excuse */
+            excuse: string;
+            /** Code */
+            code: string;
+        };
+        /**
+         * MemberEditType
+         * @enum {string}
+         */
+        MemberEditType: "attendance" | "data";
+        /** DayRequest */
+        DayRequest: {
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+        };
+        /** DayUpdateRequest */
+        DayUpdateRequest: {
+            /**
+             * Oldday
+             * Format: date
+             */
             oldDay: string;
+            /**
+             * Newday
+             * Format: date
+             */
             newDay: string;
         };
-        updateTaskRequest: {
+        /**
+         * OrganizerEditableFields
+         * @enum {string}
+         */
+        OrganizerEditableFields: "name" | "status" | "track" | "bonus" | "email" | "phone";
+        /** SettingsResponse */
+        SettingsResponse: {
+            /** Site Image */
+            site_image: string | null;
+            /** Hero Image */
+            hero_image: string | null;
+            /** Is Register Enabled */
+            is_register_enabled: boolean;
+            /** Organizer Can Edit */
+            organizer_can_edit: components["schemas"]["OrganizerEditableFields"][];
+        };
+        /** SettingsRequest */
+        SettingsRequest: {
+            /**
+             * Is Register Enabled
+             * @default false
+             */
+            is_register_enabled: boolean;
+            /**
+             * Organizer Can Edit
+             * @default []
+             */
+            organizer_can_edit: ("name" | "status" | "track" | "bonus" | "email" | "phone")[];
+        };
+        /** TaskResponse */
+        TaskResponse: {
+            /** Id */
+            id: number;
+            /** Task Number */
             task_number: number;
-            /** Format: date-time */
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
             expires_at: string;
+            /** Description */
             description: string;
+            /** Expired */
+            expired: boolean;
+            /** Unsigned Tasks Count */
+            unsigned_tasks_count: number;
+        };
+        /** TaskRequest */
+        TaskRequest: {
+            /** Task Id */
+            task_id: number;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** MemberProfileName */
+        MemberProfileName: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+        };
+        /** MemberProfileResponse */
+        MemberProfileResponse: {
+            /** Absents */
+            absents: number;
+            track: components["schemas"]["SimpleTrackSchema"];
+            /** Total Tasks Sent */
+            total_tasks_sent: number;
+            /** Missing Tasks */
+            missing_tasks: number;
+            /** Name */
+            name: string;
+            /** Code */
+            code: string;
+            status: components["schemas"]["MemberStatus"];
+            /** Tasks */
+            tasks: components["schemas"]["RecivedTaskMember"][];
+        };
+        /** RecivedFileResponse */
+        RecivedFileResponse: {
+            /** Id */
+            id: number;
+            /** File */
+            file: string;
+            /** File Name */
+            file_name: string;
+        };
+        /** RecivedTaskMember */
+        RecivedTaskMember: {
+            /** Id */
+            id: number;
+            task: components["schemas"]["TaskResponse"];
+            member: components["schemas"]["MemberProfileName"];
+            track: components["schemas"]["SimpleTrackSchema"];
+            /** Files Url */
+            files_url: components["schemas"]["RecivedFileResponse"][];
+            /** Notes */
+            notes?: string | null;
+            /** Degree */
+            degree: number;
+            /** Signed */
+            signed: boolean;
+            /**
+             * Recived At
+             * Format: date-time
+             */
+            recived_at: string;
+            /** Technical Notes */
+            technical_notes?: string | null;
+        };
+        /** MemberTaskUpdateRequest */
+        MemberTaskUpdateRequest: {
+            /** Notes */
+            notes: string;
+        };
+        /** TaskAlreadyExistsError */
+        TaskAlreadyExistsError: {
+            /**
+             * Task Number
+             * @default This task number already exists
+             */
+            task_number: string;
+        };
+        /** TaskCreateRequest */
+        TaskCreateRequest: {
+            /** Task Number */
+            task_number: number;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Description */
+            description: string;
+        };
+        /** TaskSignRequest */
+        TaskSignRequest: {
+            /** Degree */
+            degree: number;
+            /** Technical Notes */
+            technical_notes: string;
+        };
+        /** SimpleRecivedTaskResponse */
+        SimpleRecivedTaskResponse: {
+            /** Id */
+            id: number;
+            task: components["schemas"]["SimpleTaskResponse"];
+            /** Member Code */
+            member_code: string;
+            /** Notes */
+            notes?: string | null;
+            /** Technical Notes */
+            technical_notes?: string | null;
+            /** Degree */
+            degree?: number | null;
+        };
+        /** SimpleTaskResponse */
+        SimpleTaskResponse: {
+            /** Id */
+            id: number;
+            /** Task Number */
+            task_number: number;
+        };
+        /** TechnicalMembersResponse */
+        TechnicalMembersResponse: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Collage Code */
+            collage_code: string;
+            /** Phone Number */
+            phone_number: string;
+            /** Bonus */
+            bonus: number;
+            track: components["schemas"]["SimpleTrackSchema"];
+            status: components["schemas"]["MemberStatus"];
+            /** Tasks */
+            tasks: components["schemas"]["SimpleRecivedTaskResponse"][];
+        };
+        /**
+         * MemberTechEditType
+         * @enum {string}
+         */
+        MemberTechEditType: "notes" | "degree";
+        /** TechnicalMembersTasksUpdateRequest */
+        TechnicalMembersTasksUpdateRequest: {
+            /** Task Id */
+            task_id: number;
+            /** Code */
+            code: string;
+            /** Value */
+            value: number | string;
+            field: components["schemas"]["MemberTechEditType"];
         };
     };
     responses: never;
@@ -658,7 +777,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    login_create: {
+    auth_login_7c6d9a61: {
         parameters: {
             query?: never;
             header?: never;
@@ -667,37 +786,38 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["loginRequest"];
+                "application/json": components["schemas"]["LoginRequest"];
             };
         };
         responses: {
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Login"];
+                    "application/json": components["schemas"]["LoginResponse"];
                 };
             };
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["password-is-incorrect"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            404: {
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["email-is-incorrect"];
-                };
+                content?: never;
             };
         };
     };
-    logout_retrieve: {
+    auth_logout_cadf20f4: {
         parameters: {
             query?: never;
             header?: never;
@@ -706,8 +826,68 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No response body */
-            200: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    auth_register_bb613c24: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PydanticErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -715,44 +895,105 @@ export interface operations {
             };
         };
     };
-    member_edit_task_retrieve: {
+    auth_refresh_tokens_8a854b3c: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                sent_task_id: number;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshTokenRequest"];
             };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    auth_test_auth_fca66276: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RecivedTask"];
+                    "application/json": components["schemas"]["TestAuthResponse"];
                 };
             };
         };
     };
-    member_edit_task_update: {
+    tracks_get_all_e85c7866: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                sent_task_id: number;
-            };
+            path?: never;
             cookie?: never;
         };
-        requestBody?: {
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackSchema"][];
+                };
+            };
+        };
+    };
+    tracks_create_4438b6cd: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
             content: {
-                "multipart/form-data": components["schemas"]["editMemberSelfTaskRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["editMemberSelfTaskRequest"];
+                "multipart/form-data": {
+                    /** Name */
+                    name: string;
+                    /** Prefix */
+                    prefix: string;
+                    /** En Description */
+                    en_description: string;
+                    /** Ar Description */
+                    ar_description: string;
+                    /**
+                     * Image
+                     * Format: binary
+                     */
+                    image: string;
+                };
             };
         };
         responses: {
-            /** @description No response body */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -761,7 +1002,368 @@ export interface operations {
             };
         };
     };
-    member_profile_retrieve: {
+    tracks_get_one_d3b5617e: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackSchema"];
+                };
+            };
+        };
+    };
+    tracks_delete_1edee6ce: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    resetall_reset_all_f525d948: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    members_get_track_members_d35bc240: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemebrResponse"][];
+                };
+            };
+        };
+    };
+    members_edit_member_grid_e71efd2d: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberEditGridRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    attendancedaysconrtoller_get_attendance_days_e5836d51: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendaceDayResponse"][];
+                };
+            };
+        };
+    };
+    attendancedaysconrtoller_update_day_03b58827: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DayUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    attendancedaysconrtoller_create_day_35e88528: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DayRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendaceDayResponse"];
+                };
+            };
+        };
+    };
+    attendancedaysconrtoller_delete_day_2f830751: {
+        parameters: {
+            query: {
+                day: string;
+            };
+            header?: never;
+            path: {
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    settings_get_settings_33a05a1b: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsResponse"];
+                };
+            };
+        };
+    };
+    settings_update_settings_a4e35375: {
+        parameters: {
+            query?: {
+                site_image?: string | null;
+                hero_image?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/x-www-form-urlencoded": {
+                    /**
+                     * Is Register Enabled
+                     * @default false
+                     */
+                    is_register_enabled?: boolean;
+                    /**
+                     * Organizer Can Edit
+                     * @default []
+                     */
+                    organizer_can_edit?: ("name" | "status" | "track" | "bonus" | "email" | "phone")[];
+                };
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    tasks_get_all_4ec9bef9: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskResponse"][];
+                };
+            };
+        };
+    };
+    tasks_submit_task_181e8450: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Task Id */
+                    task_id: number;
+                    /** Notes */
+                    notes?: string | null;
+                    /** Files */
+                    files: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    protectedtask_get_protected_file_491b5990: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    memberprofile_get_profile_d322d0b1: {
         parameters: {
             query?: never;
             header?: never;
@@ -772,17 +1374,122 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MemberProfile"];
+                    "application/json": components["schemas"]["MemberProfileResponse"];
                 };
             };
         };
     };
-    member_protected_media_tasks_retrieve: {
+    memberedittask_get_editable_task_61ec318c: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sent_task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecivedTaskMember"];
+                };
+            };
+        };
+    };
+    memberedittask_update_my_task_fb13ee88: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sent_task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Notes */
+                    notes: string;
+                    /** Files */
+                    files: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    technicaltasks_get_all_88595abc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskResponse"][];
+                };
+            };
+        };
+    };
+    technicaltasks_add_task_93f60f43: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskAlreadyExistsError"];
+                };
+            };
+        };
+    };
+    technicaltasks_get_one_48248021: {
         parameters: {
             query?: never;
             header?: never;
@@ -793,74 +1500,126 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No response body */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    member_tasks_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Task"][];
+                    "application/json": components["schemas"]["TaskResponse"];
                 };
             };
         };
     };
-    member_tasks_create: {
+    technicaltasks_update_task_c0d7ca92: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                task_id: number;
+            };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "multipart/form-data": components["schemas"]["task-member-inputRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["task-member-inputRequest"];
+                "application/json": components["schemas"]["TaskCreateRequest"];
             };
         };
         responses: {
-            /** @description No response body */
-            201: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["badTask"];
-                };
-            };
-            406: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["taskExpired"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
     };
-    organizer_attendance_days_list: {
+    technicaltasks_delete_task_058dca3a: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    technicaltasks_get_recived_tasks_from_members_e1b6c58b: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecivedTaskMember"][];
+                };
+            };
+        };
+    };
+    technicaltasks_sign_task_d11a7672: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskSignRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    technicalmembers_get_members_ee0b10b2: {
         parameters: {
             query?: never;
             header?: never;
@@ -871,17 +1630,27 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AttendanceDays"][];
+                    "application/json": components["schemas"]["TechnicalMembersResponse"][];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
     };
-    organizer_attendance_days_update: {
+    technicalmembers_update_member_task_a440b67e: {
         parameters: {
             query?: never;
             header?: never;
@@ -892,586 +1661,25 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["updateDayRequest"];
+                "application/json": components["schemas"]["TechnicalMembersTasksUpdateRequest"];
             };
         };
         responses: {
-            /** @description No response body */
-            201: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description No response body */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+            /** @description Not Found */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["day_not_found"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
-            };
-        };
-    };
-    organizer_attendance_days_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AttendanceDaysRequest"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AttendanceDays"];
-                };
-            };
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["bad_day_creation"];
-                };
-            };
-        };
-    };
-    organizer_attendance_days_destroy: {
-        parameters: {
-            query?: {
-                day?: string;
-            };
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AttendanceDays"];
-                };
-            };
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["bad_day"];
-                };
-            };
-        };
-    };
-    organizer_members_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Member"][];
-                };
-            };
-        };
-    };
-    organizer_members_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["patchMemberRequest"];
-            };
-        };
-        responses: {
-            /** @description No response body */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    organizer_settings_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SiteSettings"];
-                };
-            };
-        };
-    };
-    organizer_settings_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "multipart/form-data": components["schemas"]["SiteSettingsRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["SiteSettingsRequest"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SiteSettings"];
-                };
-            };
-        };
-    };
-    register_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterMemberRequest"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RegisterMember"];
-                };
-            };
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["bad-register"];
-                };
-            };
-        };
-    };
-    reset_destroy: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No response body */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    technical_members_with_tasks_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MemberTechnical"][];
-                };
-            };
-        };
-    };
-    technical_members_with_tasks_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["editMemberTaskRequest"];
-            };
-        };
-        responses: {
-            /** @description No response body */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    technical_tasks_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Task"][];
-                };
-            };
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ForbiddenOnlyTechnical"];
-                };
-            };
-        };
-    };
-    technical_tasks_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TaskRequest"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Task"];
-                };
-            };
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["bad-task"];
-                };
-            };
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ForbiddenOnlyTechnical"];
-                };
-            };
-        };
-    };
-    technical_tasks_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                task_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Task"];
-                };
-            };
-        };
-    };
-    technical_tasks_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                task_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["updateTaskRequest"];
-            };
-        };
-        responses: {
-            /** @description No response body */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    technical_tasks_destroy: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                task_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No response body */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    technical_tasks_recived_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                task_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RecivedTask"][];
-                };
-            };
-        };
-    };
-    technical_tasks_recived_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                task_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TaskSigningRequest"];
-            };
-        };
-        responses: {
-            /** @description No response body */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    test_auth_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["test_auth"];
-                };
-            };
-        };
-    };
-    token_refresh_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TokenRefreshRequest"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TokenRefresh"];
-                };
-            };
-        };
-    };
-    tracks_list: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Track"][];
-                };
-            };
-        };
-    };
-    tracks_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/x-www-form-urlencoded": components["schemas"]["TrackRequest"];
-                "multipart/form-data": components["schemas"]["TrackRequest"];
-            };
-        };
-        responses: {
-            /** @description No response body */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["bad-track"];
-                };
-            };
-        };
-    };
-    tracks_retrieve: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Track"];
-                };
-            };
-        };
-    };
-    tracks_destroy: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No response body */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };

@@ -15,21 +15,21 @@ import Box from '@mui/material/Box';
 import { useAuthStore, useSettingsStore } from '../../utils/store';
 import LocaledTextField from '@/app/components/localed_textField';
 import type { components } from '../../generated/api_types';
+import API, { formatTime } from '../../utils/api.client';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import styles from "./register.module.css";
 import { useForm } from 'react-hook-form';
-import API from '../../utils/api.client';
 import { toast } from 'sonner';
 import Image from 'next/image';
 
 type RegisterFormProps = {
-  tracks: components['schemas']['Track'][];
+  tracks: components['schemas']['SimpleTrackSchema'][];
   canRegister?: boolean | null
 }
 
-type SendRegister = components['schemas']['RegisterMemberRequest'];
+type SendRegister = components['schemas']['RegisterRequest'];
 
 export default function RegisterForm({ tracks, canRegister = false }: RegisterFormProps) {
   const { handleSubmit, register, setError, formState: { errors } } = useForm<SendRegister>({ defaultValues: { phone_number: "+20" } });
@@ -60,13 +60,16 @@ export default function RegisterForm({ tracks, canRegister = false }: RegisterFo
         setCredentials({ isLoading: false, isAuthed: true, user: { username: body.name, role: "member", track: body.track, is_admin: false } });
         router.replace(`/member/${body.track?.name}`);
         return await Promise.resolve(body);
-      } else {
-        if (error && error instanceof Object) {
-          if (!(error as Record<string, string[]>).details) {
-            Object.entries(error).forEach(er => {
-              setError(er[0] as keyof SendRegister, { message: (er[1] as string[])[0] });
-            });
-          }
+      } else if (error) {
+        if (response.status === 422 && typeof error.detail[0] !== "string") {
+          setError(error.detail[0].loc[error.detail[0].loc.length - 1] as keyof SendRegister, { message: error.detail[0].ctx.error });
+        } else if (response.status === 400 && error) {
+          Object.entries(error).forEach(er => {
+            setError(er[0] as keyof SendRegister, { message: er[1] });
+          });
+        } else if (response.status === 429) {
+          const time = formatTime(parseInt(response.headers.get("Retry-After") ?? '0'));
+          toast.warning(tr('blocked', {duration: time.duration, unit: tr(time.unit)}), { duration: 5000 });
         }
         return await Promise.reject();
       };
@@ -74,7 +77,7 @@ export default function RegisterForm({ tracks, canRegister = false }: RegisterFo
 
     toast.promise(submitRegister(), {
       loading: tr('loading'),
-      success: (validated) => tr('welcome', { username: validated.name }),
+      success: (validated) => validated ? tr('welcome', { username: validated.name }) : "no name detected",
       error: tr('wrong'),
       finally() {
         setIsLoading(false);

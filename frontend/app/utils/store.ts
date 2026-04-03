@@ -4,9 +4,9 @@ import { create } from "zustand";
 export type UserAuth = {
     isLoading: boolean;
     isAuthed: boolean;
-    user: components['schemas']['Login'] | null;
+    user: components['schemas']['LoginResponse'] | null;
 }
-type SettingsImages = components['schemas']['SiteSettingsImages'];
+type SettingsImages = components['schemas']['SettingsImagesResponse'];
 
 interface UserAuthStoreType extends UserAuth {
     setCredentials: (payload: UserAuth) => void;

@@ -1,43 +1,47 @@
-from drf_spectacular.utils import extend_schema_serializer
-from rest_framework import serializers
+from core.api_schemas import SimpleTrackSchema
+from member.models import MemberStatus
+from pydantic import EmailStr
+from datetime import datetime
+from ninja import Schema
 from . import models
 
-@extend_schema_serializer(exclude_fields=('track',))
-class TaskSerializer(serializers.ModelSerializer):
-    track = serializers.PrimaryKeyRelatedField(read_only=True)
-    expired = serializers.BooleanField(read_only=True)
-    unsigned_tasks_count = serializers.IntegerField(default=0, read_only=True)
+class TaskCreateRequest(Schema):
+    task_number: int
+    expires_at: datetime
+    description: str
     
-    def validate(self, attrs):
-        track = self.context.get('track')
-        task_number = attrs.get('task_number')
-        
-        if models.Task.objects.filter(track=track, task_number=task_number).exists():
-            raise serializers.ValidationError({
-                "task_number": "This task number already exists"
-            })
-        return super().validate(attrs)
+class TaskAlreadyExistsError(Schema):
+    task_number: str = "This task number already exists"
     
-    class Meta:
-        model = models.Task
-        fields = '__all__'
+class TaskSignRequest(Schema):
+    degree: int
+    technical_notes: str
 
-class TaskNoTrackSerializer(serializers.ModelSerializer):
-    expired = serializers.BooleanField(read_only=True)
+class SimpleTaskResponse(Schema):
+    id: int
+    task_number: int
+
+class SimpleRecivedTaskResponse(Schema):
+    id: int
+    task: SimpleTaskResponse
+    member_code: str
+    notes: str | None = None
+    technical_notes: str | None = None
+    degree: int | None = None
     
-    class Meta:
-        model = models.Task
-        fields = '__all__'
-        
-class TaskSmallSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Task
-        fields = (
-            'id',
-            'task_number'
-        )
-
-
-
-
-
+class TechnicalMembersResponse(Schema):
+    code: str
+    name: str
+    email: EmailStr
+    collage_code: str
+    phone_number: str
+    bonus: int
+    track: SimpleTrackSchema
+    status: MemberStatus
+    tasks: list[SimpleRecivedTaskResponse]
+    
+class TechnicalMembersTasksUpdateRequest(Schema):
+    task_id: int
+    code: str
+    value: int | str
+    field: models.MemberTechEditType

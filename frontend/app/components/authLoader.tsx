@@ -31,8 +31,8 @@ export default function AuthLoader({ children }: { children: React.ReactNode }) 
                 if (images.value.data.allSettings) {
                     const { siteImage, heroImage } = images.value.data.allSettings;
                     setImages({
-                        site_image: siteImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${siteImage}` : undefined,
-                        hero_image: heroImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${heroImage}` : undefined
+                        site_image: siteImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${siteImage}` : null,
+                        hero_image: heroImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${heroImage}` : null
                     });
                 };
             }
@@ -66,7 +66,7 @@ export default function AuthLoader({ children }: { children: React.ReactNode }) 
         );
     };
 
-    if (isAuthed || path.includes("login") || path.includes("register") || path.includes("/")) {
+    if (isAuthed || path.includes("login") || path.includes("register") || path.includes("track-info/") || path === "/") {
         return children;
     } else {
         return (

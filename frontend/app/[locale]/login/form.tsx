@@ -9,18 +9,18 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useAuthStore, useSettingsStore } from '../../utils/store';
 import LocaledTextField from '@/app/components/localed_textField';
 import type { components } from '../../generated/api_types';
+import API, { formatTime } from '../../utils/api.client';
 import PasswordField from '../../components/password';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
-import API from '../../utils/api.client';
 import styles from "./login.module.css";
 import { useState } from 'react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 
-type GetLogIn = components['schemas']['Login'];
-type SendLogIn = components['schemas']['loginRequest'];
+type GetLogIn = components['schemas']['LoginResponse'];
+type SendLogIn = components['schemas']['LoginRequest'];
 
 export const revalidate = 1000;
 
@@ -40,6 +40,10 @@ export default function LogInForm() {
       if (response.ok && body) {
         return await Promise.resolve(body);
       } else {
+        if (response.status === 429) {
+          const time = formatTime(parseInt(response.headers.get("Retry-After") ?? '0'));
+          toast.warning(tr('blocked', {duration: time.duration, unit: tr(time.unit)}), { duration: 5000 });
+        }
         return await Promise.reject(error);
       };
     }

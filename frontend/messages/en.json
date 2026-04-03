@@ -34,6 +34,10 @@
         "invalid": "Invalid Email or Password",
         "invalidGmail": "Invalid Gmail Email address",
         "invalidLength": "Password length must be more than 8 chars",
+        "blocked": "You Have been blocked for {duration} {unit}",
+        "hours": "Hours",
+        "minutes": "Minutes",
+        "seconds": "Seconds",
         "metaTitle": "Team Bdaya Login",
         "metaDesc": "Login to Team Bdaya Now"
     },
@@ -58,6 +62,10 @@
         "collage": "Collage Code",
         "phone": "Phone Number",
         "track": "Track",
+        "blocked": "You Have been blocked for {duration} {unit}",
+        "hours": "Hours",
+        "minutes": "Minutes",
+        "seconds": "Seconds",
         "haveAcc": "Alraedy have account?",
         "metaTitle": "Team Bdaya Register",
         "metaDesc": "Register to Team Bdaya Now"
@@ -277,7 +285,6 @@
         "onTime": "Early {time}",
         "attach": "Attach Files",
         "taskSub": "Task submitted successfully!",
-        "taxkSubEx": "Submission failed: This task has expired",
         "taskSubError": "Something went wrong while submitting",
         "submiting": "Submitting....",
         "submitTask": "Submit Task"

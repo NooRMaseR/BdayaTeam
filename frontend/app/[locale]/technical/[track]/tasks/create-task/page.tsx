@@ -14,10 +14,10 @@ import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-type FormCreateTask = components['schemas']['TaskRequest'];
+type FormCreateTask = components['schemas']['TaskCreateRequest'];
 
 export default function AddTaskPage() {
-    const { register, control, handleSubmit, setError, reset, formState: { errors } } = useForm<FormCreateTask>();
+    const { register, control, handleSubmit, setError, formState: { errors } } = useForm<FormCreateTask>();
     const [isLoading, setIsloading] = useState<boolean>(false);
     const tr = useTranslations('tasksPage');
     const locale = useLocale();
@@ -34,10 +34,7 @@ export default function AddTaskPage() {
 
         toast.promise(submitPromise, {
             loading: tr('creating'),
-            success: (num) => {
-                reset();
-                return tr('taskCreated', { num });
-            },
+            success: (num) => tr('taskCreated', { num }),
             error: (errorsFound: Record<string, string[]>) => {
                 Object.entries(errorsFound || {}).forEach(([key, val]) => {
                     if (['task_number', 'expires_at', 'description'].includes(key)) {

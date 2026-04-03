@@ -14,7 +14,7 @@ import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-type CreateTrack = components['schemas']['TrackRequest'];
+type CreateTrack = components['schemas']['TrackCreateSchema'];
 
 export default function AddTrackPage() {
     const { register, handleSubmit, setError, setValue, formState: { errors } } = useForm<CreateTrack>();

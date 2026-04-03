@@ -1,9 +1,5 @@
 # instructions for Backend
 
-```bash
-bunx wscat -c wss://localhost/ws/edit-member/Python/ -n -H "Cookie: access_token="
-```
-
 ## Postgresql
 
 to install postgresql run these commands in your terminal in order

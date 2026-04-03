@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-04 05:20+0200\n"
+"POT-Creation-Date: 2026-04-03 05:21+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,26 +18,41 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: BdayaTeam/settings.py:262
+#: BdayaTeam/settings.py:314
 msgid "English"
 msgstr "English"
 
-#: BdayaTeam/settings.py:263
+#: BdayaTeam/settings.py:315
 msgid "Arabic"
 msgstr "Arabic"
 
-#: core/api_schemas.py:41 core/api_schemas.py:46
-msgid "collage_code_exists"
-msgstr "member with this collage code already exists."
+#: core/api.py:166
+msgid "email_exists"
+msgstr "This Email already exists."
 
-#: core/api_schemas.py:53
-msgid "phone_not_valid"
-msgstr "The phone number entered is not valid."
-
-#: core/api_schemas.py:58
+#: core/api.py:169
 msgid "phone_exists"
 msgstr "This Phone number already exists."
 
-#: core/api_schemas.py:66
-msgid "email_exists"
-msgstr "This Email already exists."
+#: core/api.py:172
+msgid "collage_code_exists"
+msgstr "member with this collage code already exists."
+
+#: core/middleware.py:68
+msgid "Token contained no recognizable user identification"
+msgstr ""
+
+#: core/middleware.py:80
+msgid "User not found"
+msgstr ""
+
+#: core/middleware.py:84
+msgid "User is inactive"
+msgstr ""
+
+#: core/middleware.py:91
+msgid "The user's password has been changed."
+msgstr ""
+
+#~ msgid "phone_not_valid"
+#~ msgstr "The phone number entered is not valid."
