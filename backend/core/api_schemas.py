@@ -1,143 +1,96 @@
-from drf_spectacular.extensions import OpenApiAuthenticationExtension
-from phonenumber_field.serializerfields import PhoneNumberField
+from phonenumber_field.validators import validate_international_phonenumber
+from organizer.api_schemas import SettingsImagesResponse
 from django.utils.translation import gettext_lazy as _
-from rest_framework.validators import UniqueValidator
-from django.db import IntegrityError, transaction
-from rest_framework import serializers
-from .tasks import send_member_email
-from member.models import Member
+from django.core.exceptions import ValidationError
+from pydantic import EmailStr, field_validator
 from . import models, validators
-from typing import Any
+from ninja import Schema
 
-
-class TrackSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Track
-        fields = "__all__"
-        extra_kwargs = {"prefix": {"write_only": True}}
-
-
-class TrackNameOnlySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Track
-        fields = ("id", "name")
-
-
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    is_admin = serializers.BooleanField(default=False)
-    role = serializers.ChoiceField(models.UserRole)
-    track = TrackNameOnlySerializer(allow_null=True)
-
-
-class RegisterMemberSerializer(serializers.ModelSerializer):
-    request_track_id = serializers.PrimaryKeyRelatedField(
-        source="track", queryset=models.Track.objects.all(), write_only=True
-    )
-    track = TrackNameOnlySerializer(read_only=True)
-
-    email = serializers.EmailField(
-        validators=[
-            UniqueValidator(
-                queryset=models.BdayaUser.objects.all(), message=_("email_exists")
-            )
-        ],
-    )
-    name = serializers.CharField()
-    phone_number = PhoneNumberField(
-        validators=[
-            UniqueValidator(
-                queryset=models.BdayaUser.objects.all(), message=_("phone_exists")
-            )
-        ],
-    )
-
-    class Meta:
-        model = Member
-        exclude = ("bonus", "joined_at", "status", "bdaya_user")
-        extra_kwargs = {
-            "code": {"read_only": True},
-            "collage_code": {
-                "write_only": True,
-                "error_messages": {"unique": _("collage_code_exists")},
-                "validators": [
-                    validators.validate_collage_code,
-                    UniqueValidator(
-                        queryset=Member.objects.all(), message=_("collage_code_exists")
-                    ),
-                ],
-            },
-        }
-
-    def create(self, validated_data: dict[str, Any]) -> Member:
-        email = validated_data.pop("email")
-        username = validated_data.pop("name")
-        phone_number = validated_data.pop("phone_number")
-
-        track: models.Track = validated_data["track"]
-        prefix = track.prefix
-
-        counter, _ = models.TrackCounter.objects.select_for_update().get_or_create(
-            track=track
-        )
-        counter.current_value += 1
-        counter.save()
-        code = f"{prefix}-{counter.current_value}"
-        collage_code = validated_data.pop("collage_code")
-
-        try:
-            GENERATED_PASSWORD = f"{code}@{collage_code}"
-
-            user = models.BdayaUser(
-                email=email,
-                username=username,
-                phone_number=phone_number,
-                track=track,
-                role=models.UserRole.MEMBER,
-            )
-            user.set_password(GENERATED_PASSWORD)
-            user.save()
-            
-            member = Member.objects.create(
-                bdaya_user=user, code=code, collage_code=collage_code, track=track
-            )
-
-            transaction.on_commit(
-                lambda: send_member_email(
-                    user.username,
-                    user.email,
-                    GENERATED_PASSWORD,
-                    member.code,
-                    member.track.name,
-                )
-            )
-
-            return member
-        except IntegrityError:
-            raise serializers.ValidationError(
-                {"details": "something went wrong, Please try again."}
-            )
-
-
-class ForbiddenOnlyTechnical(serializers.Serializer):
-    details = serializers.CharField(default="Only technicals Allowed")
-
-
-class ForbiddenOnlyMember(serializers.Serializer):
-    details = serializers.CharField(default="Only members Allowed")
-
-
-class ForbiddenOnlyOrganizer(serializers.Serializer):
-    details = serializers.CharField(default="Only organizers Allowed")
-
-class CookiesJWTAuthenticationScheme(OpenApiAuthenticationExtension):
-    target_class = 'core.middleware.CookiesJWTAuthentication' 
-    name = 'cookieAuth'
+class PydanticErrorCtx(Schema):
+    error: str
     
-    def get_security_definition(self, auto_schema) -> dict[str, str]:
-        return {
-            'type': 'apiKey',
-            'in': 'cookie',
-            'name': 'access_token',
-            'description': 'JWT access token stored in HttpOnly cookie'
-        }
+class PydanticErrorItem(Schema):
+    type: str
+    loc: list[str | int]
+    msg: str
+    ctx: PydanticErrorCtx
+
+class PydanticErrorResponse(Schema):
+    detail: list[PydanticErrorItem]
+
+class LoginRequest(Schema):
+    email: EmailStr
+    password: str
+
+class LoginResponse(Schema):
+    username: str
+    is_admin: bool
+    role: models.UserRole
+    track: SimpleTrackSchema | None = None
+
+class ErrorResponse(Schema):
+    details: str
+
+class SingleErrorResponse(Schema):
+    detail: str
+    
+class RegisterRequest(Schema):
+    request_track_id: int
+    email: EmailStr
+    name: str
+    phone_number: str
+    collage_code: str
+
+    @field_validator("collage_code")
+    @classmethod
+    def check_collage_code(cls, v: str) -> str:
+        try:
+            validators.validate_collage_code(v)
+            return v
+        except ValidationError as e:
+            error = e.message if hasattr(e, 'message') else e.messages[0]
+            raise ValueError(error)
+    
+    @field_validator("phone_number")
+    @classmethod
+    def check_phone_number(cls, v: str) -> str:
+        try:
+            validate_international_phonenumber(v)
+            return v
+        except ValidationError as e:
+            error = e.message if hasattr(e, 'message') else e.messages[0]
+            raise ValueError(error)
+        
+class RefreshTokenRequest(Schema):
+    refresh: str | None = None
+
+class SimpleTrackSchema(Schema):
+    id: int
+    name: str
+
+class TrackCreateSchema(Schema):
+    name: str
+    prefix: str
+    en_description: str
+    ar_description: str
+
+class TrackSchema(Schema):
+    id: int
+    name: str
+    en_description: str
+    ar_description: str
+    image: str
+
+class RegisterResponse(Schema):
+    code: str
+    track: SimpleTrackSchema
+    email: str
+    name: str
+    
+class TestAuthResponse(Schema):
+    username: str
+    role: models.UserRole
+    is_admin: bool
+    track: SimpleTrackSchema | None
+    settings: SettingsImagesResponse
+    

@@ -15,7 +15,7 @@ export async function getTechMemberGrid(track: string): Promise<GetMemberGridTyp
   const [tr, membersRes, tasksRes] = await Promise.all(
     [
       getTranslations('showMembersPage'),
-      API.GET(`/api/technical/members/{track_name}/with-tasks`, { params: { path: { track_name: track } } }),
+      API.GET(`/api/technical/members/{track_name}/with-tasks/`, { params: { path: { track_name: track } } }),
       API.GET('/api/technical/tasks/')
     ]
   );

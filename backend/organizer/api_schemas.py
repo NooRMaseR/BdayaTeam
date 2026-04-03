@@ -1,36 +1,55 @@
 from typing import Any, Literal, TypedDict
-from rest_framework import serializers
+from pydantic import field_validator
+from datetime import date
+from ninja import Schema
 from . import models
 
-class AttendanceSmallDaysSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.AttendanceAllowedDay
-        fields = ('id', "day")
+class DayRequest(Schema):
+    day: date
+
+class DayUpdateRequest(Schema):
+    oldDay: date
+    newDay: date
     
+class AttendaceDayResponse(Schema):
+    id: int
+    day: date
 
-class AttendanceDaysSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.AttendanceAllowedDay
-        fields = ('id', "day")
+class AttendanceSmallResponse(Schema):
+    date: AttendaceDayResponse
+    status: models.AttendanceStatus
+    excuse_reason: str
     
+class MemberEditGridRequest(Schema):
+    type: models.MemberEditType
+    field: str
+    value: str | models.AttendanceStatus
+    excuse: str
+    code: str
 
-class AttendenceSmallSerializer(serializers.ModelSerializer):
-    date = AttendanceSmallDaysSerializer()
-    class Meta:
-        model = models.Attendance
-        fields = ("date", "status", "excuse_reason")
+class SettingsRequest(Schema):
+    is_register_enabled: bool = False
+    organizer_can_edit: list[models.OrganizerEditableFields] = []
+    
+    @field_validator('organizer_can_edit', mode='before')
+    @classmethod
+    def parse_organizer_list(cls, value):
+        if isinstance(value, str):
+            return [item.strip() for item in value.split(',') if item.strip()]
         
-
-class SiteSettingsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.SiteSetting
-        fields = '__all__'
-        
-
-class SiteSettingsImagesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.SiteSetting
-        fields = ("site_image", "hero_image")
+        # check if the request contains only one item and it's a string like this 'bonus,status'
+        if isinstance(value, list) and len(value) == 1 and isinstance(value[0], str) and ',' in value[0]:
+            return [item.strip() for item in value[0].split(',') if item.strip()]
+                
+        return value
+    
+class SettingsImagesResponse(Schema):
+    site_image: str | None
+    hero_image: str | None
+    
+class SettingsResponse(SettingsImagesResponse):
+    is_register_enabled: bool
+    organizer_can_edit: list[models.OrganizerEditableFields]
    
 class OrganizerBroudCastData(TypedDict):
     code: str

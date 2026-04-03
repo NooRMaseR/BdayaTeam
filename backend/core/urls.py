@@ -1,13 +1,6 @@
 from django.urls import path
-from . import views
+from . import api
 
 urlpatterns = (
-    path("login/", views.Login.as_view()),
-    path("logout/", views.Logout.as_view()),
-    path("register/", views.Register.as_view()),
-    path("test-auth/", views.TestAuthCredentials.as_view()),
-    path("tracks/", views.Tracks.as_view()),
-    path("tracks/<str:track_name>/", views.TrackApi.as_view()),
-    path("reset/", views.ResetAll.as_view()),
-    path('token/refresh/', views.CookiesRefreshTokenView.as_view(), name='token_refresh'),
+    path("", api.api.urls),
 )

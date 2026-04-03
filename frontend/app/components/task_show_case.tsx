@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 import React from 'react';
 
 export type MemberTaskItemProps = {
-    tasksRecived: components['schemas']['RecivedTask'][];
+    tasksRecived: components['schemas']['RecivedTaskMember'][];
     track?: string;
 }
 
@@ -35,7 +35,7 @@ export type TaskShowCaseProps = {
     onClose: () => void;
 }
 
-type SignTask = components['schemas']['TaskSigningRequest'];
+type SignTask = components['schemas']['TaskSignRequest'];
 
 const Transition = React.forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement<unknown> },
@@ -77,7 +77,7 @@ export default function TaskShowCase({ open, task, onSuccess, onClose, editable 
             return;
         };
 
-        const submissionPromise = API.POST("/api/technical/tasks/recived/{task_id}/", {
+        const submissionPromise = API.POST("/api/technical/tasks/{task_id}/recived/", {
             params: { path: { task_id: task.id } },
             body: dataToSend
         }).then(({ response, error }) => {
@@ -136,7 +136,7 @@ export default function TaskShowCase({ open, task, onSuccess, onClose, editable 
                     <div className="flex flex-col gap-4 sm:gap-6">
                         {task.files_url?.length ? task.files_url.map((file) => (
                             <Paper key={file.id} elevation={0} className="border border-slate-200 overflow-hidden rounded-xl bg-white p-2">
-                                <TaskShowButton task_id={file.id} fileName={`File ${file.file_name || "unknown"}`} />
+                                <TaskShowButton task_id={file.id} fileName={`File ${file.file_name ?? "unknown"}`} />
                             </Paper>
                         )) : (
                             <Typography color="text.secondary" className="italic">No files submitted.</Typography>

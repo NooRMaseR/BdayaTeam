@@ -1,25 +1,42 @@
-import random
-from faker import Faker
+# import random
+# from faker import Faker
 from locust import FastHttpUser, task, between
 
+# class SingleEndpint(FastHttpUser):
+#     wait_time = between(1, 3)
+#     host="https://localhost"
+#     TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc1MjEyMTY3LCJpYXQiOjE3NzUxODY5NjcsImp0aSI6IjIyM2RhM2FlZTVhYzQ1ODRhNGZmODViMjM2ZjJmZTVkIiwidXNlcl9pZCI6IjEwMzYxIiwicm9sZSI6Im9yZ2FuaXplciJ9.TAc38k09EXNtu2ONbDQgVW9V5GMKqfwLUR486ympi-k"
 
+#     @task
+#     def see_tracks_drf(self) -> None:
+#         self.client.get(f"/api/tracks/", headers={"Authorization": self.TOKEN})
+    
+#     @task
+#     def see_tracks_ninja(self) -> None:
+#         self.client.get(f"/api/v2/tracks/", headers={"Authorization": self.TOKEN})
+    
+    
 class UserDRF(FastHttpUser):
-    wait_time = between(1, 3)
+    wait_time = between(2, 5)
     host="https://localhost"
-    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc1MDMwNjc4LCJpYXQiOjE3NzUwMDU0NzgsImp0aSI6IjA5YzQ5YWYzZmFlNzRlYmZiYjMxZjgzMDJjNjgzYThiIiwidXNlcl9pZCI6IjEwMzYxIiwicm9sZSI6Im9yZ2FuaXplciJ9.x4R_ZLsZelQR_d1wEAnmn3_SRzy75hxE6rfRdNCrxOM"
+    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc1MjEyMTY3LCJpYXQiOjE3NzUxODY5NjcsImp0aSI6IjIyM2RhM2FlZTVhYzQ1ODRhNGZmODViMjM2ZjJmZTVkIiwidXNlcl9pZCI6IjEwMzYxIiwicm9sZSI6Im9yZ2FuaXplciJ9.TAc38k09EXNtu2ONbDQgVW9V5GMKqfwLUR486ympi-k"
     
     @task
     def see_track_members_FrontEnd(self):
         self.client.get(f"/api/organizer/members/frontend/", headers={"Authorization": self.TOKEN})
+    
     @task
     def see_track_members_CCNA(self):
         self.client.get(f"/api/organizer/members/CCNA/", headers={"Authorization": self.TOKEN})
+    
     @task
     def see_track_members_Python(self):
         self.client.get(f"/api/organizer/members/Python/", headers={"Authorization": self.TOKEN})
+    
     @task
     def see_track_members_C_Sharp(self):
         self.client.get(f"/api/organizer/members/C-Sharp/", headers={"Authorization": self.TOKEN})
+    
     @task
     def see_track_members_Graphic(self):
         self.client.get(f"/api/organizer/members/Graphic%20Design/", headers={"Authorization": self.TOKEN})

@@ -56,7 +56,7 @@ export default function ResetAll() {
     const handleReset = () => {
         setIsLoading(true);
         toast.promise(async () => {
-            const {response} = await API.DELETE('/api/reset/');
+            const { response } = await API.DELETE('/api/reset-all/');
             if (response.ok) {
                 return await Promise.resolve();
             }

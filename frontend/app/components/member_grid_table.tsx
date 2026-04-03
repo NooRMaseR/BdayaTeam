@@ -107,7 +107,7 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
         const changedField = changedKey.includes('deg_') ? "degree" : "notes";
 
         const { response } = await
-            API.POST(`/api/technical/members/{track_name}/with-tasks`, {
+            API.PUT(`/api/technical/members/{track_name}/with-tasks/`, {
                 params: { path: { track_name: track } },
                 body: {
                     code: newRow.code,

@@ -18,11 +18,11 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 type TaskActionsProps = {
-    task: components['schemas']['Task'];
+    task: components['schemas']['TaskResponse'];
     track_name: string;
 }
 
-type TaskMemberSend = components['schemas']['task-member-inputRequest'];
+type TaskMemberSend = components['schemas']['TaskRequest'] & {file?: string};
 
 export default function TaskForm({ task, track_name }: TaskActionsProps) {
     const [isLoading, setIsloading] = useState<boolean>(false);
@@ -40,31 +40,40 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
     const sendTaskRequest = (data: TaskMemberSend) => {
         setIsloading(true);
         
-        const promise = API.POST('/api/member/tasks/', {
-            body: (() => {
-                const fd = new FormData();
-                fd.append('task_id', data.task_id.toString());
-                if (data.notes) fd.append('notes', data.notes);
+        const promise = async () => {
+            const { response, error } = await API.POST('/api/member/tasks/', {
+                body: {
+                    task_id: data.task_id,
+                    notes: data.notes,
+                    files: data.file ? Array.from(data.file) : []
+                },
+                bodySerializer(body) {
+                    const fd = new FormData();
+                    fd.append('task_id', JSON.stringify(body.task_id));
+                    
+                    if (body.notes)
+                        fd.append('notes', JSON.stringify(body.notes));
 
-                if (data.file) {
-                    Array.from(data.file).forEach(f => fd.append('file', f));
+                    if (body.files && body.files.length > 0) {
+                        body.files.forEach(f => fd.append('files', f));
+                    }
+                    return fd;
                 }
-                return fd as unknown as TaskMemberSend;
-            })()
-        });
+            });
+
+            if (response.ok) {
+                return await Promise.resolve();
+            }
+            return await Promise.reject(error);
+        };
 
         toast.promise(promise, {
             loading: tr('submiting'),
-            success: () => {
+            success() {
                 router.replace(`/member/${track_name}/tasks`);
                 return tr('taskSub');
             },
-            error: (err) => {
-                if (err instanceof Error && err.message === "EXPIRED") {
-                    return tr('taskSubEx');
-                }
-                return tr("taskSubError");
-            },
+            error: tr("taskSubError"),
             finally: () => setIsloading(false)
         });
     };

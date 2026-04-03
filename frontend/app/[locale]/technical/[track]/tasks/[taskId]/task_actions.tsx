@@ -20,7 +20,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 type TaskActionsProps = {
-    task: components['schemas']['Task'];
+    task: components['schemas']['TaskResponse'];
     track_name: string;
 }
 
@@ -32,7 +32,7 @@ type DeleteDialogProps = {
     isLoading: boolean;
 }
 
-type UpdateTaskProps = components['schemas']['updateTaskRequest'];
+type UpdateTaskProps = components['schemas']['TaskResponse'];
 
 type EditDialogProps = Omit<DeleteDialogProps, 'onAccept'> & {
     onAccept: (data: UpdateTaskProps) => void;

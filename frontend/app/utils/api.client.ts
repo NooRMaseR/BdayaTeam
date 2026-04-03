@@ -16,14 +16,15 @@ export async function refreshToken(options: MiddlewareCallbackParams & {
             return options.response;
         };
 
-        const { refresh } = await getAuthCookies();
+        const { refresh, csrf } = await getAuthCookies();
         const refreshRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/token/refresh/`, {
             method: "POST",
             credentials: "include",
             headers: {
                 "Content-Type": "application/json",
+                "X-CSRFToken": csrf ?? ''
             },
-            body: JSON.stringify({ refresh: refresh })
+            body: JSON.stringify({ refresh }),
         });
 
         if (refreshRes.ok) {
@@ -44,13 +45,13 @@ export async function refreshToken(options: MiddlewareCallbackParams & {
 
 const middleware: Middleware = {
     onResponse: refreshToken,
-    // onRequest: async (options) => {
-    //     const { token } = await getAuthCookies();
+    onRequest: async (options) => {
+        const { csrf } = await getAuthCookies();
         
-    //     if (token) 
-    //         options.request.headers.set("Authorization", `Bearer ${token}`);
-    //     return options.request;
-    // },
+        if (csrf) 
+            options.request.headers.set("X-CSRFToken", csrf);
+        return options.request;
+    },
 }
 
 // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -60,5 +61,14 @@ API.use(middleware);
 export function getHomeUrl(user: UserAuth['user']): string {
     return user?.role === "member" || user?.role === 'technical' ? `/${user?.role}/${user?.track?.name}` : `/${user?.role}`;
 }
+
+export function formatTime(totalSeconds: number){
+    const minutes = Math.floor(totalSeconds / 60);
+    const hours = Math.floor((totalSeconds / 60) / 60);
+
+    if (hours >= 1) return { duration: hours, unit: "hour" };
+    else if (minutes >= 1) return { duration: minutes, unit: "minutes" };
+    return { duration: Math.floor(totalSeconds % 60), unit: "seconds" };
+};
 
 export default API;

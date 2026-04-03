@@ -18,11 +18,11 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 type TaskActionsProps = {
-    task: components['schemas']['RecivedTask'];
+    task: components['schemas']['RecivedTaskMember'];
     track_name: string;
 }
 
-type TaskMemberSend = components['schemas']['editMemberSelfTaskRequest'];
+type TaskMemberSend = components['schemas']['MemberTaskUpdateRequest'] & {files?: string};
 
 export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
     const [isLoading, setIsloading] = useState<boolean>(false);
@@ -42,29 +42,28 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
         
         const promise = API.PUT('/api/member/edit-task/{sent_task_id}/', {
             params: {path: {sent_task_id: task.id}},
-            body: (() => {
+            body: {
+                notes: data.notes,
+                files: data.files ? Array.from(data.files) : []
+            },
+            bodySerializer(body) {
                 const fd = new FormData();
-                if (data.notes) fd.append('notes', data.notes);
+                if (body.notes) fd.append('notes', JSON.stringify(body.notes));
 
-                if (data.files) {
-                    Array.from(data.files).forEach(f => fd.append('file', f));
+                if (body.files && body.files.length > 0) {
+                    body.files.forEach(f => fd.append('files', f));
                 }
-                return fd as unknown as TaskMemberSend;
-            })()
+                return fd;
+            }
         });
 
         toast.promise(promise, {
             loading: tr('submiting'),
-            success: () => {
+            success() {
                 router.replace(`/member/${track_name}/tasks`);
                 return tr('taskSub');
             },
-            error: (err) => {
-                if (err instanceof Error && err.message === "EXPIRED") {
-                    return tr('taskSubEx');
-                }
-                return tr("taskSubError");
-            },
+            error: tr("taskSubError"),
             finally: () => setIsloading(false)
         });
     };

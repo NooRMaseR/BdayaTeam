@@ -55,14 +55,12 @@ INSTALLED_APPS = (
     # "django_er_diagram", #! debug only
     "graphene_django",
     "corsheaders",
-    "rest_framework",
-    "drf_spectacular",
-    "drf_spectacular_sidecar",
     "phonenumber_field",
     "huey.contrib.djhuey",
     "imagekit",
     "solo",
     "django_cleanup.apps.CleanupConfig",
+    "ninja_extra",
     'channels',
     "core",
     "technical",
@@ -80,6 +78,7 @@ MIDDLEWARE = (
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "ninja.compatibility.files.fix_request_files_middleware",
 )
 
 SECURE_CSP = {
@@ -97,18 +96,6 @@ SECURE_CSP = {
 #         "127.0.0.1",
 #     )
 
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        'core.middleware.CookiesJWTAuthentication',
-    ),
-    "DEFAULT_RENDERER_CLASSES": (
-        "core.middleware.RawJsonRenderer",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_PARSER_CLASSES": ("rest_framework.parsers.JSONParser",),
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-}
-
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(weeks=1),
@@ -116,21 +103,6 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': False,
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
-}
-
-SPECTACULAR_SETTINGS = {
-    "TITLE": "Bdaya Team APIs",
-    "DESCRIPTION": "APIs for the frontend to work with",
-    "VERSION": "1.0.0",
-    "SERVE_INCLUDE_SCHEMA": False,
-    "COMPONENT_SPLIT_REQUEST": True,
-    "SWAGGER_UI_DIST": "SIDECAR",
-    "SWAGGER_UI_FAVICON_HREFF": "SIDECAR",
-    "REDOC_DIST": "SIDECAR",
-    "ENUM_NAME_OVERRIDES": {
-        'MemberStatusEnum': 'member.models.MemberStatus',
-        'AttendanceStatusEnum': 'organizer.models.AttendanceStatus',
-    },
 }
 
 GRAPHENE = {

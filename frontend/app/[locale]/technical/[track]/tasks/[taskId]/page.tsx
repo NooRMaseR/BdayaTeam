@@ -16,7 +16,7 @@ export default async function TaskViewPage({ params }: { params: Promise<{locale
     const [tr, currentTasks, recived] = await Promise.all([
         getTranslations('taskPage'),
         API.GET('/api/technical/tasks/{task_id}/', { params: { path: { task_id: taskId } } }),
-        API.GET('/api/technical/tasks/recived/{task_id}/', { params: { path: { task_id: taskId } } })
+        API.GET('/api/technical/tasks/{task_id}/recived/', { params: { path: { task_id: taskId } } })
     ]);
 
     if (!currentTasks.response.ok || !currentTasks.data) {
