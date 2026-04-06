@@ -360,12 +360,11 @@ class TracksController:
 class ResetAll:
     
     @sync_to_async
-    @staticmethod
-    def delete_tracks() -> None:
+    def delete_tracks(self) -> None:
         with transaction.atomic():
             Track.objects.select_for_update().delete()
     
-    @route.delete('/reset-all/', response={204: None, 500: api_schemas.ErrorResponse})
+    @route.delete('/reset-all/', response={204: None, 500: api_schemas.ErrorResponse, 403: api_schemas.ErrorResponse})
     async def reset_all(self):
         "Very Dangores, Deletes all tracks and members and tasks and technicals."
         try:

@@ -1,6 +1,6 @@
 import Chip from '@mui/material/Chip';
-import Avatar from '@mui/material/Avatar';
 import Paper from '@mui/material/Paper';
+import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 
