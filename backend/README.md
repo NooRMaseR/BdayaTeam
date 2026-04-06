@@ -406,4 +406,12 @@ add these line at the bottom
 * hard nofile 5000
 ```
 
+now open `/etc/sysctl.conf` and add these
+
+```ini
+vm.overcommit_memory = 1
+net.core.somaxconn=4096
+net.core.netdev_max_backlog=4096
+```
+
 ## **Enjoy**
