@@ -8,7 +8,6 @@ const API = createClient<paths>({
     fetch: fetchWithCookies,
 });
 
-
 const middleware: Middleware = {
     onResponse: refreshToken
 }

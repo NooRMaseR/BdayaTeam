@@ -1,8 +1,8 @@
 from phonenumber_field.validators import validate_international_phonenumber
+from pydantic import EmailStr, PositiveInt, field_validator
 from organizer.api_schemas import SettingsImagesResponse
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
-from pydantic import EmailStr, field_validator
 from . import models, validators
 from ninja import Schema
 
@@ -87,10 +87,9 @@ class RegisterResponse(Schema):
     email: str
     name: str
     
-class TestAuthResponse(Schema):
+class TestAuthResponse(Schema):    
     username: str
     role: models.UserRole
     is_admin: bool
     track: SimpleTrackSchema | None
     settings: SettingsImagesResponse
-    

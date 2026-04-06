@@ -1,15 +1,15 @@
 from core.models import Track
 from core.api_schemas import ErrorResponse
-from core.permissions import NinjaIsTechnical, NinjaIsTechnicalOrMember
 from core.serializers import TrackNameOnlyMSGSerializer
+from core.permissions import NinjaIsTechnical, NinjaIsTechnicalOrMember
 
 from member.models import Member, ReciviedTask
 from member.caches import member_profile_cache_key
 from member.api_schemas import RecivedTaskMember, TaskResponse
 from member.serializers import MemberTechnicalMSGSerializer, RecivedTaskMSGSerializer
 
-from .serializers import TaskMSGSerializer
 from .models import MemberTechEditType, Task
+from .serializers import TaskMSGSerializer
 from .api_schemas import (
     TechnicalMembersTasksUpdateRequest,
     TechnicalMembersResponse,
@@ -26,6 +26,7 @@ from .caches import (
 
 from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, serializer_encoder
 from ninja_extra import api_controller, route, status
+from ninja_extra.exceptions import NotFound
 
 from django.http import HttpRequest, HttpResponse
 from django.db.models.functions import Coalesce
@@ -46,10 +47,10 @@ from django.db.models import (
 )
 
 
-@api_controller("/technical", tags=["Technical"], permissions=[NinjaIsTechnical])
+@api_controller("/technical/tasks", tags=["Technical"], permissions=[NinjaIsTechnical])
 class TechnicalTasksController:
     
-    @route.get("/tasks/", response={200: list[TaskResponse]})
+    @route.get("/", response={200: list[TaskResponse]})
     async def get_all(self, request: HttpRequest):
         TRACK: Track = request.user.track # type: ignore
         if cached := await cache.aget(technical_tasks_cache_key(TRACK.name)):
@@ -81,11 +82,11 @@ class TechnicalTasksController:
             .values("id", "task_number", "created_at", "expires_at", "description", "expired", "unsigned_tasks_count")
         )
         
-        encoded_data = serializer_encoder.encode(await sync_to_async(TaskMSGSerializer.from_queryset_values)(data))
+        encoded_data = serializer_encoder.encode(await TaskMSGSerializer.afrom_queryset_values(data))
         await cache.aset(technical_tasks_cache_key(TRACK.name), encoded_data, DEFAULT_CACHE_DURATION)
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
-    @route.post("/tasks/", response={201: TaskResponse, 400: TaskAlreadyExistsError})
+    @route.post("/", response={201: TaskResponse, 400: TaskAlreadyExistsError})
     async def add_task(self, request: HttpRequest, payload: TaskCreateRequest):
         TRACK: Track = request.user.track # type: ignore
         
@@ -104,7 +105,7 @@ class TechnicalTasksController:
         cache.delete_pattern(f"member_tasks:t{TRACK.name}*") # type: ignore
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE, status=status.HTTP_201_CREATED)
     
-    @route.get("/tasks/{task_id}/", response={200: TaskResponse}, permissions=[NinjaIsTechnicalOrMember])
+    @route.get("/{task_id}/", response={200: TaskResponse}, permissions=[NinjaIsTechnicalOrMember])
     async def get_one(self, task_id: int):
         CACHE_KEY = task_view_cache_key(task_id)
         if cached := await cache.aget(CACHE_KEY):
@@ -126,7 +127,7 @@ class TechnicalTasksController:
         await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
     
-    @route.put('/tasks/{task_id}/', response={204: None, 400: ErrorResponse})
+    @route.put('/{task_id}/', response={204: None, 400: ErrorResponse})
     async def update_task(self, request: HttpRequest, task_id: int, payload: TaskCreateRequest):
 
         data_to_update: dict = {}
@@ -159,13 +160,15 @@ class TechnicalTasksController:
         except Exception as e:
             return status.HTTP_400_BAD_REQUEST, {"details": repr(e)}
         
-    @route.delete('/tasks/{task_id}/', response={204: None})
+    @route.delete('/{task_id}/', response={204: None, 404: ErrorResponse})
     async def delete_task(self, request: HttpRequest, task_id: int):
         
         @sync_to_async
-        def safe_transaction():
+        def safe_transaction() -> None:
             with transaction.atomic():
-                Task.objects.filter(id=task_id).delete()
+                count, _ = Task.objects.filter(id=task_id).delete()
+                if count == 0:
+                    raise NotFound("no task found")
                 
         await safe_transaction()
         await cache.adelete_many(
@@ -176,7 +179,7 @@ class TechnicalTasksController:
         )
         return status.HTTP_204_NO_CONTENT, {}
     
-    @route.get("/tasks/{task_id}/recived/", response={200: list[RecivedTaskMember]})
+    @route.get("/{task_id}/recived/", response={200: list[RecivedTaskMember]})
     async def get_recived_tasks_from_members(self, request: HttpRequest, task_id: int):
         track: Track = request.user.track # type: ignore
         
@@ -186,7 +189,7 @@ class TechnicalTasksController:
 
         tasks = (
             ReciviedTask.objects
-            .select_related("track", "task", "member")
+            .select_related("track", "task", "member", "member__bdaya_user", 'signed_by')
             .prefetch_related("files")
             .defer(
                 "task__track",
@@ -203,11 +206,11 @@ class TechnicalTasksController:
             )
         )
         
-        encoded_data = serializer_encoder.encode(await sync_to_async(RecivedTaskMSGSerializer.from_queryset)(tasks))
+        encoded_data = serializer_encoder.encode(await RecivedTaskMSGSerializer.afrom_queryset(tasks))
         await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
     
-    @route.post("/tasks/{task_id}/recived/", response={204: None, 400: ErrorResponse})
+    @route.post("/{task_id}/recived/", response={204: None, 400: ErrorResponse})
     async def sign_task(self, request: HttpRequest, task_id: int, payload: TaskSignRequest):
         track: Track = request.user.track # type: ignore
         recived_task = await aget_object_or_404(ReciviedTask.objects.select_related('task', 'member'), id=task_id, track=track)
@@ -262,7 +265,7 @@ class TechnicalMembersController:
             .filter(track=track_obj)
         )
         
-        data = await sync_to_async(MemberTechnicalMSGSerializer.from_queryset_with_track)(members, track_serialized)
+        data = await MemberTechnicalMSGSerializer.afrom_queryset_with_track(members, track_serialized)
         encoded_data = serializer_encoder.encode(data)
         await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
@@ -280,5 +283,4 @@ class TechnicalMembersController:
         await recivied_task.asave()
         cache.delete(members_by_technicals_cache_key(track_name))
         return status.HTTP_204_NO_CONTENT, {}
-
 

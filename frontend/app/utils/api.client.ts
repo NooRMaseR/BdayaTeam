@@ -29,12 +29,41 @@ export async function refreshToken(options: MiddlewareCallbackParams & {
 
         if (refreshRes.ok) {
             options.request.headers.delete("Authorization");
-            const data = await refreshRes.json();
-            options.request.headers.set("Authorization", `Bearer ${data.access}`);
+            const newCookies = refreshRes.headers.getSetCookie();
+            let cookies = options.request.headers.get("Cookie") || "";
+            let newAccessToken: string | null = null;
+
+            newCookies.forEach(cookie => {
+                const [keyValue] = cookie.split(';');
+                const [key, value] = keyValue.split('=');
+
+                if (key.trim() === 'access_token') {
+                    newAccessToken = value.trim();
+                }
+
+                // 2. Safely replace the old token in the string, or append it
+                const regex = new RegExp(`(?:^|;\\s*)${key}=[^;]*`);
+                if (regex.test(cookies)) {
+                    cookies = cookies.replace(regex, `; ${key}=${value}`);
+                } else {
+                    cookies += (cookies ? `; ` : "") + `${key}=${value}`;
+                }
+            });
+
+            // Clean up any leading semicolons that might have formed
+            cookies = cookies.replace(/^;\s*/, '');
             const retryRequest = new Request(options.request, {
                 ...options,
                 headers: options.request.headers
             });
+
+            if (cookies) {
+                retryRequest.headers.set("Cookie", cookies);
+            }
+
+            if (newAccessToken) {
+                retryRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
+            }
 
             return await fetch(retryRequest);
         }
@@ -47,8 +76,8 @@ const middleware: Middleware = {
     onResponse: refreshToken,
     onRequest: async (options) => {
         const { csrf } = await getAuthCookies();
-        
-        if (csrf) 
+
+        if (csrf)
             options.request.headers.set("X-CSRFToken", csrf);
         return options.request;
     },
@@ -62,7 +91,7 @@ export function getHomeUrl(user: UserAuth['user']): string {
     return user?.role === "member" || user?.role === 'technical' ? `/${user?.role}/${user?.track?.name}` : `/${user?.role}`;
 }
 
-export function formatTime(totalSeconds: number){
+export function formatTime(totalSeconds: number) {
     const minutes = Math.floor(totalSeconds / 60);
     const hours = Math.floor((totalSeconds / 60) / 60);
 

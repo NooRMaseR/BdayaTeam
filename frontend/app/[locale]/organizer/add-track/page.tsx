@@ -65,7 +65,7 @@ export default function AddTrackPage() {
             } else {
                 Object.entries(error || {}).forEach(e => {
                     const key = e[0] as keyof CreateTrack;
-                    const value = (e[1] as string[])[0];
+                    const value = e[1];
 
                     if (validData.includes(key)) {
                         setError(key, { message: value });

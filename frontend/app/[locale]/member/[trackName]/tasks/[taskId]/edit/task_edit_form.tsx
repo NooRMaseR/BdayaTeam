@@ -48,7 +48,7 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
             },
             bodySerializer(body) {
                 const fd = new FormData();
-                if (body.notes) fd.append('notes', JSON.stringify(body.notes));
+                if (body.notes) fd.append('notes',body.notes);
 
                 if (body.files && body.files.length > 0) {
                     body.files.forEach(f => fd.append('files', f));

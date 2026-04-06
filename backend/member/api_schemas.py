@@ -1,7 +1,7 @@
+from pydantic import EmailStr, PositiveInt, NonNegativeInt
 from organizer.api_schemas import AttendanceSmallResponse
 from core.api_schemas import SimpleTrackSchema
 from datetime import datetime
-from pydantic import EmailStr
 from ninja import Schema
 from . import models
 
@@ -13,7 +13,7 @@ class MemebrResponse(Schema):
     phone_number: str
     code: str
     collage_code: str
-    bonus: int
+    bonus: NonNegativeInt
     status: models.MemberStatus
     
     class Meta:
@@ -21,8 +21,8 @@ class MemebrResponse(Schema):
         exclude = ('joined_at',)
         
 class TaskResponse(Schema):
-    id: int
-    task_number: int
+    id: PositiveInt
+    task_number: PositiveInt
     created_at: datetime
     expires_at: datetime
     description: str
@@ -30,7 +30,7 @@ class TaskResponse(Schema):
     unsigned_tasks_count: int
     
 class TaskRequest(Schema):
-    task_id: int
+    task_id: PositiveInt
     notes: str | None = None
     
 class MemberProfileName(Schema):
@@ -38,12 +38,12 @@ class MemberProfileName(Schema):
     name: str
     
 class RecivedFileResponse(Schema):
-    id: int
+    id: PositiveInt
     file: str
     file_name: str
 
 class RecivedTaskMember(Schema):
-    id: int
+    id: PositiveInt
     task: TaskResponse
     member: MemberProfileName
     track: SimpleTrackSchema
@@ -55,10 +55,10 @@ class RecivedTaskMember(Schema):
     technical_notes: str | None = None
 
 class MemberProfileResponse(Schema):
-    absents: int
+    absents: NonNegativeInt
     track: SimpleTrackSchema
-    total_tasks_sent: int
-    missing_tasks: int
+    total_tasks_sent: NonNegativeInt
+    missing_tasks: NonNegativeInt
     name: str
     code: str
     status: models.MemberStatus

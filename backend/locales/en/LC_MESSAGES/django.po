@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-03 05:21+0200\n"
+"POT-Creation-Date: 2026-04-05 18:24+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,15 +26,15 @@ msgstr "English"
 msgid "Arabic"
 msgstr "Arabic"
 
-#: core/api.py:166
+#: core/api.py:168
 msgid "email_exists"
 msgstr "This Email already exists."
 
-#: core/api.py:169
+#: core/api.py:171
 msgid "phone_exists"
 msgstr "This Phone number already exists."
 
-#: core/api.py:172
+#: core/api.py:174
 msgid "collage_code_exists"
 msgstr "member with this collage code already exists."
 
@@ -53,6 +53,11 @@ msgstr ""
 #: core/middleware.py:91
 msgid "The user's password has been changed."
 msgstr ""
+
+#: member/api.py:139
+#, python-brace-format
+msgid "Member {username} sent task {task_number}"
+msgstr "Member {username} sent task {task_number}"
 
 #~ msgid "phone_not_valid"
 #~ msgstr "The phone number entered is not valid."

@@ -1,7 +1,16 @@
 from ninja_extra.exceptions import ErrorDetail as NinjaErrorDetail
 from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework.exceptions import ErrorDetail
+from PIL import Image
 import msgspec
+import io
+
+def generate_dummy_image() -> bytes:
+    file_obj = io.BytesIO()
+    image = Image.new("RGB", size=(1, 1), color=(255, 0, 0))
+    image.save(file_obj, "jpeg")
+    file_obj.seek(0)
+    return file_obj.read()
 
 def enc_str(obj) -> str:
     if isinstance(obj, PhoneNumber):

@@ -20,13 +20,13 @@ class AttendanceMSGSerializer(BaseMSGSerializer[Attendance], frozen=True):
     date: AttendanceDayMSGSerializer
     status: str
     excuse_reason: str | None = None
-
+    
     @classmethod
     def from_model(cls, model: Attendance) -> Self:
         return cls(
             date=AttendanceDayMSGSerializer.from_model(model.date),
             status=model.status,
-            excuse_reason=model.excuse_reason,
+            excuse_reason=model.excuse_reason
         )
 
     
@@ -37,8 +37,8 @@ class SiteSettingsImagesMSGSerializer(BaseMSGSerializer[SiteSetting], frozen=Tru
     @classmethod
     def from_model(cls, model: SiteSetting) -> Self:
         return cls(
-            model.site_image.url if model.site_image.url else None,
-            model.hero_image.url if model.hero_image.url else None
+            model.site_image.url if model.site_image else None,
+            model.hero_image.url if model.hero_image else None
         )
 
     

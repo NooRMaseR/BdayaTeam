@@ -35,7 +35,7 @@ DEBUG = False
 ALLOWED_HOSTS = (
     "localhost",
     "127.0.0.1",
-    "heavily-larry-commerce-contained.trycloudflare.com"
+    "tropical-batman-emissions-asia.trycloudflare.com"
 )
 
 # Application definition
@@ -113,7 +113,7 @@ GRAPHENE = {
 ROOT_URLCONF = "BdayaTeam.urls"
 AUTH_USER_MODEL = "core.BdayaUser"
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USE_TLS = True
@@ -340,13 +340,13 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
-    "https://heavily-larry-commerce-contained.trycloudflare.com",
+    "https://tropical-batman-emissions-asia.trycloudflare.com",
 )
 
 CSRF_TRUSTED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
-    "https://heavily-larry-commerce-contained.trycloudflare.com",
+    "https://tropical-batman-emissions-asia.trycloudflare.com",
 )
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"

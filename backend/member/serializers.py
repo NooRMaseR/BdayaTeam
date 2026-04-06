@@ -1,9 +1,10 @@
 from technical.serializers import TaskMSGSerializer, TaskSmallMSGSerializer
 from core.serializers import TrackNameOnlyMSGSerializer, BaseMSGSerializer
 from organizer.serializers import AttendanceMSGSerializer
+from core.models import BdayaUser
 
 from .models import Member, ReciviedTask, ReciviedTaskFile
-from collections.abc import Iterable
+from collections.abc import AsyncIterable, Iterable
 from datetime import datetime
 from typing import Self
 
@@ -51,6 +52,23 @@ class MemberORGMSGSerializer(MemberBaseMSG, frozen=True):
                 attendances=AttendanceMSGSerializer.from_queryset(model.attendances.all()),  # type: ignore
             )
             for model in models
+        ]
+    
+    @classmethod
+    async def afrom_queryset_with_track(cls, models: AsyncIterable[Member], track: TrackNameOnlyMSGSerializer) -> list[Self]:
+        return [
+            cls(
+                code=model.code,
+                name=model.bdaya_user.username,
+                email=model.bdaya_user.email,
+                collage_code=model.collage_code,
+                phone_number=model.bdaya_user.phone_number,
+                status=model.status,
+                bonus=model.bonus,
+                track=track,
+                attendances=AttendanceMSGSerializer.from_queryset(model.attendances.all()),  # type: ignore
+            )
+            async for model in models
         ]
 
 
@@ -107,6 +125,23 @@ class MemberTechnicalMSGSerializer(MemberBaseMSG, frozen=True):
             )
             for model in models
         ]
+    
+    @classmethod
+    async def afrom_queryset_with_track(cls, models: AsyncIterable[Member], track: TrackNameOnlyMSGSerializer) -> list[Self]:
+        return [
+            cls(
+                code=model.code,
+                name=model.bdaya_user.username,
+                email=model.bdaya_user.email,
+                collage_code=model.collage_code,
+                phone_number=model.bdaya_user.phone_number,
+                bonus=model.bonus,
+                track=track,
+                status=model.status,
+                tasks=RecivedTaskSmallMSGSerializer.from_queryset(model.prefetched_tasks) # type: ignore
+            )
+            async for model in models
+        ]
 
 
 class MemberMSGSerializerForTask(BaseMSGSerializer[Member], frozen=True):
@@ -126,7 +161,6 @@ class RecivedFile(BaseMSGSerializer[ReciviedTaskFile], frozen=True):
     @classmethod
     def from_model(cls, model: ReciviedTaskFile) -> Self:
         return cls(model.pk, model.file.url, model.file_name)
-
 
 class RecivedTaskMSGSerializer(BaseMSGSerializer[ReciviedTask], frozen=True):
     id: int

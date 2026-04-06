@@ -131,6 +131,7 @@ export default async function OrganizerMembersPage({ params }: Props) {
         ({ rows, columns, groupModel } = await getOrgMemberGrid(track));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
+        console.error("error", e);
         return <Dialog open>
             <DialogTitle>Opps!!</DialogTitle>
             <DialogContent>

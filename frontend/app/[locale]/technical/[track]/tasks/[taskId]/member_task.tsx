@@ -41,7 +41,6 @@ function SecondaryActionUI({lateStatus, lateString, viewer}: SecondaryActionUIPr
             </Typography>
         )}
             
-        {/* THE PRESENCE INDICATOR */}
         {viewer && (
             <Tooltip title={`${viewer} is currently grading this task`} placement="left">
                 <Chip

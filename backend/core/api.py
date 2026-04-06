@@ -181,23 +181,20 @@ class AuthController:
 
         user = await BdayaUser.objects.aget(id=member.bdaya_user_id) # type: ignore
 
-        refresh = await sync_to_async(RefreshToken.for_user)(user)
+        refresh = RefreshToken.for_user(user)
         refresh['role'] = user.role
         refresh['code'] = member.code
                 
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
         
-        await sync_to_async(cache.delete_pattern)("*member*") # type: ignore
+        cache.delete_pattern("*member*") # type: ignore
         
         encoded_data = serializer_encoder.encode({
             "code": member.code,
             "name": user.username,
             "email": user.email,
-            "track": {
-                "id": member.bdaya_user.track.id, # type: ignore
-                "name": member.bdaya_user.track.name # type: ignore
-            }
+            "track": TrackNameOnlyMSGSerializer.from_model(member.bdaya_user.track) # type: ignore
         })
         response = HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE, status=status.HTTP_201_CREATED)
 
@@ -267,7 +264,7 @@ class AuthController:
             samesite='Lax'
         )
 
-        return status.HTTP_204_NO_CONTENT, {}    
+        return status.HTTP_204_NO_CONTENT, {}
 
     @route.get("/test-auth/", response={200: api_schemas.TestAuthResponse})
     async def test_auth(self, request: HttpRequest):
@@ -363,7 +360,8 @@ class TracksController:
 class ResetAll:
     
     @sync_to_async
-    def delete_tracks(self) -> None:
+    @staticmethod
+    def delete_tracks() -> None:
         with transaction.atomic():
             Track.objects.select_for_update().delete()
     

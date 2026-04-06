@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from django.http import HttpRequest, HttpResponse
 from django.db import IntegrityError, transaction
 from django.shortcuts import aget_object_or_404
@@ -21,7 +22,7 @@ from ninja_extra import route, api_controller, status
 from ninja_extra.permissions import IsAuthenticated
 from ninja import File, Form, UploadedFile
 
-from core.permissions import NinjaIsMember, NinjaIsTechnicalOrMember
+from core.permissions import NinjaIsMember
 from core.api_schemas import ErrorResponse
 from core.models import Track
 
@@ -80,12 +81,12 @@ class TasksController:
             .values('id', 'task_number', 'created_at', 'expires_at', 'description', 'expired')
         )
         
-        encoded_data = serializer_encoder.encode(await sync_to_async(TaskMSGSerializer.from_queryset_values)(tasks))
+        encoded_data = serializer_encoder.encode(await TaskMSGSerializer.afrom_queryset_values(tasks))
         await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
     
     @route.post("", response={201: None, 400: ErrorResponse})
-    async def submit_task(self, request: HttpRequest, payload: Form[TaskRequest], files: File[list[UploadedFile]]):
+    async def submit_task(self, request: HttpRequest, payload: Form[TaskRequest], files: File[list[UploadedFile]] = []):
         member: Member = request.user.member # type: ignore
         TRACK: Track = request.user.track # type: ignore
         
@@ -104,15 +105,18 @@ class TasksController:
                     oc_files = (ReciviedTaskFile(recivied_task=rec_task, file=file, file_name=os.path.basename(file.name)) for file in files)
                     ReciviedTaskFile.objects.bulk_create(oc_files)
                     
+                    return status.HTTP_201_CREATED, {}
                 except IntegrityError as e:
-                    logger.warning(repr(e))
                     return status.HTTP_400_BAD_REQUEST, {"details": "this task already exists"}
                 
                 except Exception as e:
-                    logger.error(repr(e))
                     return status.HTTP_400_BAD_REQUEST, {"details": "somthing went wrong, please try again"}
         
-        await safe_transaction()     
+        status_code, details = await safe_transaction()
+        
+        if status_code != 201:
+            return status_code, details
+             
         await cache.adelete_many(
             [
                 tasks_cache_key(TRACK.name, request.user.id), # type: ignore
@@ -132,20 +136,22 @@ class TasksController:
             {
                 "type": "broadcast_technical",
                 "data": {
-                    "message": f"Member {request.user.username} sent task {task.task_number}"
+                    "message": _("Member {username} sent task {task_number}").format(
+                        username= request.user.username,
+                        task_number= task.task_number
+                    )
                 }
             }
         )
-        return status.HTTP_201_CREATED, {}
-
+        return status_code, details
 
 @api_controller("/member/protected_media/tasks", tags=["Member"], permissions=[IsAuthenticated])
 class ProtectedTaskController:
 
-    @route.get("/{task_id}/")
-    async def get_protected_file(self, request: HttpRequest, task_id: int):
+    @route.get("/{sent_task_id}/", response={200: None, 404: None})
+    async def get_protected_file(self, request: HttpRequest, sent_task_id: int):
         
-        document = await aget_object_or_404(ReciviedTaskFile.objects.only("id", 'file', "file_name", "recivied_task__member__bdaya_user__email").select_related('recivied_task__member__bdaya_user'), id=task_id)
+        document = await aget_object_or_404(ReciviedTaskFile.objects.only("id", 'file', "file_name", "recivied_task__member__bdaya_user__email").select_related('recivied_task__member__bdaya_user'), id=sent_task_id)
         
         # check if it's an organizer or technical to get the file or check if the user is a member and it's the same member that uplouded this task
         if (request.user.is_member and document.recivied_task.member.bdaya_user.email != request.user.email): # type: ignore
@@ -164,10 +170,11 @@ class ProtectedTaskController:
 
         return response
 
-@api_controller("/member/profile", tags=["Member"], permissions=[NinjaIsTechnicalOrMember])
+@api_controller("/member/profile", tags=["Member"], permissions=[IsAuthenticated])
 class MemberProfileController:
     
-    def get_sub_queries(self):
+    @staticmethod
+    def get_sub_queries():
         absents_subquery = Subquery(
             Attendance.objects.filter(
                 member=OuterRef('pk'),
@@ -225,12 +232,12 @@ class MemberProfileController:
             code=target_code
         )
         
-        data = await sync_to_async(MemberProfileMSGSerializer.from_model)(member)
+        data = MemberProfileMSGSerializer.from_model(member)
         encoded_data = data.encode()
         await cache.aset(member_profile_cache_key(data.code), encoded_data, 1800) # 30 minutes
         
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
-    
+
 @api_controller("/member/edit-task", tags=['Member'], permissions=[NinjaIsMember])
 class MemberEditTaskController:
     
@@ -253,10 +260,10 @@ class MemberEditTaskController:
         )
         task_serialized_encoded = RecivedTaskMSGSerializer.from_model(task).encode()
         return HttpResponse(task_serialized_encoded, content_type=JSON_CONTENT_TYPE)
-        
-    @route.put("/{sent_task_id}/", response={204: None})
-    async def update_my_task(self, request: HttpRequest, sent_task_id: int, payload: Form[MemberTaskUpdateRequest], files: File[list[UploadedFile]]):
-        task = await aget_object_or_404(ReciviedTask.objects.only("notes", "signed", "member_code", "task_id").select_related("member", "task"), id=sent_task_id, member__email=request.user.email) # type: ignore
+    
+    @route.put("/{sent_task_id}/", response={204: None, 404: ErrorResponse})
+    async def update_my_task(self, request: HttpRequest, sent_task_id: int, payload: Form[MemberTaskUpdateRequest], files: File[list[UploadedFile]] = []):
+        task = await aget_object_or_404(ReciviedTask.objects.only("notes", "signed", "member__code", "task_id").select_related("member", "task"), id=sent_task_id, member__bdaya_user__email=request.user.email) # type: ignore
         update_fields: set[str] = {"signed"}
         
         @sync_to_async

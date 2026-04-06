@@ -71,6 +71,7 @@ export default function AddTaskPage() {
                                 rules={{ required: true }}
                                 render={({ field }) => (
                                     <DateTimePicker
+                                        minDateTime={dayjs()}
                                         label={tr('expiresAt')}
                                         value={field.value ? dayjs(field.value) : null}
                                         ampm={true}

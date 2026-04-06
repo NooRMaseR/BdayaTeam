@@ -155,8 +155,8 @@ class JWTSocketMiddleware(BaseMiddleware):
         headers = dict(scope.get('headers', []))
         scope['user'] = AnonymousUser()  # type: ignore
         
-        if headers.get(b'cookie'):
-            cookie_str = headers[b'cookie'].decode()
+        if cookies:= (headers.get(b'cookie') or headers.get(b'Cookie')):
+            cookie_str = cookies.decode()
             cookie_parser = SimpleCookie(cookie_str)
             
             token = cookie_parser.get('access_token')

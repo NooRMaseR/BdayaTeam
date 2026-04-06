@@ -89,9 +89,9 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
             });
 
         if (response.ok) {
-            return newRow;
+            return await Promise.resolve(newRow);
         }
-        return oldRow;
+        return await Promise.reject(oldRow);
     },
         {
             loading: tr('saving'),
@@ -119,12 +119,12 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
 
         if (response.ok) {
             toast.success(tr('saved'));
-            return newRow;
+            return await Promise.resolve(newRow);
         } else if (response.status === 404) {
             toast.error(tr("no_member_task"));
-            return oldRow;
+            return await Promise.reject(oldRow);
         }
-        return oldRow;
+        return await Promise.reject(oldRow);
     },
         {
             loading: tr('saving'),

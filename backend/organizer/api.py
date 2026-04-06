@@ -3,7 +3,7 @@ from ninja_extra.permissions import AllowAny
 from ninja_extra import route, api_controller, status
 
 from core.permissions import NinjaIsOrganizer, NinjaIsTechnicalOrOrganizer
-from core.api_schemas import RegisterRequest, ErrorResponse
+from core.api_schemas import DetailError, RegisterRequest, ErrorResponse
 from core.serializers import TrackNameOnlyMSGSerializer
 from core.models import BdayaUser, Track
 
@@ -11,7 +11,7 @@ from member.serializers import MemberORGMSGSerializer
 from member.api_schemas import MemebrResponse
 from member.models import Member
 
-from .api_schemas import AttendaceDayResponse, DayRequest, DayUpdateRequest, MemberEditGridRequest, SettingsRequest, SettingsResponse
+from .api_schemas import AttendanceDayResponse, DayRequest, DayUpdateRequest, MemberEditGridRequest, SettingsRequest, SettingsResponse
 from .caches import SETTINGS_CACHE_KEY, attendance_cache_key, members_by_organizer_cache_key
 from .models import Attendance, AttendanceAllowedDay, MemberEditType, SiteSetting
 from .serializers import AttendanceDayMSGSerializer, SiteSettingsMSGSerializer
@@ -61,17 +61,18 @@ class MembersController:
             .filter(track=target_track)
             .order_by("joined_at")
         )
-        data = await sync_to_async(MemberORGMSGSerializer.from_queryset_with_track)(members, track_serialized)
+        data = await MemberORGMSGSerializer.afrom_queryset_with_track(members, track_serialized)
         data = serializer_encoder.encode(data)
         
         await cache.aset(CACHE_KEY, data, DEFAULT_CACHE_DURATION)
         return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
 
-    def move_member_to_another_track(self, code: str, current_track: str, move_to_track: str) -> None:
+    @staticmethod
+    def move_member_to_another_track(code: str, current_track: str, move_to_track: str) -> None:
         from core.api import create_member_transaction
         
         member = get_object_or_404(
-            Member.objects.select_related("bdaya_user").only("collage_code", "bdaya_user__name", "bdaya_user__email", "bdaya_user__phone_number"),
+            Member.objects.select_related("bdaya_user").only("collage_code", "bdaya_user__username", "bdaya_user__email", "bdaya_user__phone_number"),
             code=code,
             track__name=current_track,
         )
@@ -88,8 +89,7 @@ class MembersController:
             )
         )
         
-
-    @route.post("/members/{track_name}/")
+    @route.post("/members/{track_name}/", response={200: None, 403: ErrorResponse})
     async def edit_member_grid(self, track_name: str, payload: MemberEditGridRequest):
         TRACK = track_name.replace("%20", " ")
         CACHE_KEY = members_by_organizer_cache_key(track_name)
@@ -113,7 +113,7 @@ class MembersController:
                             )
                             Attendance.objects.create(member=member, date=day, status=payload.value)
                             cache.delete(CACHE_KEY)
-                            return status.HTTP_201_CREATED, {}
+                            return status.HTTP_200_OK, {}
                     case MemberEditType.DATA:
                         if payload.field == "track":
                             self.move_member_to_another_track(payload.code, TRACK, str(payload.value))
@@ -122,7 +122,7 @@ class MembersController:
                         else:
                             settings = SiteSetting.get_solo()
                             if not payload.field in settings.organizer_can_edit:
-                                return status.HTTP_403_FORBIDDEN,{"details": f"field {payload.field} is not allowed"}
+                                return status.HTTP_403_FORBIDDEN, {"details": f"field {payload.field} is not allowed"}
 
                             Member.objects.filter(code=payload.code).update(**{payload.field: payload.value})
                             cache.delete(CACHE_KEY)
@@ -137,7 +137,7 @@ class MembersController:
 @api_controller("/organizer/attendance", permissions=[NinjaIsOrganizer], tags=["Organizer"])
 class AttendanceDaysConrtoller:
     
-    @route.get('/{track_name}/days/', permissions=[NinjaIsTechnicalOrOrganizer], response={200: list[AttendaceDayResponse]})
+    @route.get('/{track_name}/days/', permissions=[NinjaIsTechnicalOrOrganizer], response={200: list[AttendanceDayResponse]})
     async def get_attendance_days(self, track_name: str) -> HttpResponse:
         TRACK = track_name.replace("%20", " ")
         CACHE_KEY = attendance_cache_key(TRACK)
@@ -148,12 +148,12 @@ class AttendanceDaysConrtoller:
         days = AttendanceAllowedDay.objects.filter(track__name=TRACK).values("id", "day")
 
         encoded_data = serializer_encoder.encode(
-            await sync_to_async(AttendanceDayMSGSerializer.from_queryset_values)(days)
+            await AttendanceDayMSGSerializer.afrom_queryset_values(days)
         )
         await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
     
-    @route.post('/{track_name}/days/', response={200: AttendaceDayResponse})
+    @route.post('/{track_name}/days/', response={201: AttendanceDayResponse, 400: ErrorResponse, 404: DetailError})
     async def create_day(self, track_name: str, payload: DayRequest):
         TRACK = track_name.replace("%20", " ")
 
@@ -176,7 +176,6 @@ class AttendanceDaysConrtoller:
         except ValidationError as e:
             return HttpResponse(e.messages, status=status.HTTP_400_BAD_REQUEST, content_type=JSON_CONTENT_TYPE)
         
-    
     @route.delete('/{track_name}/days/', response={204: None})
     async def delete_day(self, track_name: str, day: date):
         TRACK = track_name.replace("%20", " ")
@@ -184,7 +183,6 @@ class AttendanceDaysConrtoller:
         await get_object_or_404(AttendanceAllowedDay, day=day, track__name=TRACK).adelete()
         cache.delete(attendance_cache_key(TRACK))
         return status.HTTP_204_NO_CONTENT, {}
-    
     
     @route.put('/{track_name}/days/', response={204: None, 400: ErrorResponse})
     async def update_day(self, track_name: str, payload: DayUpdateRequest):
@@ -215,7 +213,6 @@ class SettingsController:
         encoded_data = SiteSettingsMSGSerializer.from_model(site).encode()
         await cache.aset(SETTINGS_CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
-
 
     @route.put('', response={204: None})
     async def update_settings(self, request: HttpRequest, payload: Form[SettingsRequest], site_image: File[UploadedFile] | None = None, hero_image: File[UploadedFile] | None = None):

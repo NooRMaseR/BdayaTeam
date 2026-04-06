@@ -11,20 +11,20 @@ class DayUpdateRequest(Schema):
     oldDay: date
     newDay: date
     
-class AttendaceDayResponse(Schema):
+class AttendanceDayResponse(Schema):
     id: int
     day: date
 
 class AttendanceSmallResponse(Schema):
-    date: AttendaceDayResponse
+    date: AttendanceDayResponse
     status: models.AttendanceStatus
-    excuse_reason: str
-    
+    excuse_reason: str | None = None
+
 class MemberEditGridRequest(Schema):
     type: models.MemberEditType
     field: str
-    value: str | models.AttendanceStatus
-    excuse: str
+    value: str | int | models.AttendanceStatus
+    excuse: str | None = None
     code: str
 
 class SettingsRequest(Schema):

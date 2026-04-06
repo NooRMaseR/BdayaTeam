@@ -1,28 +1,38 @@
+from pydantic import EmailStr, PositiveInt, field_validator, NonNegativeInt
 from core.api_schemas import SimpleTrackSchema
 from member.models import MemberStatus
-from pydantic import EmailStr
+from django.utils import timezone
 from datetime import datetime
 from ninja import Schema
 from . import models
 
 class TaskCreateRequest(Schema):
-    task_number: int
+    task_number: PositiveInt
     expires_at: datetime
     description: str
+    
+    @field_validator('expires_at', mode='after')
+    @classmethod
+    def validate_expires_at(cls, v: datetime) -> datetime:
+        if v <= timezone.now():
+            raise ValueError("expires_at cannot be in the past")
+        
+        return v
+            
     
 class TaskAlreadyExistsError(Schema):
     task_number: str = "This task number already exists"
     
 class TaskSignRequest(Schema):
-    degree: int
+    degree: NonNegativeInt
     technical_notes: str
 
 class SimpleTaskResponse(Schema):
-    id: int
+    id: PositiveInt
     task_number: int
 
 class SimpleRecivedTaskResponse(Schema):
-    id: int
+    id: PositiveInt
     task: SimpleTaskResponse
     member_code: str
     notes: str | None = None
@@ -41,7 +51,7 @@ class TechnicalMembersResponse(Schema):
     tasks: list[SimpleRecivedTaskResponse]
     
 class TechnicalMembersTasksUpdateRequest(Schema):
-    task_id: int
+    task_id: PositiveInt
     code: str
     value: int | str
     field: models.MemberTechEditType
