@@ -53,7 +53,7 @@ class MembersController:
             .prefetch_related(
                 Prefetch(
                     "attendances",
-                    Attendance.objects.select_related("date"),
+                    Attendance.objects.select_related("date", 'by'),
                 )
             )
             .select_related("bdaya_user")
@@ -81,16 +81,16 @@ class MembersController:
         member.delete()
         create_member_transaction(
             RegisterRequest(
-                name = member.name,
-                email = member.email,
+                name = member.bdaya_user.username,
+                email = member.bdaya_user.email,
                 collage_code = member.collage_code,
-                phone_number = str(member.phone_number),
+                phone_number = str(member.bdaya_user.phone_number),
                 request_track_id = track.pk,
             )
         )
         
     @route.post("/members/{track_name}/", response={200: None, 403: ErrorResponse})
-    async def edit_member_grid(self, track_name: str, payload: MemberEditGridRequest):
+    async def edit_member_grid(self, request: HttpRequest, track_name: str, payload: MemberEditGridRequest):
         TRACK = track_name.replace("%20", " ")
         CACHE_KEY = members_by_organizer_cache_key(track_name)
 
@@ -104,14 +104,16 @@ class MembersController:
 
                         if Attendance.objects.filter(member=member, date__day=payload.field).exists():
                             Attendance.objects.filter(member=member, date__day=payload.field).update(
-                                status=payload.value, excuse_reason=payload.excuse
+                                status=payload.value,
+                                excuse_reason=payload.excuse,
+                                by=request.user
                             )
                             cache.delete(CACHE_KEY)
                         else:
                             day = get_object_or_404(
                                 AttendanceAllowedDay.objects.only("id"), day=payload.field
                             )
-                            Attendance.objects.create(member=member, date=day, status=payload.value)
+                            Attendance.objects.create(member=member, date=day, status=payload.value, by=request.user)
                             cache.delete(CACHE_KEY)
                             return status.HTTP_200_OK, {}
                     case MemberEditType.DATA:
@@ -200,6 +202,7 @@ class AttendanceDaysConrtoller:
         await attendace.asave()
         cache.delete(attendance_cache_key(TRACK))
         return status.HTTP_204_NO_CONTENT, {}
+
 
 @api_controller("/organizer/settings/", tags=['Organizer'], permissions=[NinjaIsOrganizer])
 class SettingsController:

@@ -71,14 +71,26 @@ class MemberORGMSGSerializer(MemberBaseMSG, frozen=True):
             async for model in models
         ]
 
+class SignedMSGBy(BaseMSGSerializer[BdayaUser], frozen=True):
+    id: int
+    username: str
+
+    @classmethod
+    def from_model(cls, model: BdayaUser) -> Self:
+        return cls(
+            model.pk,
+            model.username
+        )
 
 class RecivedTaskSmallMSGSerializer(BaseMSGSerializer[ReciviedTask], frozen=True):
     id: int
     task: TaskSmallMSGSerializer
     member_code: str
+    signed_by: SignedMSGBy | None = None
     notes: str | None = None
     technical_notes: str | None = None
     degree: int | None = None
+
 
     @classmethod
     def from_model(cls, model: ReciviedTask) -> Self:
@@ -86,6 +98,7 @@ class RecivedTaskSmallMSGSerializer(BaseMSGSerializer[ReciviedTask], frozen=True
             id=model.pk,
             task=TaskSmallMSGSerializer.from_model(model.task),
             member_code=model.member.code,
+            signed_by=SignedMSGBy.from_model(model.signed_by) if model.signed_by else None,
             notes=model.notes,
             technical_notes=model.technical_notes,
             degree=model.degree,

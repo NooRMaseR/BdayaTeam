@@ -4,6 +4,7 @@ from organizer.api_schemas import OrganizerBroudCast
 class LiveMemberEditConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self) -> None:
         track_name: str = self.scope['url_route']['kwargs']['track_name'].replace(' ', '_') # type: ignore
+        self.current_username = self.scope['user'].username # type: ignore
         self.group_name = f"technical_live_member_edit_{track_name}"
         
         await self.channel_layer.group_add(self.group_name, self.channel_name)
@@ -14,6 +15,7 @@ class LiveMemberEditConsumer(AsyncJsonWebsocketConsumer):
     
     async def receive_json(self, content: OrganizerBroudCast, **kwargs: dict) -> None:
         if content:
+            content['data']['by'] = self.current_username
             await self.channel_layer.group_send(
                 self.group_name,
                 {
@@ -39,7 +41,7 @@ class OnlineTechnicalTaskConsumer(AsyncJsonWebsocketConsumer):
     
     async def receive_json(self, content: OrganizerBroudCast, **kwargs: dict) -> None:
         if content:
-            content['viewer'] = self.scope['user'].username # type: ignore
+            content['viewer'] = self.scope['user'].username # type: ignore            
             await self.channel_layer.group_send(
                 self.group_name,
                 {

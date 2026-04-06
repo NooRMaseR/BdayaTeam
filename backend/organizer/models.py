@@ -34,6 +34,7 @@ class Attendance(models.Model):
     date = models.ForeignKey(AttendanceAllowedDay, on_delete=models.CASCADE, related_name="members_attendance")
     status = models.CharField(max_length=9, choices=AttendanceStatus)
     excuse_reason = models.TextField(blank=True, null=True)
+    by = models.ForeignKey(BdayaUser, on_delete=models.CASCADE)
     
     class Meta:
         unique_together = ("member", "date")

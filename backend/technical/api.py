@@ -218,7 +218,8 @@ class TechnicalTasksController:
             await ReciviedTask.objects.filter(id=recived_task.pk).aupdate(
                 degree=payload.degree,
                 technical_notes=payload.technical_notes,
-                signed=True
+                signed=True,
+                signed_by=request.user
             )
             
             await cache.adelete_many(
@@ -256,7 +257,7 @@ class TechnicalMembersController:
             .prefetch_related(
                 Prefetch(
                     "tasks_sent",
-                    ReciviedTask.objects.select_related('task'),
+                    ReciviedTask.objects.select_related('task', 'signed_by'),
                     "prefetched_tasks"
                 )
             )
@@ -271,7 +272,7 @@ class TechnicalMembersController:
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
     
     @route.put("/members/{track_name}/with-tasks/", response={204: None, 404: ErrorResponse})
-    async def update_member_task(self, track_name: str, payload: TechnicalMembersTasksUpdateRequest):
+    async def update_member_task(self, request: HttpRequest, track_name: str, payload: TechnicalMembersTasksUpdateRequest):
         recivied_task = await aget_object_or_404(ReciviedTask.objects.only("id", "notes", "degree"), task_id=payload.task_id, member__code=payload.code)
         
         match payload.field:
@@ -279,6 +280,8 @@ class TechnicalMembersController:
                 recivied_task.notes = str(payload.value)
             case MemberTechEditType.DEGREE:
                 recivied_task.degree = int(payload.value)
+        
+        recivied_task.signed_by = request.user # type: ignore
                 
         await recivied_task.asave()
         cache.delete(members_by_technicals_cache_key(track_name))

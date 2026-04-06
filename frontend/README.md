@@ -5,7 +5,7 @@
 to update `openAPI` support run this command
 
 ```bash
-bunx openapi-typescript http://localhost/api/schema/ -o app/generated/api_types.ts
+bunx openapi-typescript http://localhost/api/openapi.json -o app/generated/api_types.ts
 ```
 
 ## GraphQL
