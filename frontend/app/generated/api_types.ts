@@ -14,7 +14,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Login */
-        post: operations["auth_login_4e5f3200"];
+        post: operations["auth_login_7580494f"];
         delete?: never;
         options?: never;
         head?: never;
@@ -29,7 +29,7 @@ export interface paths {
             cookie?: never;
         };
         /** Logout */
-        get: operations["auth_logout_c370d61c"];
+        get: operations["auth_logout_6076ab4d"];
         put?: never;
         post?: never;
         delete?: never;
@@ -48,7 +48,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Register */
-        post: operations["auth_register_5b827372"];
+        post: operations["auth_register_0cb34145"];
         delete?: never;
         options?: never;
         head?: never;
@@ -65,7 +65,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Refresh Tokens */
-        post: operations["auth_refresh_tokens_051abdbe"];
+        post: operations["auth_refresh_tokens_f8d1e586"];
         delete?: never;
         options?: never;
         head?: never;
@@ -80,7 +80,7 @@ export interface paths {
             cookie?: never;
         };
         /** Test Auth */
-        get: operations["auth_test_auth_d6eaf410"];
+        get: operations["auth_test_auth_effb2328"];
         put?: never;
         post?: never;
         delete?: never;
@@ -97,10 +97,10 @@ export interface paths {
             cookie?: never;
         };
         /** Get All */
-        get: operations["tracks_get_all_5fe3ff25"];
+        get: operations["tracks_get_all_b31d755e"];
         put?: never;
         /** Create */
-        post: operations["tracks_create_a29057dd"];
+        post: operations["tracks_create_42acc207"];
         delete?: never;
         options?: never;
         head?: never;
@@ -115,11 +115,11 @@ export interface paths {
             cookie?: never;
         };
         /** Get One */
-        get: operations["tracks_get_one_99b9191b"];
+        get: operations["tracks_get_one_d4ad8faf"];
         put?: never;
         post?: never;
         /** Delete */
-        delete: operations["tracks_delete_5eb650c8"];
+        delete: operations["tracks_delete_7cab0323"];
         options?: never;
         head?: never;
         patch?: never;
@@ -139,7 +139,7 @@ export interface paths {
          * Reset All
          * @description Very Dangores, Deletes all tracks and members and tasks and technicals.
          */
-        delete: operations["resetall_reset_all_2819c657"];
+        delete: operations["resetall_reset_all_c521c216"];
         options?: never;
         head?: never;
         patch?: never;
@@ -153,10 +153,10 @@ export interface paths {
             cookie?: never;
         };
         /** Get Track Members */
-        get: operations["members_get_track_members_5cb50c0e"];
+        get: operations["members_get_track_members_b1bcbce8"];
         put?: never;
         /** Edit Member Grid */
-        post: operations["members_edit_member_grid_ddf4593d"];
+        post: operations["members_edit_member_grid_563cefde"];
         delete?: never;
         options?: never;
         head?: never;
@@ -171,13 +171,13 @@ export interface paths {
             cookie?: never;
         };
         /** Get Attendance Days */
-        get: operations["attendancedaysconrtoller_get_attendance_days_6a8a38e8"];
+        get: operations["attendancedaysconrtoller_get_attendance_days_b410fac0"];
         /** Update Day */
-        put: operations["attendancedaysconrtoller_update_day_88f9cf89"];
+        put: operations["attendancedaysconrtoller_update_day_c65bdc3e"];
         /** Create Day */
-        post: operations["attendancedaysconrtoller_create_day_c29dd283"];
+        post: operations["attendancedaysconrtoller_create_day_0d99b788"];
         /** Delete Day */
-        delete: operations["attendancedaysconrtoller_delete_day_3654c97f"];
+        delete: operations["attendancedaysconrtoller_delete_day_75fd9ebe"];
         options?: never;
         head?: never;
         patch?: never;
@@ -191,9 +191,9 @@ export interface paths {
             cookie?: never;
         };
         /** Get Settings */
-        get: operations["settings_get_settings_7e4f8f85"];
+        get: operations["settings_get_settings_4db60e99"];
         /** Update Settings */
-        put: operations["settings_update_settings_37df60a8"];
+        put: operations["settings_update_settings_b1a31b48"];
         post?: never;
         delete?: never;
         options?: never;
@@ -209,10 +209,10 @@ export interface paths {
             cookie?: never;
         };
         /** Get All */
-        get: operations["tasks_get_all_194388cf"];
+        get: operations["tasks_get_all_9a30df4b"];
         put?: never;
         /** Submit Task */
-        post: operations["tasks_submit_task_5370ba4e"];
+        post: operations["tasks_submit_task_10bd58e4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -227,7 +227,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get Protected File */
-        get: operations["protectedtask_get_protected_file_ba40a010"];
+        get: operations["protectedtask_get_protected_file_b28510a2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -244,7 +244,7 @@ export interface paths {
             cookie?: never;
         };
         /** Get Profile */
-        get: operations["memberprofile_get_profile_77277424"];
+        get: operations["memberprofile_get_profile_920a86f6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -261,9 +261,9 @@ export interface paths {
             cookie?: never;
         };
         /** Get Editable Task */
-        get: operations["memberedittask_get_editable_task_a217d229"];
+        get: operations["memberedittask_get_editable_task_15218fa2"];
         /** Update My Task */
-        put: operations["memberedittask_update_my_task_4a4a07b8"];
+        put: operations["memberedittask_update_my_task_92636dda"];
         post?: never;
         delete?: never;
         options?: never;
@@ -279,10 +279,10 @@ export interface paths {
             cookie?: never;
         };
         /** Get All */
-        get: operations["technicaltasks_get_all_80b40dc3"];
+        get: operations["technicaltasks_get_all_4fc815eb"];
         put?: never;
         /** Add Task */
-        post: operations["technicaltasks_add_task_3c61f312"];
+        post: operations["technicaltasks_add_task_e0e5f3d5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -297,12 +297,12 @@ export interface paths {
             cookie?: never;
         };
         /** Get One */
-        get: operations["technicaltasks_get_one_2ef1e344"];
+        get: operations["technicaltasks_get_one_5235a10e"];
         /** Update Task */
-        put: operations["technicaltasks_update_task_64615341"];
+        put: operations["technicaltasks_update_task_ba9508be"];
         post?: never;
         /** Delete Task */
-        delete: operations["technicaltasks_delete_task_a975fd89"];
+        delete: operations["technicaltasks_delete_task_d4dca776"];
         options?: never;
         head?: never;
         patch?: never;
@@ -316,10 +316,10 @@ export interface paths {
             cookie?: never;
         };
         /** Get Recived Tasks From Members */
-        get: operations["technicaltasks_get_recived_tasks_from_members_99c5f096"];
+        get: operations["technicaltasks_get_recived_tasks_from_members_e962f602"];
         put?: never;
         /** Sign Task */
-        post: operations["technicaltasks_sign_task_b66ca6ab"];
+        post: operations["technicaltasks_sign_task_cb0fdc33"];
         delete?: never;
         options?: never;
         head?: never;
@@ -334,9 +334,9 @@ export interface paths {
             cookie?: never;
         };
         /** Get Members */
-        get: operations["technicalmembers_get_members_327660fb"];
+        get: operations["technicalmembers_get_members_a2c3b5c3"];
         /** Update Member Task */
-        put: operations["technicalmembers_update_member_task_75eae17e"];
+        put: operations["technicalmembers_update_member_task_60bcea67"];
         post?: never;
         delete?: never;
         options?: never;
@@ -481,8 +481,15 @@ export interface components {
             /** Ar Description */
             ar_description: string;
         };
-        /** AttendaceDayResponse */
-        AttendaceDayResponse: {
+        /** AttendanceBy */
+        AttendanceBy: {
+            /** Id */
+            id: number;
+            /** Username */
+            username: string;
+        };
+        /** AttendanceDayResponse */
+        AttendanceDayResponse: {
             /** Id */
             id: number;
             /**
@@ -493,8 +500,9 @@ export interface components {
         };
         /** AttendanceSmallResponse */
         AttendanceSmallResponse: {
-            date: components["schemas"]["AttendaceDayResponse"];
+            date: components["schemas"]["AttendanceDayResponse"];
             status: components["schemas"]["AttendanceStatus"];
+            by: components["schemas"]["AttendanceBy"];
             /** Excuse Reason */
             excuse_reason?: string | null;
         };
@@ -715,6 +723,13 @@ export interface components {
             /** Technical Notes */
             technical_notes: string;
         };
+        /** SignedBy */
+        SignedBy: {
+            /** Id */
+            id: number;
+            /** Username */
+            username: string;
+        };
         /** SimpleRecivedTaskResponse */
         SimpleRecivedTaskResponse: {
             /** Id */
@@ -726,6 +741,7 @@ export interface components {
             notes?: string | null;
             /** Technical Notes */
             technical_notes?: string | null;
+            signed_by?: components["schemas"]["SignedBy"] | null;
             /** Degree */
             degree?: number | null;
         };
@@ -782,7 +798,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    auth_login_4e5f3200: {
+    auth_login_7580494f: {
         parameters: {
             query?: never;
             header?: never;
@@ -824,7 +840,7 @@ export interface operations {
             };
         };
     };
-    auth_logout_c370d61c: {
+    auth_logout_6076ab4d: {
         parameters: {
             query?: never;
             header?: never;
@@ -851,7 +867,7 @@ export interface operations {
             };
         };
     };
-    auth_register_5b827372: {
+    auth_register_0cb34145: {
         parameters: {
             query?: never;
             header?: never;
@@ -904,7 +920,7 @@ export interface operations {
             };
         };
     };
-    auth_refresh_tokens_051abdbe: {
+    auth_refresh_tokens_f8d1e586: {
         parameters: {
             query?: never;
             header?: never;
@@ -935,7 +951,7 @@ export interface operations {
             };
         };
     };
-    auth_test_auth_d6eaf410: {
+    auth_test_auth_effb2328: {
         parameters: {
             query?: never;
             header?: never;
@@ -955,7 +971,7 @@ export interface operations {
             };
         };
     };
-    tracks_get_all_5fe3ff25: {
+    tracks_get_all_b31d755e: {
         parameters: {
             query?: never;
             header?: never;
@@ -975,7 +991,7 @@ export interface operations {
             };
         };
     };
-    tracks_create_a29057dd: {
+    tracks_create_42acc207: {
         parameters: {
             query?: never;
             header?: never;
@@ -1020,7 +1036,7 @@ export interface operations {
             };
         };
     };
-    tracks_get_one_99b9191b: {
+    tracks_get_one_d4ad8faf: {
         parameters: {
             query?: never;
             header?: never;
@@ -1042,7 +1058,7 @@ export interface operations {
             };
         };
     };
-    tracks_delete_5eb650c8: {
+    tracks_delete_7cab0323: {
         parameters: {
             query?: never;
             header?: never;
@@ -1071,7 +1087,7 @@ export interface operations {
             };
         };
     };
-    resetall_reset_all_2819c657: {
+    resetall_reset_all_c521c216: {
         parameters: {
             query?: never;
             header?: never;
@@ -1098,7 +1114,7 @@ export interface operations {
             };
         };
     };
-    members_get_track_members_5cb50c0e: {
+    members_get_track_members_b1bcbce8: {
         parameters: {
             query?: never;
             header?: never;
@@ -1120,7 +1136,7 @@ export interface operations {
             };
         };
     };
-    members_edit_member_grid_ddf4593d: {
+    members_edit_member_grid_563cefde: {
         parameters: {
             query?: never;
             header?: never;
@@ -1153,7 +1169,7 @@ export interface operations {
             };
         };
     };
-    attendancedaysconrtoller_get_attendance_days_6a8a38e8: {
+    attendancedaysconrtoller_get_attendance_days_b410fac0: {
         parameters: {
             query?: never;
             header?: never;
@@ -1170,12 +1186,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AttendaceDayResponse"][];
+                    "application/json": components["schemas"]["AttendanceDayResponse"][];
                 };
             };
         };
     };
-    attendancedaysconrtoller_update_day_88f9cf89: {
+    attendancedaysconrtoller_update_day_c65bdc3e: {
         parameters: {
             query?: never;
             header?: never;
@@ -1208,7 +1224,7 @@ export interface operations {
             };
         };
     };
-    attendancedaysconrtoller_create_day_c29dd283: {
+    attendancedaysconrtoller_create_day_0d99b788: {
         parameters: {
             query?: never;
             header?: never;
@@ -1229,7 +1245,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AttendaceDayResponse"];
+                    "application/json": components["schemas"]["AttendanceDayResponse"];
                 };
             };
             /** @description Bad Request */
@@ -1252,7 +1268,7 @@ export interface operations {
             };
         };
     };
-    attendancedaysconrtoller_delete_day_3654c97f: {
+    attendancedaysconrtoller_delete_day_75fd9ebe: {
         parameters: {
             query: {
                 day: string;
@@ -1274,7 +1290,7 @@ export interface operations {
             };
         };
     };
-    settings_get_settings_7e4f8f85: {
+    settings_get_settings_4db60e99: {
         parameters: {
             query?: never;
             header?: never;
@@ -1294,7 +1310,7 @@ export interface operations {
             };
         };
     };
-    settings_update_settings_37df60a8: {
+    settings_update_settings_b1a31b48: {
         parameters: {
             query?: {
                 site_image?: string | null;
@@ -1330,7 +1346,7 @@ export interface operations {
             };
         };
     };
-    tasks_get_all_194388cf: {
+    tasks_get_all_9a30df4b: {
         parameters: {
             query?: never;
             header?: never;
@@ -1350,7 +1366,7 @@ export interface operations {
             };
         };
     };
-    tasks_submit_task_5370ba4e: {
+    tasks_submit_task_10bd58e4: {
         parameters: {
             query?: never;
             header?: never;
@@ -1391,7 +1407,7 @@ export interface operations {
             };
         };
     };
-    protectedtask_get_protected_file_ba40a010: {
+    protectedtask_get_protected_file_b28510a2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1418,7 +1434,7 @@ export interface operations {
             };
         };
     };
-    memberprofile_get_profile_77277424: {
+    memberprofile_get_profile_920a86f6: {
         parameters: {
             query?: never;
             header?: never;
@@ -1440,7 +1456,7 @@ export interface operations {
             };
         };
     };
-    memberedittask_get_editable_task_a217d229: {
+    memberedittask_get_editable_task_15218fa2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1462,7 +1478,7 @@ export interface operations {
             };
         };
     };
-    memberedittask_update_my_task_4a4a07b8: {
+    memberedittask_update_my_task_92636dda: {
         parameters: {
             query?: never;
             header?: never;
@@ -1503,7 +1519,7 @@ export interface operations {
             };
         };
     };
-    technicaltasks_get_all_80b40dc3: {
+    technicaltasks_get_all_4fc815eb: {
         parameters: {
             query?: never;
             header?: never;
@@ -1523,7 +1539,7 @@ export interface operations {
             };
         };
     };
-    technicaltasks_add_task_3c61f312: {
+    technicaltasks_add_task_e0e5f3d5: {
         parameters: {
             query?: never;
             header?: never;
@@ -1556,7 +1572,7 @@ export interface operations {
             };
         };
     };
-    technicaltasks_get_one_2ef1e344: {
+    technicaltasks_get_one_5235a10e: {
         parameters: {
             query?: never;
             header?: never;
@@ -1578,7 +1594,7 @@ export interface operations {
             };
         };
     };
-    technicaltasks_update_task_64615341: {
+    technicaltasks_update_task_ba9508be: {
         parameters: {
             query?: never;
             header?: never;
@@ -1611,7 +1627,7 @@ export interface operations {
             };
         };
     };
-    technicaltasks_delete_task_a975fd89: {
+    technicaltasks_delete_task_d4dca776: {
         parameters: {
             query?: never;
             header?: never;
@@ -1629,9 +1645,18 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
-    technicaltasks_get_recived_tasks_from_members_99c5f096: {
+    technicaltasks_get_recived_tasks_from_members_e962f602: {
         parameters: {
             query?: never;
             header?: never;
@@ -1653,7 +1678,7 @@ export interface operations {
             };
         };
     };
-    technicaltasks_sign_task_b66ca6ab: {
+    technicaltasks_sign_task_cb0fdc33: {
         parameters: {
             query?: never;
             header?: never;
@@ -1686,7 +1711,7 @@ export interface operations {
             };
         };
     };
-    technicalmembers_get_members_327660fb: {
+    technicalmembers_get_members_a2c3b5c3: {
         parameters: {
             query?: never;
             header?: never;
@@ -1717,7 +1742,7 @@ export interface operations {
             };
         };
     };
-    technicalmembers_update_member_task_75eae17e: {
+    technicalmembers_update_member_task_60bcea67: {
         parameters: {
             query?: never;
             header?: never;

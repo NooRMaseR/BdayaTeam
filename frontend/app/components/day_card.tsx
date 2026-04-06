@@ -28,7 +28,7 @@ import API from '@/app/utils/api.client';
 import { toast } from 'sonner';
 import React from 'react';
 
-type AttendanceDay = components['schemas']['AttendaceDayResponse'];
+type AttendanceDay = components['schemas']['AttendanceDayResponse'];
 type DayCardProps = {
     day: AttendanceDay; 
     onDelete: (date: string) => void;

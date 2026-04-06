@@ -15,10 +15,6 @@ class MemebrResponse(Schema):
     collage_code: str
     bonus: NonNegativeInt
     status: models.MemberStatus
-    
-    class Meta:
-        model = models.Member
-        exclude = ('joined_at',)
         
 class TaskResponse(Schema):
     id: PositiveInt

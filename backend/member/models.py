@@ -54,6 +54,7 @@ class ReciviedTask(models.Model):
     technical_notes = models.TextField(null=True, blank=True)
     degree = models.PositiveSmallIntegerField(null=True, blank=True)
     signed = models.BooleanField(default=False)
+    signed_by = models.ForeignKey(BdayaUser, on_delete=models.CASCADE, null=True, blank=True)
     recived_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

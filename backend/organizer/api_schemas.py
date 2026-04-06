@@ -1,5 +1,5 @@
+from pydantic import PositiveInt, field_validator
 from typing import Any, Literal, TypedDict
-from pydantic import field_validator
 from datetime import date
 from ninja import Schema
 from . import models
@@ -12,12 +12,17 @@ class DayUpdateRequest(Schema):
     newDay: date
     
 class AttendanceDayResponse(Schema):
-    id: int
+    id: PositiveInt
     day: date
+    
+class AttendanceBy(Schema):
+    id: PositiveInt
+    username: str
 
 class AttendanceSmallResponse(Schema):
     date: AttendanceDayResponse
     status: models.AttendanceStatus
+    by: AttendanceBy
     excuse_reason: str | None = None
 
 class MemberEditGridRequest(Schema):
@@ -52,6 +57,7 @@ class SettingsResponse(SettingsImagesResponse):
     organizer_can_edit: list[models.OrganizerEditableFields]
    
 class OrganizerBroudCastData(TypedDict):
+    by: str
     code: str
     changedKey: str
     changedValue: Any

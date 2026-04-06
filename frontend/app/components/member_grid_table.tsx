@@ -22,6 +22,15 @@ type GridProps = {
     disableWebSocket?: boolean;
 }
 
+type SocketResponse = {
+    data: {
+        by: string;
+        code: string;
+        changedKey: string;
+        changedValue: string | number;
+    }
+}
+
 export default function MembersGridTable({ rows, columns, columnGroupingModel = [], track, forTech = false, disableWebSocket = false }: GridProps) {
     const tr = useTranslations('showMembersPage');
     const trackReadableName = track.replaceAll("%20", ' ');
@@ -48,9 +57,9 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
         reconnectInterval: 3000,
         onMessage(event) {
             try {
-                const data = JSON.parse(event.data);
+                const data: SocketResponse = JSON.parse(event.data);
                 if (data) {
-                    const { code, changedKey, changedValue } = data.data;
+                    const { by, code, changedKey, changedValue } = data.data;
                     setLocalRows((prevRows) => {
                         const rowIndex = prevRows.findIndex(row => row.code == code);
 
@@ -59,8 +68,15 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
                         const newRows = [...prevRows];
                         newRows[rowIndex] = {
                             ...newRows[rowIndex],
-                            [changedKey]: changedValue
+                            [changedKey]: changedValue,
                         };
+                        if (by && changedKey.endsWith("_date")) {
+                            const key = changedKey.replace("_date", '_by');
+                            newRows[rowIndex][key] = by;
+                        } else if (by && changedKey.startsWith("task_deg_")) {
+                            const id = parseInt(changedKey.replace("task_deg_", ''));
+                            newRows[rowIndex][`task_signed_by_${id}`] = by;
+                        }
                         return newRows;
                     });
                 }
@@ -81,7 +97,7 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
                 params: { path: { track_name: track } },
                 body: {
                     code: newRow.code,
-                    field: changedKey.replace(hasExcuse ? "_excuse" : "_date", ''),
+                    field: changedKey.replace(hasExcuse ? "_excuse" : "_date", '').replace("_by", ''),
                     value: hasExcuse ? newRow[changedKey.replace("_excuse", "_date")] : changedValue,
                     type: isAttendance || hasExcuse ? "attendance" : "data",
                     excuse: hasExcuse ? newRow[changedKey] : null
@@ -103,7 +119,7 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel = 
     const handleTech = async (newRow: GridRowModel, oldRow: GridRowModel, changedKey: any) => await toast.promise<GridRowModel>(async () => {
 
         const changedValue = newRow[changedKey];
-        const taskID = parseInt(changedKey?.replace("task_deg_", '').replace('task_notes_', ''));
+        const taskID = parseInt(changedKey?.replace("task_deg_", '').replace('task_notes_', '').replace("task_deg_", ''));
         const changedField = changedKey.includes('deg_') ? "degree" : "notes";
 
         const { response } = await

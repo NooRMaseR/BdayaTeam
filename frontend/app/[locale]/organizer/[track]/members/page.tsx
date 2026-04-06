@@ -69,6 +69,7 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
         member.attendances.forEach(att => {
             row[`${att.date.day}_date`] = att.status;
             row[`${att.date.day}_excuse`] = att.excuse_reason;
+            row[`${att.date.day}_by`] = att.by.username;
         });
 
         return row;
@@ -105,6 +106,15 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
                     headerAlign: "center",
                     filterable: false,
                     editable: !safe
+                },
+                {
+                    field: `${day.day}_by`,
+                    headerName: tr("by"),
+                    width: 170,
+                    align: "center",
+                    headerAlign: "center",
+                    filterable: false,
+                    editable: false
                 }
             ];
         }) || [])
@@ -113,7 +123,7 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
     const columnGroupingModel: GridColumnGroupingModel = daysRes.data?.map((day) => ({
         groupId: day.day,
         headerName: dtr(new Date(day.day).toLocaleDateString('en-US', { weekday: 'long' })),
-        children: [{ field: `${day.day}_date` }, { field: `${day.day}_excuse` }],
+        children: [{ field: `${day.day}_date` }, { field: `${day.day}_excuse` }, { field: `${day.day}_by` }],
         headerAlign: "center",
     })) || [];
 

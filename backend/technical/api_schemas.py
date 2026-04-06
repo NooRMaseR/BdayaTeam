@@ -31,12 +31,17 @@ class SimpleTaskResponse(Schema):
     id: PositiveInt
     task_number: int
 
+class SignedBy(Schema):
+    id: PositiveInt
+    username: str
+
 class SimpleRecivedTaskResponse(Schema):
     id: PositiveInt
     task: SimpleTaskResponse
     member_code: str
     notes: str | None = None
     technical_notes: str | None = None
+    signed_by: SignedBy | None = None
     degree: int | None = None
     
 class TechnicalMembersResponse(Schema):

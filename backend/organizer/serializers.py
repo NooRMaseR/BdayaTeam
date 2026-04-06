@@ -1,6 +1,7 @@
 from datetime import date
 from typing import Self
 
+from core.models import BdayaUser
 from core.serializers import BaseMSGSerializer
 from .models import Attendance, AttendanceAllowedDay, SiteSetting
 
@@ -15,10 +16,21 @@ class AttendanceDayMSGSerializer(BaseMSGSerializer[AttendanceAllowedDay], frozen
             model.day
         )
 
+class AttendanceMSGBy(BaseMSGSerializer[BdayaUser], frozen=True):
+    id: int
+    username: str
+
+    @classmethod
+    def from_model(cls, model: BdayaUser) -> Self:
+        return cls(
+            model.pk,
+            model.username
+        )
     
 class AttendanceMSGSerializer(BaseMSGSerializer[Attendance], frozen=True):
     date: AttendanceDayMSGSerializer
     status: str
+    by: AttendanceMSGBy
     excuse_reason: str | None = None
     
     @classmethod
@@ -26,9 +38,9 @@ class AttendanceMSGSerializer(BaseMSGSerializer[Attendance], frozen=True):
         return cls(
             date=AttendanceDayMSGSerializer.from_model(model.date),
             status=model.status,
-            excuse_reason=model.excuse_reason
+            excuse_reason=model.excuse_reason,
+            by=AttendanceMSGBy.from_model(model.by)
         )
-
     
 class SiteSettingsImagesMSGSerializer(BaseMSGSerializer[SiteSetting], frozen=True):
     site_image: str | None

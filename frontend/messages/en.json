@@ -148,6 +148,8 @@
         "task": "Task {number}",
         "degree": "Degree",
         "notes": "Notes",
+        "by": "By",
+        "signed_by": "Signed By",
         "profile": "Profile",
         "saving": "Saving....",
         "saved": "Saved",
