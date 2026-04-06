@@ -33,6 +33,7 @@ CREATE USER root WITH PASSWORD 'root123';
 ALTER ROLE root SET client_encoding TO 'utf8';
 ALTER ROLE root SET default_transaction_isolation TO 'read committed';
 ALTER ROLE root SET timezone TO 'Africa/Cairo';
+ALTER USER root CREATEDB;
 
 <!-- 4. add the user permissions -->
 GRANT ALL PRIVILEGES ON DATABASE teambdayadb TO root;
@@ -65,9 +66,9 @@ DATABASES = {
         'PORT': os.getenv("DB_PORT"),
         'OPTIONS': {
             "pool": {
-                "min_size": 2,
-                "max_size": 10,
-                "timeout": 30
+                "min_size": 5,
+                "max_size": 18,
+                "timeout": 20
             }
         }
     }
@@ -141,11 +142,12 @@ run the server by using this command
 
 ```bash
 uv run gunicorn \
-        --workers 5 \
+        --workers 4 \
         --worker-connections 600 \
         --timeout 30 \
         --keep-alive 2 \
         --worker-class uvicorn.workers.UvicornWorker \
+        --forwarded-allow-ips="*" \
         --bind unix:/run/gunicorn.sock \
         BdayaTeam.asgi:application
 ```
@@ -154,9 +156,7 @@ uv run gunicorn \
 
 **`--worker-connections`** how many coonections to accept for each worker
 
-to open `swagger-UI` open this url `http://127.0.0.1:8000/api/schema/swagger-ui/`
-
-to open the `admin panel` open this url `http://127.0.0.1:8000/api/admin/`
+to open `openApi` open this url `http://localhost:8000/api/docs`
 
 ## Redis
 
@@ -257,31 +257,6 @@ ListenStream=/run/gunicorn.sock
 WantedBy=sockets.target
 ```
 
-then create a `gunicorn.service`
-
-```ini
-[Unit]
-Description=gunicorn daemon
-Requires=gunicorn.socket
-After=network.target
-
-[Service]
-User=kali
-Group=www-data
-WorkingDirectory=/home/kali/BdayaTeam/backend/
-ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/gunicorn \
-        --workers 5 \
-        --worker-connections 600 \
-        --timeout 30 \
-        --keep-alive 2 \
-        --worker-class uvicorn.workers.UvicornWorker \
-        --bind unix:/run/gunicorn.sock \
-        BdayaTeam.asgi:application
-
-[Install]
-WantedBy=multi-user.target
-```
-
 then start the `systemctl`
 
 ```bash
@@ -295,7 +270,7 @@ you can check the status after that
 sudo systemctl status gunicorn
 ```
 
-then create a symlink file for `nginx_teamDdaya.conf` in this location like this
+create a symlink file for `nginx_teamDdaya.conf` in this location like this
 
 ```bash
 sudo ln -s /home/kali/BdayaTeam/nginx_teamBdaya.conf /etc/nginx/sites-enabled/nginx_teamBdaya.conf
