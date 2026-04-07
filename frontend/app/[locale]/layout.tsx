@@ -1,11 +1,15 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import API from "../utils/api.server";
 import Header from "../components/header";
 import { getMessages } from 'next-intl/server';
 import { Toaster } from "@/components/ui/sonner";
 import AuthLoader from "../components/authLoader";
 import { NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
+import { serverGraphQL } from "../utils/api_utils";
+import { GET_IMAGES_SETTINGS } from "../utils/graphql_helpers";
+import type { SettingsImagesQuery } from "../generated/graphql";
 import { LoadingProvider, RegisterNextThemeProvider, RegisterThemeProvider } from "./clientProviders";
 
 export const metadata: Metadata = {
@@ -45,7 +49,15 @@ type RootLayoutProps = Readonly<{
 export default async function RootLayout({ children, params }: RootLayoutProps) {
   const { locale } = await params;
   setRequestLocale(locale);
+
   const messages = await getMessages({ locale });
+  const [authResponse, imagesResponse] = await Promise.allSettled([
+      API.GET("/api/test-auth/"),
+      serverGraphQL<SettingsImagesQuery>(GET_IMAGES_SETTINGS)
+  ]);
+
+  const authData = authResponse.status === "fulfilled" && authResponse.value.data ? authResponse.value.data : null;
+  const imagesData = imagesResponse.status === "fulfilled" ? imagesResponse.value.data.allSettings : null;
 
   return (
     <html lang={locale} dir={locale === 'ar' ? "rtl" : 'ltr'} suppressHydrationWarning>
@@ -54,7 +66,7 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
           <RegisterNextThemeProvider attribute='class' defaultTheme="system" enableSystem>
             <NextIntlClientProvider messages={messages}>
               <RegisterThemeProvider>
-                <AuthLoader>
+                <AuthLoader authData={authData} imagesData={imagesData}>
                   <Header />
                   <Toaster />
                   {children}

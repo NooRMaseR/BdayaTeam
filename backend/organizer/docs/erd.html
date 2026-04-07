@@ -73,6 +73,7 @@
     }
     Attendance {
         id BigAutoField
+        by ForeignKey
         date ForeignKey
         member ForeignKey
         excuse_reason TextField
@@ -88,6 +89,7 @@
     Track ||--|{ AttendanceAllowedDay : has
     Member ||--|{ Attendance : has
     AttendanceAllowedDay ||--|{ Attendance : has
+    BdayaUser ||--|{ Attendance : has
         </div>
         <a href="/home/kali/BdayaTeam/backend/erd_index.html">Back to Index</a>
     </div>

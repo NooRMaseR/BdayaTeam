@@ -80,6 +80,7 @@
         id BigAutoField
         files ForeignKey
         member ForeignKey
+        signed_by ForeignKey
         task ForeignKey
         track ForeignKey
         degree PositiveSmallIntegerField
@@ -98,6 +99,7 @@
     Task ||--|{ ReciviedTask : has
     Member ||--|{ ReciviedTask : has
     Track ||--|{ ReciviedTask : has
+    BdayaUser ||--o{ ReciviedTask : has
     ReciviedTask ||--|{ ReciviedTaskFile : has
     BdayaUser ||--|| Member : has
         </div>

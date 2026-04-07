@@ -20,7 +20,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 type TaskActionsProps = {
-    task: components['schemas']['Task'];
+    task: components['schemas']['TaskResponse'];
     track_name: string;
 }
 
@@ -32,7 +32,7 @@ type DeleteDialogProps = {
     isLoading: boolean;
 }
 
-type UpdateTaskProps = components['schemas']['updateTaskRequest'];
+type UpdateTaskProps = components['schemas']['TaskResponse'];
 
 type EditDialogProps = Omit<DeleteDialogProps, 'onAccept'> & {
     onAccept: (data: UpdateTaskProps) => void;
@@ -71,12 +71,12 @@ function EditDialog({ open, onAccept, onCancel, taskNumber, isLoading, register,
             <DialogContent dividers>
                 <form onSubmit={handleSubmit(onAccept)} id='edit-form' className='flex flex-col gap-5 py-2'>
                     <LocaledTextField
-                        label={tr('taskNum')} 
-                        {...register("task_number", { required: true, valueAsNumber: true })} 
-                        required 
-                        fullWidth 
-                        error={!!errors.task_number} 
-                        helperText={errors.task_number?.message} 
+                        label={tr('taskNum')}
+                        {...register("task_number", { required: true, valueAsNumber: true })}
+                        required
+                        fullWidth
+                        error={!!errors.task_number}
+                        helperText={errors.task_number?.message}
                         type="number"
                     />
                     
@@ -87,8 +87,9 @@ function EditDialog({ open, onAccept, onCancel, taskNumber, isLoading, register,
                             rules={{ required: true }}
                             render={({ field }) => (
                                 <DateTimePicker
+                                    minDateTime={dayjs(field.value)}
                                     label={tr('expires')}
-                                    value={field.value ? dayjs(field.value) : null}
+                                    value={dayjs(field.value)}
                                     ampm={true}
                                     format='DD/MM/YYYY hh:mm a'
                                     onChange={(newValue) => field.onChange(newValue ? newValue.toISOString() : null)}

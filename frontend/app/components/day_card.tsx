@@ -28,7 +28,7 @@ import API from '@/app/utils/api.client';
 import { toast } from 'sonner';
 import React from 'react';
 
-type AttendanceDay = components['schemas']['AttendanceDays'];
+type AttendanceDay = components['schemas']['AttendanceDayResponse'];
 type DayCardProps = {
     day: AttendanceDay; 
     onDelete: (date: string) => void;
@@ -105,7 +105,7 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
             const { response, data } = await API.POST(`/api/organizer/attendance/{track_name}/days/`, { params: { path: { track_name: track } }, body: { day: dlgDate.date } });
             if (response.ok) {
                 setDlgDate(pre => ({ open: false, date: pre.date }));
-                setDays(pre => [...pre, data!])
+                setDays(pre => [...pre, data!]);
                 await revalidateTagName(`${track}_days`);
                 return await Promise.resolve(dlgDate.date);
             }

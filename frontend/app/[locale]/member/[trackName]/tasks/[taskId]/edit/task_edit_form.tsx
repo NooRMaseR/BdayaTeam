@@ -18,11 +18,11 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 type TaskActionsProps = {
-    task: components['schemas']['RecivedTask'];
+    task: components['schemas']['RecivedTaskMember'];
     track_name: string;
 }
 
-type TaskMemberSend = components['schemas']['editMemberSelfTaskRequest'];
+type TaskMemberSend = components['schemas']['MemberTaskUpdateRequest'] & {files?: string};
 
 export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
     const [isLoading, setIsloading] = useState<boolean>(false);
@@ -42,29 +42,28 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
         
         const promise = API.PUT('/api/member/edit-task/{sent_task_id}/', {
             params: {path: {sent_task_id: task.id}},
-            body: (() => {
+            body: {
+                notes: data.notes,
+                files: data.files ? Array.from(data.files) : []
+            },
+            bodySerializer(body) {
                 const fd = new FormData();
-                if (data.notes) fd.append('notes', data.notes);
+                if (body.notes) fd.append('notes',body.notes);
 
-                if (data.files) {
-                    Array.from(data.files).forEach(f => fd.append('file', f));
+                if (body.files && body.files.length > 0) {
+                    body.files.forEach(f => fd.append('files', f));
                 }
-                return fd as unknown as TaskMemberSend;
-            })()
+                return fd;
+            }
         });
 
         toast.promise(promise, {
             loading: tr('submiting'),
-            success: () => {
+            success() {
                 router.replace(`/member/${track_name}/tasks`);
                 return tr('taskSub');
             },
-            error: (err) => {
-                if (err instanceof Error && err.message === "EXPIRED") {
-                    return tr('taskSubEx');
-                }
-                return tr("taskSubError");
-            },
+            error: tr("taskSubError"),
             finally: () => setIsloading(false)
         });
     };
@@ -81,7 +80,7 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
                     </Typography>
                     
                     {!selectedFiles || selectedFiles.length === 0 ? (
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl hover:bg-slate-50 hover:border-blue-500 transition-colors cursor-pointer group">
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl dark:hover:bg-(--dark-color) hover:bg-slate-50 hover:border-blue-500 transition-colors cursor-pointer group">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <CloudUploadIcon className="w-8 h-8 mb-2 text-slate-400 group-hover:text-blue-500 transition-colors" />
                                 <Typography variant="body2" color="text.secondary">
@@ -96,7 +95,7 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
                             />
                         </label>
                     ) : (
-                        <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 flex flex-col gap-2">
+                        <div className="border border-slate-200 rounded-xl p-4 dark:bg-(--dark-color) bg-slate-50 flex flex-col gap-2">
                             <div className="flex justify-between items-center mb-2">
                                 <Typography variant="caption" fontWeight="bold" color="text.secondary" className="uppercase tracking-wider">
                                     {selectedFiles.length} File(s) Selected
@@ -107,7 +106,7 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
                             </div>
                             <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
                                 {Array.from(selectedFiles).map((file, i) => (
-                                    <div key={i} className="flex items-center gap-2 bg-white border border-slate-200 p-2 rounded-lg">
+                                    <div key={i} className="flex items-center gap-2 dark:bg-(--dark-color) bg-white border border-slate-200 p-2 rounded-lg">
                                         <AttachFileIcon fontSize="small" className="text-slate-400" />
                                         <Typography variant="body2" className="truncate flex-1 font-medium">
                                             {(file as unknown as File).name}
