@@ -1,5 +1,6 @@
 from abc import abstractmethod, ABCMeta
-from collections.abc import Iterable
+from collections.abc import AsyncIterable, Iterable
+
 from utils import serializer_encoder
 from typing import Any, Self
 from .models import Track
@@ -27,9 +28,19 @@ class BaseMSGSerializer[T](msgspec.Struct, frozen=True, metaclass=CombinedMetaCl
         return [cls.from_model_values(t) for t in models]
     
     @classmethod
+    async def afrom_queryset_values(cls, models: AsyncIterable[dict[str, Any]]) -> list[Self]:
+        "Converts a `QuerySet` or `list` of models to a `Struct`"
+        return [cls.from_model_values(t) async for t in models]
+    
+    @classmethod
     def from_queryset(cls, models: Iterable[T]) -> list[Self]:
         "Converts a `QuerySet` or `list` of models to a `Struct`"
         return [cls.from_model(t) for t in models]
+    
+    @classmethod
+    async def afrom_queryset(cls, models: AsyncIterable[T]) -> list[Self]:
+        "Converts a `QuerySet` or `list` of models to a `Struct`"
+        return [cls.from_model(t) async for t in models]
         
     def encode(self) -> bytes:
         return serializer_encoder.encode(self)

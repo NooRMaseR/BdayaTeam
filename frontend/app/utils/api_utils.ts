@@ -70,6 +70,11 @@ export const fetchWithCookies: typeof fetch = async (url, options) => {
         headers.set("Content-Type", "application/json");
     }
 
+    const cookieString = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+    if (cookieString) {
+        headers.set("Cookie", cookieString);
+    }
+
     if (token) {
         headers.set("Authorization", `Bearer ${token}`);
     }
@@ -88,13 +93,14 @@ export const fetchWithCookies: typeof fetch = async (url, options) => {
         credentials: "include",
     });
 
-
     const setCookieHeaders = response.headers.getSetCookie();
     if (setCookieHeaders && setCookieHeaders.length > 0) {
         setCookieHeaders.forEach((cookieStr) => {
             const parsed = parseCookie(cookieStr);
             if (parsed) {
-                cookieStore.set(parsed.name, parsed.value, parsed);
+                try {
+                    cookieStore.set(parsed.name, parsed.value, parsed);
+                } catch {}
             }
         });
     }

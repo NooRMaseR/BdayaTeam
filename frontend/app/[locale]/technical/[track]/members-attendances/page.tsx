@@ -26,7 +26,7 @@ export default async function MembersPage({ params }: TechnicalParams) {
 
   return (
     <BodyM>
-      <MembersGridTable rows={rows} columns={columns} columnGroupingModel={groupModel} track={track} forTech />
+      <MembersGridTable rows={rows} columns={columns} columnGroupingModel={groupModel} track={track} forTech disableWebSocket />
     </BodyM>
   )
 }

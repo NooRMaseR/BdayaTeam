@@ -14,7 +14,6 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from django.views.decorators.csrf import csrf_exempt
 from core.middleware import GraphQLAuthMiddleware
 from graphene_django.views import GraphQLView
@@ -23,18 +22,12 @@ from django.urls import path, include
 from django.contrib import admin
 
 
-urlpatterns = [
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/schema/swagger-ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
-    path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
-    path("api/organizer/", include("organizer.urls")),
-    path("api/technical/", include("technical.urls")),
-    path("api/member/", include("member.urls")),
-    path('api/admin/', admin.site.urls),
+urlpatterns = (
+    path('api/super/s/secure/admin/', admin.site.urls),
     path("api/", include("core.urls")),
-    path("api/graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True, middleware=[GraphQLAuthMiddleware()]))),
+    path("api/graphql/", csrf_exempt(GraphQLView.as_view(middleware=[GraphQLAuthMiddleware()]))),
     path('api/i18n/', include('django.conf.urls.i18n')),
-]
+)
 
 # if settings.DEBUG:
 #     from debug_toolbar.toolbar import debug_toolbar_urls

@@ -86,9 +86,11 @@
     }
     BdayaUser {
         id BigAutoField
+        attendance ForeignKey
         groups ManyToManyField
         logentry ForeignKey
         member OneToOneField
+        reciviedtask ForeignKey
         track ForeignKey
         user_permissions ManyToManyField
         email CharField

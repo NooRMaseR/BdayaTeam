@@ -15,7 +15,11 @@ import API from '@/app/utils/api.client';
 import { toast } from 'sonner';
 import React from 'react';
 
-type Settings = components['schemas']['SiteSettingsRequest'];
+type Settings = components['schemas']['SettingsResponse'];
+type OrganizerCanEditType = {
+    key: Settings['organizer_can_edit'][0];
+    label: string
+};
 
 export default function SettingsClient({ recivedSettings }: { recivedSettings: Settings }) {
     const tr = useTranslations('settingsPage');
@@ -39,12 +43,11 @@ export default function SettingsClient({ recivedSettings }: { recivedSettings: S
 
     const handleEditFieldsChange = (field: string, checked: boolean) => {
         setSettings(prev => {
-            const currentList = prev.organizer_can_edit || [];
             return {
                 ...prev,
                 organizer_can_edit: checked 
-                    ? [...new Set([...currentList, field])]
-                    : currentList.filter(s => s !== field)
+                    ? [...new Set([...prev.organizer_can_edit, field])] as OrganizerCanEditType['key'][]
+                    : prev.organizer_can_edit.filter(s => s !== field)
             };
         });
     }
@@ -75,17 +78,23 @@ export default function SettingsClient({ recivedSettings }: { recivedSettings: S
         setIsLoading(true);
         
         const submissionPromise = API.PUT("/api/organizer/settings/", {
-            body: (() => {
+            body: {
+                is_register_enabled: settings.is_register_enabled,
+                organizer_can_edit: settings.organizer_can_edit,
+                site_image: siteImageFile,
+                hero_image: heroImageFile
+            },
+            bodySerializer(body) {
                 const fd = new FormData();
-                if (isAdmin) fd.append("is_register_enabled", String(settings.is_register_enabled));
+                if (isAdmin) fd.append("is_register_enabled", String(body.is_register_enabled));
                 
-                settings.organizer_can_edit?.forEach(v => fd.append("organizer_can_edit", v));
+                body.organizer_can_edit?.forEach(v => v.trim() != '' && fd.append("organizer_can_edit", v));
                 
                 if (siteImageFile) fd.append("site_image", siteImageFile);
                 if (heroImageFile) fd.append("hero_image", heroImageFile);
                 
-                return fd as Settings;
-            })()
+                return fd;
+            }
         }).then(({ response, error }) => {
             if (!response.ok) throw error;
             return response;
@@ -99,9 +108,8 @@ export default function SettingsClient({ recivedSettings }: { recivedSettings: S
         });
     };
 
-    const editableFields = [
-        { key: 'code', label: tr('code') },
-        { key: 'name', label: tr('name') },
+    const editableFields: OrganizerCanEditType[] = [
+        { key: "name", label: tr('name') },
         { key: 'status', label: tr('status') },
         { key: 'track', label: tr('track') },
         { key: 'bonus', label: tr('bonus') },

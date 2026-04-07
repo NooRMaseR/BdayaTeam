@@ -18,11 +18,11 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 type TaskActionsProps = {
-    task: components['schemas']['Task'];
+    task: components['schemas']['TaskResponse'];
     track_name: string;
 }
 
-type TaskMemberSend = components['schemas']['task-member-inputRequest'];
+type TaskMemberSend = components['schemas']['TaskRequest'] & {file?: string};
 
 export default function TaskForm({ task, track_name }: TaskActionsProps) {
     const [isLoading, setIsloading] = useState<boolean>(false);
@@ -40,31 +40,40 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
     const sendTaskRequest = (data: TaskMemberSend) => {
         setIsloading(true);
         
-        const promise = API.POST('/api/member/tasks/', {
-            body: (() => {
-                const fd = new FormData();
-                fd.append('task_id', data.task_id.toString());
-                if (data.notes) fd.append('notes', data.notes);
+        const promise = async () => {
+            const { response, error } = await API.POST('/api/member/tasks/', {
+                body: {
+                    task_id: data.task_id,
+                    notes: data.notes,
+                    files: data.file ? Array.from(data.file) : []
+                },
+                bodySerializer(body) {
+                    const fd = new FormData();
+                    fd.append('task_id', JSON.stringify(body.task_id));
+                    
+                    if (body.notes)
+                        fd.append('notes', JSON.stringify(body.notes));
 
-                if (data.file) {
-                    Array.from(data.file).forEach(f => fd.append('file', f));
+                    if (body.files && body.files.length > 0) {
+                        body.files.forEach(f => fd.append('files', f));
+                    }
+                    return fd;
                 }
-                return fd as unknown as TaskMemberSend;
-            })()
-        });
+            });
+
+            if (response.ok) {
+                return await Promise.resolve();
+            }
+            return await Promise.reject(error);
+        };
 
         toast.promise(promise, {
             loading: tr('submiting'),
-            success: () => {
+            success() {
                 router.replace(`/member/${track_name}/tasks`);
                 return tr('taskSub');
             },
-            error: (err) => {
-                if (err instanceof Error && err.message === "EXPIRED") {
-                    return tr('taskSubEx');
-                }
-                return tr("taskSubError");
-            },
+            error: tr("taskSubError"),
             finally: () => setIsloading(false)
         });
     };
@@ -81,7 +90,7 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                     </Typography>
                     
                     {!selectedFiles || selectedFiles.length === 0 ? (
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl hover:bg-slate-50 hover:border-blue-500 transition-colors cursor-pointer group">
+                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl dark:hover:bg-(--dark-color) hover:bg-slate-50 hover:border-blue-500 transition-colors cursor-pointer group">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <CloudUploadIcon className="w-8 h-8 mb-2 text-slate-400 group-hover:text-blue-500 transition-colors" />
                                 <Typography variant="body2" color="text.secondary">
@@ -96,7 +105,7 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                             />
                         </label>
                     ) : (
-                        <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 flex flex-col gap-2">
+                        <div className="border border-slate-200 rounded-xl p-4 dark:bg-(--dark-color) bg-slate-50 flex flex-col gap-2">
                             <div className="flex justify-between items-center mb-2">
                                 <Typography variant="caption" fontWeight="bold" color="text.secondary" className="uppercase tracking-wider">
                                     {selectedFiles.length} File(s) Selected
@@ -107,7 +116,7 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                             </div>
                             <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
                                 {Array.from(selectedFiles).map((file, i) => (
-                                    <div key={i} className="flex items-center gap-2 bg-white border border-slate-200 p-2 rounded-lg">
+                                    <div key={i} className="flex items-center gap-2 dark:bg-(--dark-color) bg-white border border-slate-200 p-2 rounded-lg">
                                         <AttachFileIcon fontSize="small" className="text-slate-400" />
                                         <Typography variant="body2" className="truncate flex-1 font-medium">
                                             {(file as unknown as File).name}

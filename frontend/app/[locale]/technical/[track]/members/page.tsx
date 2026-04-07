@@ -15,11 +15,11 @@ export async function getTechMemberGrid(track: string): Promise<GetMemberGridTyp
   const [tr, membersRes, tasksRes] = await Promise.all(
     [
       getTranslations('showMembersPage'),
-      API.GET(`/api/technical/members/{track_name}/with-tasks`, { params: { path: { track_name: track } } }),
+      API.GET(`/api/technical/members/{track_name}/with-tasks/`, { params: { path: { track_name: track } } }),
       API.GET('/api/technical/tasks/')
     ]
   );
-
+  
   if (!membersRes.response.ok) {
     return Promise.reject(membersRes.error);
   };
@@ -40,6 +40,7 @@ export async function getTechMemberGrid(track: string): Promise<GetMemberGridTyp
     member.tasks.forEach(recived_task => {
       row[`task_deg_${recived_task.task.id}`] = recived_task.degree;
       row[`task_notes_${recived_task.task.id}`] = recived_task.technical_notes;
+      row[`task_signed_by_${recived_task.task.id}`] = recived_task.signed_by?.username;
     });
 
     return row;
@@ -74,6 +75,16 @@ export async function getTechMemberGrid(track: string): Promise<GetMemberGridTyp
           filterable: false,
           sortable: false,
           editable: true
+        },
+        {
+          field: `task_signed_by_${task.id}`,
+          headerName: tr('signed_by'),
+          width: 170,
+          align: "center",
+          headerAlign: "center",
+          filterable: false,
+          sortable: false,
+          editable: false
         }
       ];
     }) || [])
@@ -82,7 +93,7 @@ export async function getTechMemberGrid(track: string): Promise<GetMemberGridTyp
   const columnGroupingModel: GridColumnGroupingModel = tasksRes.data?.map((task) => ({
     groupId: task.id.toString(),
     headerName: tr('task', {number: task.task_number}),
-    children: [{ field: `task_deg_${task.id}` }, { field: `task_notes_${task.id}` }],
+    children: [{ field: `task_deg_${task.id}` }, { field: `task_notes_${task.id}` }, { field: `task_signed_by_${task.id}` }],
     headerAlign: "center",
   })) || [];
   

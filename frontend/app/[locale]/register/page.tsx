@@ -33,10 +33,7 @@ export default async function RegisterPage() {
       serverGraphQL<SeeCanRegisterQuery>(CAN_REGISTER)
     ]
   );
-
-  if (resTracks.response.ok) {
-    return <RegisterForm tracks={resTracks.data || []} canRegister={canRegister.data.canRegister} />
-  }
-  return <RegisterForm tracks={[]} canRegister={false} />
+  
+  return <RegisterForm tracks={resTracks.data ?? []} canRegister={canRegister.data.canRegister} />
 }
 

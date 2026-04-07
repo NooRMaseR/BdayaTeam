@@ -61,7 +61,7 @@ export default async function OrganizerPage({params}: {params: Promise<{locale: 
                     desc={tr('settingsDesc')}
                 />
                 <NavigationCard
-                    url={`${process.env.NEXT_PUBLIC_API_URL}/api/admin/`}
+                    url={`${process.env.NEXT_PUBLIC_API_URL}/api/super/s/secure/admin/`}
                     title={tr('admin')}
                     desc={tr('adminDesc')}
                 />

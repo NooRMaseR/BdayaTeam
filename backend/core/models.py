@@ -45,7 +45,7 @@ class Track(models.Model):
     ar_description = models.TextField()
     image = ProcessedImageField(upload_to="public/tracks", format="webP") # type: ignore
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
     
 class TrackCounter(models.Model):

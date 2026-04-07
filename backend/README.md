@@ -33,6 +33,7 @@ CREATE USER root WITH PASSWORD 'root123';
 ALTER ROLE root SET client_encoding TO 'utf8';
 ALTER ROLE root SET default_transaction_isolation TO 'read committed';
 ALTER ROLE root SET timezone TO 'Africa/Cairo';
+ALTER USER root CREATEDB;
 
 <!-- 4. add the user permissions -->
 GRANT ALL PRIVILEGES ON DATABASE teambdayadb TO root;
@@ -65,9 +66,9 @@ DATABASES = {
         'PORT': os.getenv("DB_PORT"),
         'OPTIONS': {
             "pool": {
-                "min_size": 2,
-                "max_size": 10,
-                "timeout": 30
+                "min_size": 5,
+                "max_size": 18,
+                "timeout": 20
             }
         }
     }
@@ -140,20 +141,22 @@ uv run manage.py createsuperuser
 run the server by using this command
 
 ```bash
-uv run gunicorn BdayaTeam.wsgi --workers 4 --max-requests 1000 --max-requests-jitter 2500 --worker-connections 1000 --timeout 30 --keep-alive 2 --worker-class gevent
+uv run gunicorn \
+        --workers 4 \
+        --worker-connections 600 \
+        --timeout 30 \
+        --keep-alive 2 \
+        --worker-class uvicorn.workers.UvicornWorker \
+        --forwarded-allow-ips="*" \
+        --bind unix:/run/gunicorn.sock \
+        BdayaTeam.asgi:application
 ```
 
 **`--worker`** how many wokrers would you need
 
-**`--max-requests`** how many requests to restart a worker after, this helps avoid memory leaks
-
-**`--max-requests-jitter`** adds a random number to each worker to they don't restart all workers at the same time
-
 **`--worker-connections`** how many coonections to accept for each worker
 
-to open `swagger-UI` open this url `http://127.0.0.1:8000/api/schema/swagger-ui/`
-
-to open the `admin panel` open this url `http://127.0.0.1:8000/admin/`
+to open `openApi` open this url `http://localhost:8000/api/docs`
 
 ## Redis
 
@@ -254,24 +257,6 @@ ListenStream=/run/gunicorn.sock
 WantedBy=sockets.target
 ```
 
-then create a `gunicorn.service`
-
-```ini
-[Unit]
-Description=gunicorn daemon
-Requires=gunicorn.socket
-After=network.target
-
-[Service]
-User=kali
-Group=www-data
-WorkingDirectory=/home/kali/BdayaTeam/backend/
-ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/gunicorn BdayaTeam.wsgi --workers 4 --max-requests 1000 --max-requests-jitter 100 --worker-connections 2500 --timeout 30 --keep-alive 2 --worker-class gevent --bind unix:/run/gunicorn.sock
-
-[Install]
-WantedBy=multi-user.target
-```
-
 then start the `systemctl`
 
 ```bash
@@ -285,7 +270,7 @@ you can check the status after that
 sudo systemctl status gunicorn
 ```
 
-then create a symlink file for `nginx_teamDdaya.conf` in this location like this
+create a symlink file for `nginx_teamDdaya.conf` in this location like this
 
 ```bash
 sudo ln -s /home/kali/BdayaTeam/nginx_teamBdaya.conf /etc/nginx/sites-enabled/nginx_teamBdaya.conf
@@ -419,6 +404,14 @@ add these line at the bottom
 ```ini
 * soft nofile 5000
 * hard nofile 5000
+```
+
+now open `/etc/sysctl.conf` and add these
+
+```ini
+vm.overcommit_memory = 1
+net.core.somaxconn=4096
+net.core.netdev_max_backlog=4096
 ```
 
 ## **Enjoy**

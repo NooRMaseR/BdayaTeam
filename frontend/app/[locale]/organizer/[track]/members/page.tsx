@@ -69,6 +69,7 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
         member.attendances.forEach(att => {
             row[`${att.date.day}_date`] = att.status;
             row[`${att.date.day}_excuse`] = att.excuse_reason;
+            row[`${att.date.day}_by`] = att.by.username;
         });
 
         return row;
@@ -77,7 +78,7 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
     const tracksNameArray: string[] = tracksRes.data?.map((track) => track.name) || [];
 
     const columns: GridColDef[] = [
-        { align: "center", headerAlign: "center", field: "code", headerName: tr("code"), editable: editableFields.data.allSettings?.organizerCanEdit.includes("code"), pinnable: true, cellClassName: 'sticky left-0 z-3 dark:bg-(--dark-color) bg-white' },
+        { align: "center", headerAlign: "center", field: "code", headerName: tr("code"), editable: false, pinnable: true, cellClassName: 'sticky left-0 z-3 dark:bg-(--dark-color) bg-white' },
         { field: "name", headerName: tr("name"), width: 200, editable: editableFields.data.allSettings?.organizerCanEdit.includes("name") },
         { align: "center", headerAlign: "center", field: "status", headerName: tr("status"), width: 100, editable: editableFields.data.allSettings?.organizerCanEdit.includes("status"), type: 'singleSelect', valueOptions: Object.values(MemberStatus).map((status) => ({ label: tr(status), value: status })) },
         { align: "center", headerAlign: "center", field: "bonus", headerName: tr("bonus"), editable: editableFields.data.allSettings?.organizerCanEdit.includes("bonus"), type: "number" },
@@ -105,6 +106,15 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
                     headerAlign: "center",
                     filterable: false,
                     editable: !safe
+                },
+                {
+                    field: `${day.day}_by`,
+                    headerName: tr("by"),
+                    width: 170,
+                    align: "center",
+                    headerAlign: "center",
+                    filterable: false,
+                    editable: false
                 }
             ];
         }) || [])
@@ -113,7 +123,7 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
     const columnGroupingModel: GridColumnGroupingModel = daysRes.data?.map((day) => ({
         groupId: day.day,
         headerName: dtr(new Date(day.day).toLocaleDateString('en-US', { weekday: 'long' })),
-        children: [{ field: `${day.day}_date` }, { field: `${day.day}_excuse` }],
+        children: [{ field: `${day.day}_date` }, { field: `${day.day}_excuse` }, { field: `${day.day}_by` }],
         headerAlign: "center",
     })) || [];
 
@@ -131,6 +141,7 @@ export default async function OrganizerMembersPage({ params }: Props) {
         ({ rows, columns, groupModel } = await getOrgMemberGrid(track));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
+        console.error("error", e);
         return <Dialog open>
             <DialogTitle>Opps!!</DialogTitle>
             <DialogContent>
