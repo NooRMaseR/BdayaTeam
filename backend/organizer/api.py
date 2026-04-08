@@ -218,7 +218,7 @@ class SettingsController:
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
     @route.put('', response={204: None})
-    async def update_settings(self, request: HttpRequest, payload: Form[SettingsRequest], site_image: File[UploadedFile] | None = None, hero_image: File[UploadedFile] | None = None):
+    async def update_settings(self, request: HttpRequest, payload: Form[SettingsRequest], site_image: File[UploadedFile] | None = File(None), hero_image: File[UploadedFile] | None = File(None)): # type: ignore
         
         @sync_to_async
         def safe_update_settings() -> None:
@@ -229,7 +229,7 @@ class SettingsController:
             
             if payload.organizer_can_edit != None:
                 obj.organizer_can_edit = payload.organizer_can_edit # type: ignore
-                
+            
             if site_image:
                 obj.site_image = site_image # type: ignore
             

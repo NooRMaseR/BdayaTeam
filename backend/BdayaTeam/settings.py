@@ -35,7 +35,7 @@ DEBUG = False
 ALLOWED_HOSTS = (
     "localhost",
     "127.0.0.1",
-    "tropical-batman-emissions-asia.trycloudflare.com"
+    "available-barrel-variation-feelings.trycloudflare.com"
 )
 
 # Application definition
@@ -340,13 +340,13 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
-    "https://tropical-batman-emissions-asia.trycloudflare.com",
+    "https://available-barrel-variation-feelings.trycloudflare.com",
 )
 
 CSRF_TRUSTED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
-    "https://tropical-batman-emissions-asia.trycloudflare.com",
+    "https://available-barrel-variation-feelings.trycloudflare.com",
 )
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"

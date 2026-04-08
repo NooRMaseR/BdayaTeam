@@ -1,8 +1,8 @@
 import "./globals.css";
-import type { Metadata } from "next";
 import API from "../utils/api.server";
 import Header from "../components/header";
 import { getMessages } from 'next-intl/server';
+import type { Metadata, Viewport } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import AuthLoader from "../components/authLoader";
 import { NextIntlClientProvider } from 'next-intl';
@@ -34,6 +34,14 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#292929' },
+  ],
+  maximumScale: 1,
+};
+
 export function generateStaticParams() {
   return [
     { locale: 'en' },
@@ -52,8 +60,8 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
 
   const messages = await getMessages({ locale });
   const [authResponse, imagesResponse] = await Promise.allSettled([
-      API.GET("/api/test-auth/"),
-      serverGraphQL<SettingsImagesQuery>(GET_IMAGES_SETTINGS)
+    API.GET("/api/test-auth/"),
+    serverGraphQL<SettingsImagesQuery>(GET_IMAGES_SETTINGS)
   ]);
 
   const authData = authResponse.status === "fulfilled" && authResponse.value.data ? authResponse.value.data : null;
@@ -61,6 +69,10 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
 
   return (
     <html lang={locale} dir={locale === 'ar' ? "rtl" : 'ltr'} suppressHydrationWarning>
+      <head>
+        <link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="manifest" href={`/manifest.json?role=${authData?.role}&track=${authData?.track?.name}`} />
+      </head>
       <body className="color-trans dark:bg-(--dark-color)">
         <LoadingProvider>
           <RegisterNextThemeProvider attribute='class' defaultTheme="system" enableSystem>

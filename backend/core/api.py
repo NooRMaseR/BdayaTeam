@@ -310,7 +310,7 @@ class TracksController:
         return HttpResponse(encoded_data, content_type="application/json")
     
     @route.post('', response={201: None, 400: api_schemas.DetailError})
-    async def create(self, payload: Form[api_schemas.TrackCreateSchema], image: File[UploadedFile]):
+    async def create(self, payload: Form[api_schemas.TrackCreateSchema], image: UploadedFile = File(...)): # type: ignore
         
         @sync_to_async
         def save_track():
