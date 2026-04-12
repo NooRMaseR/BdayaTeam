@@ -35,10 +35,10 @@ export default function AddTaskPage() {
         toast.promise(submitPromise, {
             loading: tr('creating'),
             success: (num) => tr('taskCreated', { num }),
-            error: (errorsFound: Record<string, string[]>) => {
+            error: (errorsFound: Record<string, string>) => {
                 Object.entries(errorsFound || {}).forEach(([key, val]) => {
                     if (['task_number', 'expires_at', 'description'].includes(key)) {
-                        setError(key as keyof FormCreateTask, { message: val[0] });
+                        setError(key as keyof FormCreateTask, { message: val });
                     }
                 });
                 return tr('error');

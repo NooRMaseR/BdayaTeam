@@ -4,6 +4,7 @@ import SeeProfileCard from "./see_profile_card";
 import { getTranslations } from "next-intl/server";
 import { fetchSiteImage } from "@/app/utils/api_utils";
 import NavigationCard from "../../../components/navigation_card";
+import AskNotificationButton from "@/app/components/notification_button";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [tr, res] = await Promise.all(
@@ -39,6 +40,7 @@ export default async function TechnicalPage({ params }: TechnicalParams) {
   );
   return (
     <BodyM>
+      <AskNotificationButton />
       <div className="flex justify-center items-center min-h-[calc(100vh-105px)] flex-wrap gap-6">
         <NavigationCard
           url={`${track}/tasks`}

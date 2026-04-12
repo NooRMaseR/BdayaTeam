@@ -81,8 +81,8 @@ export default function SettingsClient({ recivedSettings }: { recivedSettings: S
             body: {
                 is_register_enabled: settings.is_register_enabled,
                 organizer_can_edit: settings.organizer_can_edit,
-                site_image: siteImageFile,
-                hero_image: heroImageFile
+                site_image: siteImageFile as unknown as string,
+                hero_image: heroImageFile as unknown as string
             },
             bodySerializer(body) {
                 const fd = new FormData();

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && cp -r ./public ./.next/standalone/",
+    "build:pack": "next build --webpack && cp -r ./public ./.next/standalone/",
     "start": "next start",
     "alone": "bun run --bun .next/standalone/server.js",
     "lint": "eslint"

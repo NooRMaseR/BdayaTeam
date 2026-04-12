@@ -1,19 +1,13 @@
-import { fetchSiteImage, serverGraphQL } from '../../utils/api_utils';
 import type { SeeCanRegisterQuery } from '../../generated/graphql';
 import { CAN_REGISTER } from '../../utils/graphql_helpers';
+import { serverGraphQL } from '../../utils/api_utils';
 import { fetchTracks } from '../../utils/api.server';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
 import RegisterForm from './form';
 
 export async function generateMetadata(): Promise<Metadata> { 
-  const [tr, res] = await Promise.all(
-    [
-      getTranslations('registerPage'),
-      fetchSiteImage()
-    ]
-  );
-  const site = res.data.allSettings?.siteImage;
+  const tr = await getTranslations('registerPage');
 
   return {
     title: tr('metaTitle'),
@@ -21,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: tr('metaTitle'),
       description: tr('metaDesc'),
-      images: site ? [`${process.env.NEXT_PUBLIC_API_URL}${process.env.NEXT_PUBLIC_MEDIA_URL}${site}`] : undefined,
+      images: ["/favicon.svg"],
     },
   }
 }

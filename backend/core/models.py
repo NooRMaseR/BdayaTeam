@@ -88,3 +88,12 @@ class BdayaUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self) -> str:
         return self.username
+
+class PushSubscription(models.Model):
+    user = models.ForeignKey(BdayaUser, on_delete=models.CASCADE, related_name="push_subscriptions")
+    endpoint = models.URLField(max_length=500)
+    auth = models.CharField(max_length=100)
+    p256dh = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ("user", "endpoint")
