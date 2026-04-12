@@ -12,7 +12,7 @@ const withNextIntl = createNextIntlPlugin();
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
-  allowedDevOrigins: ['available-barrel-variation-feelings.trycloudflare.com'],
+  allowedDevOrigins: ['associates-qld-nasa-logo.trycloudflare.com'],
   output: "standalone",
   images: {
     remotePatterns: [

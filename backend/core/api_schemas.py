@@ -93,3 +93,8 @@ class TestAuthResponse(Schema):
     is_admin: bool
     track: SimpleTrackSchema | None
     settings: SettingsImagesResponse
+
+class SubscriptionRequest(Schema):
+    endpoint: str
+    auth: str
+    p256dh: str

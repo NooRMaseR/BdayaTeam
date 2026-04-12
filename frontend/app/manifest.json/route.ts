@@ -14,7 +14,7 @@ export async function GET(request: Request) {
         start_url: '/',
         display: 'standalone',
         theme_color: "#193cb8",
-        background_color: "#ffffff",
+        background_color: "#292929",
         icons: [
             {
                 src: '/favicon-96x96.png',

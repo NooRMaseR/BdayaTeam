@@ -2,6 +2,7 @@ from core.models import Track
 from core.api_schemas import ErrorResponse
 from core.serializers import TrackNameOnlyMSGSerializer
 from core.permissions import NinjaIsTechnical, NinjaIsTechnicalOrMember
+from core.tasks import send_notification_to_track_members, send_notification_to_user
 
 from member.models import Member, ReciviedTask
 from member.caches import member_profile_cache_key
@@ -100,7 +101,14 @@ class TechnicalTasksController:
             track=TRACK
         )
         encoded_data = TaskMSGSerializer.from_model(created_task).encode()
-    
+        
+        send_notification_to_track_members(
+            track_id=TRACK.pk,
+            title="New Task!",
+            body=f"Task {created_task.task_number} is now avilable",
+            url=f"/member/{TRACK.name}/tasks/{created_task.pk}"
+        )
+        
         cache.delete(technical_tasks_cache_key(TRACK.name))
         cache.delete_pattern(f"member_tasks:t{TRACK.name}*") # type: ignore
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE, status=status.HTTP_201_CREATED)
@@ -129,32 +137,39 @@ class TechnicalTasksController:
     
     @route.put('/{task_id}/', response={204: None, 400: ErrorResponse})
     async def update_task(self, request: HttpRequest, task_id: int, payload: TaskCreateRequest):
+        TRACK: Track = request.user.track # type: ignore
+        data_to_update: set[str] = set()
 
-        data_to_update: dict = {}
-        has_data: bool = False
+        TASK = await aget_object_or_404(Task, id=task_id)
+        
+        if payload.task_number:
+            data_to_update.add("task_number")
+            TASK.task_number = payload.task_number
 
-        if payload.task_number: # type: ignore
-            data_to_update["task_number"] = payload.task_number
-            has_data = True
+        if payload.expires_at:
+            data_to_update.add("expires_at")
+            TASK.expires_at = payload.expires_at
 
-        if payload.expires_at:  # type: ignore
-            data_to_update["expires_at"] = payload.expires_at
-            has_data = True
+        if payload.description:
+            data_to_update.add("description")
+            TASK.description = payload.description
 
-        if payload.description:  # type: ignore
-            data_to_update["description"] = payload.description
-            has_data = True
-
-        if not has_data:
+        if not data_to_update:
             return status.HTTP_400_BAD_REQUEST, {"details": "nothing to update"}
         
         try:
-            await Task.objects.filter(id=task_id).aupdate(**data_to_update)
+            await TASK.asave(update_fields=data_to_update)
             await cache.adelete_many(
                 [
                     task_view_cache_key(task_id),
-                    technical_tasks_cache_key(request.user.track.name) # type: ignore
+                    technical_tasks_cache_key(TRACK.name)
                 ]
+            )
+            send_notification_to_track_members(
+                track_id=TRACK.name,
+                title="Task Update",
+                body=f"Task {TASK.task_number} has been updated",
+                url=f"/member/{TRACK.name}/tasks/{task_id}"
             )
             return status.HTTP_204_NO_CONTENT, {}
         except Exception as e:
@@ -213,13 +228,21 @@ class TechnicalTasksController:
     @route.post("/{task_id}/recived/", response={204: None, 400: ErrorResponse})
     async def sign_task(self, request: HttpRequest, task_id: int, payload: TaskSignRequest):
         track: Track = request.user.track # type: ignore
-        recived_task = await aget_object_or_404(ReciviedTask.objects.select_related('task', 'member'), id=task_id, track=track)
+        recived_task = await aget_object_or_404(ReciviedTask.objects.select_related('task', 'member', 'member__bdaya_user'), id=task_id, track=track)
+        
         try:
             await ReciviedTask.objects.filter(id=recived_task.pk).aupdate(
                 degree=payload.degree,
                 technical_notes=payload.technical_notes,
                 signed=True,
                 signed_by=request.user
+            )
+            
+            await send_notification_to_user(
+                user_id=recived_task.member.bdaya_user.pk,
+                title=f"Task {recived_task.task.task_number} Signed",
+                body=payload.technical_notes,
+                url=f"/profile/{recived_task.member.code}"
             )
             
             await cache.adelete_many(

@@ -11,9 +11,9 @@ from organizer.models import SiteSetting
 
 from technical.api import TechnicalMembersController, TechnicalTasksController
 
+from .middleware import AsyncCookiesJWTAuth, AsyncSafeThrottle, RawJsonMSGRenderer
+from .models import BdayaUser, PushSubscription, Track, TrackCounter, UserRole
 from .serializers import TrackMSGSerializer, TrackNameOnlyMSGSerializer
-from .middleware import AsyncCookiesJWTAuth, RawJsonMSGRenderer
-from .models import BdayaUser, Track, TrackCounter, UserRole
 from .permissions import NinjaIsOrganizer, NinjaIsSuperUser
 from .caches import TRACKS_CACHE_KEY, track_cache_key
 from .tasks import send_member_email
@@ -29,7 +29,6 @@ from django.conf import settings
 from django.contrib import auth
 
 from ninja_extra import NinjaExtraAPI, api_controller, route, status
-from ninja_extra.throttling import AnonRateThrottle
 from ninja_extra.permissions import AllowAny
 from ninja import File, Form, UploadedFile
 
@@ -94,7 +93,7 @@ def create_member_transaction(payload: api_schemas.RegisterRequest) -> Member:
 @api_controller('', tags=['Auth'], permissions=[AllowAny])
 class AuthController:
 
-    @route.post("/login/", throttle=AnonRateThrottle("10/1h"), auth=None, response={200: api_schemas.LoginResponse, 400: api_schemas.ErrorResponse, 429: api_schemas.SingleErrorResponse})
+    @route.post("/login/", throttle=AsyncSafeThrottle("10/1h"), auth=None, response={200: api_schemas.LoginResponse, 400: api_schemas.ErrorResponse, 429: api_schemas.SingleErrorResponse})
     async def login(self, request: HttpRequest, payload: api_schemas.LoginRequest):
         
         user: BdayaUser | None = await auth.aauthenticate(request, email=payload.email, password=payload.password) # type: ignore
@@ -153,7 +152,7 @@ class AuthController:
         response.delete_cookie("refresh_token")
         return status.HTTP_204_NO_CONTENT, {}
   
-    @route.post("/register/", throttle=AnonRateThrottle("10/1h"), auth=None, response={201: api_schemas.RegisterResponse, 400: dict[str, str], 422: api_schemas.PydanticErrorResponse, 429: api_schemas.SingleErrorResponse})
+    @route.post("/register/", throttle=AsyncSafeThrottle("10/1h"), auth=None, response={201: api_schemas.RegisterResponse, 400: dict[str, str], 422: api_schemas.PydanticErrorResponse, 429: api_schemas.SingleErrorResponse})
     async def register(self, payload: api_schemas.RegisterRequest):
         errors: dict[str, str] = {}
         email_exists, phone_exists, collage_code_exists = await asyncio.gather(
@@ -286,6 +285,18 @@ class AuthController:
         csrf.get_token(request)
         
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
+
+    @route.post("/notifications/subscribe/", response={204: None})
+    async def save_subscription(self, request: HttpRequest, payload: api_schemas.SubscriptionRequest):
+        await PushSubscription.objects.aupdate_or_create(
+            user=request.user,
+            endpoint=payload.endpoint,
+            defaults={
+                "auth": payload.auth,
+                "p256dh": payload.p256dh
+            }
+        )
+        return 204, {}
 
 @api_controller("/tracks/", tags=['Track'], permissions=[NinjaIsOrganizer])
 class TracksController:

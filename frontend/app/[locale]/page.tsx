@@ -5,23 +5,17 @@ import Container from '@mui/material/Container';
 import { fetchTracks } from '../utils/api.server';
 import NavButtons from '../components/nav_buttons';
 import { getTranslations } from 'next-intl/server';
+import { serverGraphQL } from '../utils/api_utils';
 import NormalAnimation from '../components/animations';
 import NavigationCard from '../components/navigation_card';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import type { SettingsHeroImageQuery } from '../generated/graphql';
-import { fetchSiteImage, serverGraphQL } from '../utils/api_utils';
 import { GET_HERO_IMAGE_SETTINGS } from '../utils/graphql_helpers';
 
 export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> { 
-  const [tr, res] = await Promise.all(
-    [
-      getTranslations('homePage'),
-      fetchSiteImage()
-    ]
-  );
-  const site = res.data.allSettings?.siteImage;
+  const tr = await getTranslations('homePage');
 
   return {
     title: tr('metaTitle'),
@@ -30,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: tr('metaTitle'),
       description: tr('metaDesc'),
-      images: site ? [`${process.env.NEXT_PUBLIC_API_URL}${process.env.NEXT_PUBLIC_MEDIA_URL}${site}`] : undefined,
+      images: ["/favicon.svg"],
     },
   }
 }

@@ -1,3 +1,5 @@
+import asyncio
+
 from django.utils.translation import gettext_lazy as _
 from django.http import HttpRequest, HttpResponse
 from django.db import IntegrityError, transaction
@@ -25,6 +27,7 @@ from ninja import File, Form, UploadedFile
 from core.permissions import NinjaIsMember
 from core.api_schemas import ErrorResponse
 from core.models import Track
+from core.tasks import send_notification_to_track_technicals
 
 from .api_schemas import MemberProfileResponse, MemberTaskUpdateRequest, RecivedTaskMember, TaskRequest, TaskResponse
 from .serializers import MemberProfileMSGSerializer, RecivedTaskMSGSerializer
@@ -116,7 +119,7 @@ class TasksController:
         
         if status_code != 201:
             return status_code, details
-             
+        
         await cache.adelete_many(
             [
                 tasks_cache_key(TRACK.name, request.user.id), # type: ignore
@@ -131,17 +134,25 @@ class TasksController:
         channel_layer = get_channel_layer()
         group_name = f"technical_{TRACK.name.replace(' ', '_')}_notifications"
         
-        await channel_layer.group_send( # type: ignore
-            group_name,
-            {
-                "type": "broadcast_technical",
-                "data": {
-                    "message": _("Member {username} sent task {task_number}").format(
-                        username= request.user.username,
-                        task_number= task.task_number
-                    )
+        await asyncio.gather(
+            channel_layer.group_send( # type: ignore
+                group_name,
+                {
+                    "type": "broadcast_technical",
+                    "data": {
+                        "message": _("Member {username} sent task {task_number}").format(
+                            username= request.user.username,
+                            task_number= task.task_number
+                        )
+                    }
                 }
-            }
+            ),
+            send_notification_to_track_technicals(
+                track_id=TRACK.pk,
+                title=f"{request.user.username} - {member.code}",
+                body=f"Sent Task {task.task_number}",
+                url=f"/technical/{TRACK.name}/tasks/{task.pk}"
+            )
         )
         return status_code, details
 

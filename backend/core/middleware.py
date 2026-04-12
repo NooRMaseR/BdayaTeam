@@ -18,6 +18,7 @@ from .models import BdayaUser
 
 from ninja.renderers import BaseRenderer as NinjaBaseRenderer
 from ninja_extra.security import AsyncAPIKeyCookie
+from ninja.throttling import AnonRateThrottle
 
 class GraphQLAuthMiddleware:
 
@@ -181,4 +182,9 @@ class RawJsonMSGRenderer(NinjaBaseRenderer):
             return data
             
         return serializer_encoder.encode(data)
-    
+
+
+class AsyncSafeThrottle(AnonRateThrottle):
+    def get_cache_key(self, request, *args, **kwargs) -> str:
+        ident = self.get_ident(request)
+        return self.cache_format % {'scope': self.scope, 'ident': ident}

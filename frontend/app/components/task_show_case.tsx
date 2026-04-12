@@ -47,7 +47,7 @@ const Transition = React.forwardRef(function Transition(
 
 export default function TaskShowCase({ open, task, onSuccess, onClose, editable = true }: TaskShowCaseProps) {
     const tr = useTranslations('taskPage');
-    const { register, handleSubmit } = useForm<SignTask>();
+    const { register, handleSubmit, reset } = useForm<SignTask>();
     const onCloseRef = React.useRef(onClose);
 
     React.useEffect(() => {
@@ -88,6 +88,7 @@ export default function TaskShowCase({ open, task, onSuccess, onClose, editable 
         toast.promise(submissionPromise, {
             loading: tr('signing'),
             success: () => {
+                reset();
                 if (onSuccess) onSuccess(task.id);
                 return tr('signed');
             },

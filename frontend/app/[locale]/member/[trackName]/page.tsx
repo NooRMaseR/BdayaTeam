@@ -1,3 +1,4 @@
+import AskNotificationButton from '@/app/components/notification_button';
 import { fetchSiteImage, serverGraphQL } from '@/app/utils/api_utils';
 import type { Get_Member_CodeQuery } from '@/app/generated/graphql';
 import { GET_MEMBER_CODE } from '@/app/utils/graphql_helpers';
@@ -44,6 +45,7 @@ export default async function MemberTrackPage({ params }: ParamsProps ) {
     
     return (
         <BodyM>
+            <AskNotificationButton />
             <div className="flex justify-center items-center min-h-[calc(100vh-105px)] flex-wrap gap-6">
                 <NavigationCard
                     url={`/profile/${codeRes.data.member?.code}`}

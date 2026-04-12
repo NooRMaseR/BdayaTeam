@@ -11,7 +11,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 
-export async function getTechMemberGrid(track: string): Promise<GetMemberGridType> {
+async function getTechMemberGrid(track: string): Promise<GetMemberGridType> {
   const [tr, membersRes, tasksRes] = await Promise.all(
     [
       getTranslations('showMembersPage'),
