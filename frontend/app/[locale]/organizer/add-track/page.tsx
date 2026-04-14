@@ -1,6 +1,5 @@
 'use client';
 
-
 import LocaledTextField from '@/app/components/localed_textField';
 import type { components } from '@/app/generated/api_types';
 import { revalidateTracks } from '@/app/utils/api_utils';
@@ -21,7 +20,7 @@ export default function AddTrackPage() {
     const [trackPreviewImage, setTrackPreviewImage] = useState<string | null>(null);
     const [trackFormImage, setTrackFormImage] = useState<File | null>(null);
     const [isLoading, setIsloading] = useState<boolean>(false);
-    const validData = ["name", "en_description", "ar_description", "prefix", 'image'] as const;
+    const validFields = ["name", "en_description", "ar_description", "prefix", 'image'] as const;
     const tr = useTranslations('createTrackPage');
 
 
@@ -37,20 +36,22 @@ export default function AddTrackPage() {
     const onSubmit = (data: CreateTrack) => {
         setIsloading(true);
         toast.promise(async () => {
-            const formData = new FormData();
-            formData.set("image", trackFormImage as Blob)
-            formData.set("name", data.name)
-            formData.set("en_description", data.en_description)
-            formData.set("ar_description", data.ar_description)
-            formData.set("prefix", data.prefix)
-
             const { response, error } = await API.POST("/api/tracks/", {
-                body: formData as unknown as {
-                    name: string;
-                    prefix: string;
-                    en_description: string;
-                    ar_description: string;
-                    image: string;
+                body: {
+                    name: data.name,
+                    prefix: data.prefix,
+                    en_description: data.en_description,
+                    ar_description: data.ar_description,
+                    image: trackFormImage as unknown as string
+                },
+                bodySerializer(body) {
+                    const formData = new FormData();
+                    formData.set("image", body.image);
+                    formData.set("name", body.name);
+                    formData.set("en_description", body.en_description);
+                    formData.set("ar_description", body.ar_description);
+                    formData.set("prefix", body.prefix);
+                    return formData;
                 }
             });
 
@@ -67,7 +68,7 @@ export default function AddTrackPage() {
                     const key = e[0] as keyof CreateTrack;
                     const value = e[1];
 
-                    if (validData.includes(key)) {
+                    if (validFields.includes(key)) {
                         setError(key, { message: value });
                     } else {
                         toast.error(key, { description: value, descriptionClassName: "text-gray-600!" });

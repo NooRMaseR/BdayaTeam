@@ -66,6 +66,7 @@ INSTALLED_APPS = (
     "technical",
     "organizer",
     "member",
+    "notifications"
 )
 
 MIDDLEWARE = (

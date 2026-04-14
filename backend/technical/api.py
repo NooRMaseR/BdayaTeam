@@ -2,7 +2,7 @@ from core.models import Track
 from core.api_schemas import ErrorResponse
 from core.serializers import TrackNameOnlyMSGSerializer
 from core.permissions import NinjaIsTechnical, NinjaIsTechnicalOrMember
-from core.tasks import send_notification_to_track_members, send_notification_to_user
+from notifications.tasks import send_notification_to_track_members, send_notification_to_user
 
 from member.models import Member, ReciviedTask
 from member.caches import member_profile_cache_key

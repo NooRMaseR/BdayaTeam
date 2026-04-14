@@ -5,6 +5,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from member.api import MemberEditTaskController, MemberProfileController, ProtectedTaskController, TasksController
 from member.models import Member
 
+from notifications.api import NotificationController
 from organizer.api import AttendanceDaysConrtoller, MembersController, SettingsController
 from organizer.serializers import SiteSettingsImagesMSGSerializer
 from organizer.models import SiteSetting
@@ -12,8 +13,8 @@ from organizer.models import SiteSetting
 from technical.api import TechnicalMembersController, TechnicalTasksController
 
 from .middleware import AsyncCookiesJWTAuth, AsyncSafeThrottle, RawJsonMSGRenderer
-from .models import BdayaUser, PushSubscription, Track, TrackCounter, UserRole
 from .serializers import TrackMSGSerializer, TrackNameOnlyMSGSerializer
+from .models import BdayaUser, Track, TrackCounter, UserRole
 from .permissions import NinjaIsOrganizer, NinjaIsSuperUser
 from .caches import TRACKS_CACHE_KEY, track_cache_key
 from .tasks import send_member_email
@@ -286,17 +287,6 @@ class AuthController:
         
         return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
-    @route.post("/notifications/subscribe/", response={204: None})
-    async def save_subscription(self, request: HttpRequest, payload: api_schemas.SubscriptionRequest):
-        await PushSubscription.objects.aupdate_or_create(
-            user=request.user,
-            endpoint=payload.endpoint,
-            defaults={
-                "auth": payload.auth,
-                "p256dh": payload.p256dh
-            }
-        )
-        return 204, {}
 
 @api_controller("/tracks/", tags=['Track'], permissions=[NinjaIsOrganizer])
 class TracksController:
@@ -320,30 +310,35 @@ class TracksController:
         
         return HttpResponse(encoded_data, content_type="application/json")
     
-    @route.post('', response={201: None, 400: api_schemas.DetailError})
+    @route.post('', response={201: None, 400: dict[str, str]})
     async def create(self, payload: Form[api_schemas.TrackCreateSchema], image: UploadedFile = File(...)): # type: ignore
+        errors: dict[str, str] = {}
+        track_exists, prefix_exists = await asyncio.gather(
+            Track.objects.filter(name__iexact=payload.name).aexists(),
+            Track.objects.filter(prefix__iexact=payload.prefix).aexists(),
+        )
         
-        @sync_to_async
-        def save_track():
-            try:
-                Track.objects.create(
-                    name=payload.name,
-                    prefix=payload.prefix,
-                    en_description=payload.en_description,
-                    ar_description=payload.ar_description,
-                    image=image,
-                )
-                return True, {}
-            except IntegrityError:
-                return False, {"detail": "this track already exists"}
+        if track_exists:
+            errors['name'] = str(_("this track already exists"))
         
-        success, error_payload = await save_track()
-        
-        if not success:
-            return status.HTTP_400_BAD_REQUEST, error_payload
+        if prefix_exists:
+            errors['prefix'] = str(_("this prefix already exists"))
+            
+        if errors:
+            return status.HTTP_400_BAD_REQUEST, errors
+        try:
+            await sync_to_async(Track.objects.create)(
+                name=payload.name,
+                prefix=payload.prefix,
+                en_description=payload.en_description,
+                ar_description=payload.ar_description,
+                image=image,
+            )
+        except IntegrityError:
+            return status.HTTP_400_BAD_REQUEST, {'detail': str(_("this track already exists"))}
         
         cache.delete(TRACKS_CACHE_KEY)
-        return status.HTTP_201_CREATED, {}
+        return status.HTTP_201_CREATED, None
     
     @route.get('/{track_name}/', response={200: api_schemas.TrackSchema}, auth=None, permissions=[AllowAny])
     async def get_one(self, track_name: str):
@@ -405,5 +400,8 @@ api.register_controllers(
     
     # ======= technicals ========
     TechnicalTasksController,
-    TechnicalMembersController
+    TechnicalMembersController,
+    
+    # ======= notifications =======
+    NotificationController
 )

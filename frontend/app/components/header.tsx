@@ -35,6 +35,17 @@ type LogoutDialogProps = {
 
 function LogoutDialog({ open, onSucces, onClose }: LogoutDialogProps) {
   const tr = useTranslations('header');
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
+
+  const onLogoutClick = () => {
+    setIsLoggingOut(true);
+    onSucces();
+  }
+  
+  const onCancleClick = () => {
+    setIsLoggingOut(false);
+    onClose();
+  }
 
   return (
     <Dialog open={open}>
@@ -43,13 +54,31 @@ function LogoutDialog({ open, onSucces, onClose }: LogoutDialogProps) {
         <DialogContentText>{tr('logoutConf')}</DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button variant='contained' onClick={onClose}>{tr('cancel')}</Button>
-        <Button variant='outlined' color='error' onClick={onSucces}>{tr('logout')}</Button>
+        <Button variant='contained' onClick={onCancleClick} loading={isLoggingOut}>{tr('cancel')}</Button>
+        <Button variant='outlined' color='error' onClick={onLogoutClick} loading={isLoggingOut}>{tr('logout')}</Button>
       </DialogActions>
     </Dialog>
   )
 }
 
+async function performSecureLogout() {
+  try {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+
+      if (subscription) {
+        await API.POST("/api/notifications/unsubscribe/", {
+          body: { endpoint: subscription.endpoint }
+        });
+
+        await subscription.unsubscribe();
+      }
+    }
+  } catch (error) {
+    console.error("Failed to clean up push notifications on logout:", error);
+  }
+}
 
 export default function Header() {
   const isAuthed = useAuthStore((state) => state.isAuthed);
@@ -72,6 +101,7 @@ export default function Header() {
   const closeLogoutConf = () => setDlgOpen(false);
 
   const logoutF = async () => {
+    await performSecureLogout();
     const { response } = await API.GET("/api/logout/");
     if (response.ok) {
       logout();

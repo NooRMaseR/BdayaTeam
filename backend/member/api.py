@@ -27,10 +27,10 @@ from ninja import File, Form, UploadedFile
 from core.permissions import NinjaIsMember
 from core.api_schemas import ErrorResponse
 from core.models import Track
-from core.tasks import send_notification_to_track_technicals
 
 from .api_schemas import MemberProfileResponse, MemberTaskUpdateRequest, RecivedTaskMember, TaskRequest, TaskResponse
 from .serializers import MemberProfileMSGSerializer, RecivedTaskMSGSerializer
+from notifications.tasks import send_notification_to_track_technicals
 from .models import Member, ReciviedTask, ReciviedTaskFile
 
 from organizer.models import Attendance, AttendanceStatus

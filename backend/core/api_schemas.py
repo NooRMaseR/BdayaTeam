@@ -35,7 +35,7 @@ class SingleErrorResponse(Schema):
     detail: str
     
 class RegisterRequest(Schema):
-    request_track_id: int
+    request_track_id: PositiveInt
     email: EmailStr
     name: str
     phone_number: str
@@ -65,7 +65,7 @@ class RefreshTokenRequest(Schema):
     refresh: str | None = None
 
 class SimpleTrackSchema(Schema):
-    id: int
+    id: PositiveInt
     name: str
 
 class TrackCreateSchema(Schema):
@@ -75,7 +75,7 @@ class TrackCreateSchema(Schema):
     ar_description: str
 
 class TrackSchema(Schema):
-    id: int
+    id: PositiveInt
     name: str
     en_description: str
     ar_description: str
@@ -93,8 +93,3 @@ class TestAuthResponse(Schema):
     is_admin: bool
     track: SimpleTrackSchema | None
     settings: SettingsImagesResponse
-
-class SubscriptionRequest(Schema):
-    endpoint: str
-    auth: str
-    p256dh: str

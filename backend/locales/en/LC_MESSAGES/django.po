@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-05 18:24+0200\n"
+"POT-Creation-Date: 2026-04-14 23:07+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,43 +18,51 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: BdayaTeam/settings.py:314
+#: BdayaTeam/settings.py:317
 msgid "English"
 msgstr "English"
 
-#: BdayaTeam/settings.py:315
+#: BdayaTeam/settings.py:318
 msgid "Arabic"
 msgstr "Arabic"
 
-#: core/api.py:168
+#: core/api.py:167
 msgid "email_exists"
 msgstr "This Email already exists."
 
-#: core/api.py:171
+#: core/api.py:170
 msgid "phone_exists"
 msgstr "This Phone number already exists."
 
-#: core/api.py:174
+#: core/api.py:173
 msgid "collage_code_exists"
 msgstr "member with this collage code already exists."
 
-#: core/middleware.py:68
+#: core/api.py:334 core/api.py:350
+msgid "this track already exists"
+msgstr "this track already exists"
+
+#: core/api.py:337
+msgid "this prefix already exists"
+msgstr "this prefix already exists"
+
+#: core/middleware.py:69
 msgid "Token contained no recognizable user identification"
 msgstr ""
 
-#: core/middleware.py:80
+#: core/middleware.py:81
 msgid "User not found"
 msgstr ""
 
-#: core/middleware.py:84
+#: core/middleware.py:85
 msgid "User is inactive"
 msgstr ""
 
-#: core/middleware.py:91
+#: core/middleware.py:92
 msgid "The user's password has been changed."
 msgstr ""
 
-#: member/api.py:139
+#: member/api.py:143
 #, python-brace-format
 msgid "Member {username} sent task {task_number}"
 msgstr "Member {username} sent task {task_number}"
