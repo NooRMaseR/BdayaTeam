@@ -62,7 +62,7 @@ function SecondaryActionUI({lateStatus, lateString, viewer}: SecondaryActionUIPr
     )
 };
 
-export function MembersRecivedTaskItem({ task, onClick, showSigned = false, overrideText = {}, viewer }: MembersRecivedTaskItemProps) {
+export function MembersRecivedTaskItem({ task, onClick, showSigned = false, overrideText, viewer }: MembersRecivedTaskItemProps) {
     const tr = useTranslations('taskPage');
     const locale = useLocale();
     const late = checkLateStatus(task.task.expires_at, locale, task.recived_at, true);

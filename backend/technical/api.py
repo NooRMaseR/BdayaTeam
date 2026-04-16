@@ -166,7 +166,7 @@ class TechnicalTasksController:
                 ]
             )
             send_notification_to_track_members(
-                track_id=TRACK.name,
+                track_id=TRACK.pk,
                 title="Task Update",
                 body=f"Task {TASK.task_number} has been updated",
                 url=f"/member/{TRACK.name}/tasks/{task_id}"

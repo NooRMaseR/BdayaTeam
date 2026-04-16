@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: `${readableTrack} Track Dashboard | Organizer`,
+    title: `Track ${readableTrack}`,
     description: `Manage members, attendance, and days for the ${readableTrack} track.`,
     
     openGraph: {

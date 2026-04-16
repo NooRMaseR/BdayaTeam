@@ -6,7 +6,6 @@ import { fetchTracks } from '../utils/api.server';
 import NavButtons from '../components/nav_buttons';
 import { getTranslations } from 'next-intl/server';
 import { serverGraphQL } from '../utils/api_utils';
-import NormalAnimation from '../components/animations';
 import NavigationCard from '../components/navigation_card';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import type { SettingsHeroImageQuery } from '../generated/graphql';
@@ -14,7 +13,7 @@ import { GET_HERO_IMAGE_SETTINGS } from '../utils/graphql_helpers';
 
 export const revalidate = 300;
 
-export async function generateMetadata(): Promise<Metadata> { 
+export async function generateMetadata(): Promise<Metadata> {
   const tr = await getTranslations('homePage');
 
   return {
@@ -29,9 +28,9 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function HomePage({params} : {params: Promise<{locale: string}>}) {
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const years = new Date().getFullYear() - 2015;
-  const [ tr, tracks, hero, {locale} ] = await Promise.all(
+  const [tr, tracks, hero, { locale }] = await Promise.all(
     [
       getTranslations('homePage'),
       fetchTracks(),
@@ -42,19 +41,11 @@ export default async function HomePage({params} : {params: Promise<{locale: stri
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900 color-trans">
-      <NormalAnimation
-        component='section'
-        className='relative bg-sky-500 py-24 overflow-hidden aspect-16/10'
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ease: 'easeOut' }}>
-        {
-          hero.success && hero.data.allSettings?.heroImage
-            ? <Image src={`${process.env.NEXT_PUBLIC_MEDIA_URL}${hero.data.allSettings?.heroImage}`} alt='Team pic' fill priority style={{ objectFit: "cover" }} unoptimized />
-            : null
-        }
-      </NormalAnimation>
-
+      {
+        hero.success && hero.data.allSettings?.heroImage
+          ? <Image src={`${process.env.NEXT_PUBLIC_MEDIA_URL}${hero.data.allSettings?.heroImage}`} alt='Team pic' fill priority style={{ objectFit: "cover" }} unoptimized />
+          : null
+      }
       {/* Hero Section */}
       <section className={`relative bg-blue-700 dark:bg-blue-900 text-white py-8 px-4 overflow-hidden transition-colors duration-300`}>
         <Container maxWidth="lg" className="relative z-10 text-center">
@@ -62,8 +53,8 @@ export default async function HomePage({params} : {params: Promise<{locale: stri
             label={tr('excellence', { years })}
             color="secondary"
             className="mb-6 font-bold uppercase tracking-wider"
-            sx={{color: "white"}}
-            icon={<VerifiedUserIcon sx={{color: 'white'}} />}
+            sx={{ color: "white" }}
+            icon={<VerifiedUserIcon sx={{ color: 'white' }} />}
           />
 
           <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
@@ -97,7 +88,7 @@ export default async function HomePage({params} : {params: Promise<{locale: stri
       <section className="py-20 dark:bg-slate-900 transition-colors duration-300">
         <Container maxWidth="lg">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">{ tr('avlTracks') }</h2>
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">{tr('avlTracks')}</h2>
             <div className="w-20 h-1 bg-blue-600 dark:bg-blue-500 mx-auto rounded"></div>
           </div>
 
@@ -135,7 +126,7 @@ export default async function HomePage({params} : {params: Promise<{locale: stri
               {tr('by')}, <br /> {tr('for')}.
             </h2>
             <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
-              {tr('bdayaStarted', {years})}
+              {tr('bdayaStarted', { years })}
             </p>
             <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
               {tr('weProvide')}

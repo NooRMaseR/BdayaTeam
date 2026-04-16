@@ -1,81 +1,8 @@
 # instructions for Backend
 
-## Postgresql
+just run `setup.sh` from the project root and it will setup and installs the dependencies
 
-to install postgresql run these commands in your terminal in order
-
-```bash
-sudo apt install postgresql
-```
-
-then start `postgresql` server
-
-```bash
-sudo service postgresql start
-```
-
-then start the `postgresql` session
-
-```bash
-sudo -u postgres psql
-```
-
-now execute the following `sql` commands with your own data
-
-```postgresql
-<!-- 1. Create the Database -->
-CREATE DATABASE teambdayadb;
-
-<!-- 2. Create a user with passwor -->
-CREATE USER root WITH PASSWORD 'root123';
-
-<!-- 3. edit the user roles -->
-ALTER ROLE root SET client_encoding TO 'utf8';
-ALTER ROLE root SET default_transaction_isolation TO 'read committed';
-ALTER ROLE root SET timezone TO 'Africa/Cairo';
-ALTER USER root CREATEDB;
-
-<!-- 4. add the user permissions -->
-GRANT ALL PRIVILEGES ON DATABASE teambdayadb TO root;
-
-<!-- 5. add the user permissions for public schema -->
-\c teambdayadb
-GRANT ALL PRIVILEGES ON SCHEMA public TO root;
-
-<!-- that's all, now exist -->
-\q
-```
-
-now you can start the `postgresql` like this
-
-```bash
-sudo systemctl enable postgresql # only if you want it to start automaticlly after booting
-sudo systemctl start postgresql
-```
-
-then in your `settings.py` database add the following
-
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv("DB_NAME"),
-        'USER': os.getenv("DB_USER"),
-        'PASSWORD': os.getenv("DB_PASSWORD"),
-        'HOST': os.getenv("DB_HOST"),
-        'PORT': os.getenv("DB_PORT"),
-        'OPTIONS': {
-            "pool": {
-                "min_size": 5,
-                "max_size": 18,
-                "timeout": 20
-            }
-        }
-    }
-}
-```
-
-then in your `env` add these
+in your `env` add these
 
 ```ini
 SECRET_KEY=<djang-secret>
@@ -88,47 +15,11 @@ EMAIL_HOST=<host>
 EMAIL_PORT=<port>
 EMAIL_HOST_USER=<email>
 EMAIL_HOST_PASSWORD=<app-password>
+VAPID_PRIVATE_KEY=VAPID_PRIVATE_KEY
+VAPID_ADMIN_EMAIL=VAPID_ADMIN_EMAIL
 ```
 
-## uv
-
-in the `CMD` run this command
-
-Windows
-
-```bash
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
-Linux
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-### install the requirements
-
-run
-
-```bash
-uv sync --locked
-```
-
-### migrations to database
-
-create the migrations
-
-```bash
-uv run manage.py makemigrations
-```
-
-then apply the migrations
-
-```bash
-uv run manage.py migrate
-```
-
-### creating an admin user
+## creating an admin user
 
 to create an admin user run this command
 
@@ -160,125 +51,15 @@ to open `openApi` open this url `http://localhost:8000/api/docs`
 
 ## Redis
 
-to install redis on your linux run this command
-
-```bash
-sudo apt install redis-server
-```
-
-after installation run
-
-```bash
-sudo systemctl enable redis-server
-sudo systemctl start redis-server
-```
-
-then test it from this command
+test it from this command
 
 ```bash
 redis-cli ping # you should get PONG
 ```
 
-add this line so the server don't crush when having low memory
-
-```bash
-echo "vm.overcommit_memory = 1" | sudo tee -a /etc/sysctl.conf
-```
-
-## Huey
-
-to start Huey broker in another terminal **(after initializing `gunicorn`)** run
-
-```bash
-uv run manage.py run_huey
-```
-
-**Important Note!**
-
-so you don't start manully every time we start the machine, it's recommended to create a `systemd` for it like this
-
-```bash
-sudo nano /etc/systemd/system/huey-worker.service
-```
-
-then add these configurations
-
-```ini
-[Unit]
-Description=huey Worker
-After=network.target redis-server.service gunicorn.service
-
-[Service]
-User=kali
-Group=kali
-WorkingDirectory=/home/kali/BdayaTeam/backend
-ExecStart=/home/kali/.local/bin/uv run manage.py run_huey
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-```
-
-then run these commands
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable huey-worker
-sudo systemctl start huey-worker
-```
-
 ## Nginx
 
-to install `nginx` in your terminal run
-
-```bash
-sudo apt install nginx
-```
-
-now we need to bind gunicorn and nginx to comunicate using sockets for a better performance like the following
-
-first create a systemd file called `gunicorn.socket`
-
-```bash
-sudo nano /etc/systemd/system/gunicorn.socket
-```
-
-then add the following
-
-```ini
-[Unit]
-Description=gunicorn socket
-
-[Socket]
-ListenStream=/run/gunicorn.sock
-
-[Install]
-WantedBy=sockets.target
-```
-
-then start the `systemctl`
-
-```bash
-sudo systemctl start gunicorn
-sudo systemctl enable gunicorn # only if you want it to start automaticlly after booting
-```
-
-you can check the status after that
-
-```bash
-sudo systemctl status gunicorn
-```
-
-create a symlink file for `nginx_teamDdaya.conf` in this location like this
-
-```bash
-sudo ln -s /home/kali/BdayaTeam/nginx_teamBdaya.conf /etc/nginx/sites-enabled/nginx_teamBdaya.conf
-```
-
-this will be our proxy to serve the backend and the frontend
-
-now open `nginx.conf`
+open `nginx.conf`
 
 ```bash
 sudo nano /etc/nginx/nginx.conf
@@ -320,28 +101,6 @@ you can check the permissions using this command
 ```bash
 sudo -u www-data head -n 5 /home/kali/BdayaTeam/nginx_teamBdaya.conf
 ```
-
-if `nginx` couldn't access the media of static files then you need to add the permissions to it, install `acl`
-
-```bash
-sudo apt-get install acl
-```
-
-give the permissions like these **add your own folder path**
-
-```bash
-setfacl -m u:www-data:x /home/kali/
-setfacl -m u:www-data:x /home/kali/BdayaTeam/
-setfacl -m u:www-data:x /home/kali/BdayaTeam/nginx_teamBdaya.conf
-setfacl -m u:www-data:x /home/kali/BdayaTeam/backend/
-setfacl -m u:www-data:x /home/kali/BdayaTeam/backend/static_files/
-setfacl -m u:www-data:x /home/kali/BdayaTeam/backend/media_files/
-setfacl -R -m u:www-data:rX /home/kali/BdayaTeam/nginx_teamBdaya.conf
-setfacl -R -m u:www-data:rX /home/kali/BdayaTeam/backend/static_files
-setfacl -R -m u:www-data:rX /home/kali/BdayaTeam/backend/media_files
-```
-
-that's it
 
 ## Formulas
 
@@ -404,14 +163,6 @@ add these line at the bottom
 ```ini
 * soft nofile 5000
 * hard nofile 5000
-```
-
-now open `/etc/sysctl.conf` and add these
-
-```ini
-vm.overcommit_memory = 1
-net.core.somaxconn=4096
-net.core.netdev_max_backlog=4096
 ```
 
 ## **Enjoy**

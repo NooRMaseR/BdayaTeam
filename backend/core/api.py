@@ -17,7 +17,7 @@ from .serializers import TrackMSGSerializer, TrackNameOnlyMSGSerializer
 from .models import BdayaUser, Track, TrackCounter, UserRole
 from .permissions import NinjaIsOrganizer, NinjaIsSuperUser
 from .caches import TRACKS_CACHE_KEY, track_cache_key
-from .tasks import send_member_email
+from .tasks import delete_all_tracks, send_member_email
 from . import api_schemas
 
 from django.shortcuts import get_object_or_404, aget_object_or_404
@@ -151,7 +151,7 @@ class AuthController:
         response.delete_cookie("sessionid")
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
-        return status.HTTP_204_NO_CONTENT, {}
+        return status.HTTP_204_NO_CONTENT, None
   
     @route.post("/register/", throttle=AsyncSafeThrottle("10/1h"), auth=None, response={201: api_schemas.RegisterResponse, 400: dict[str, str], 422: api_schemas.PydanticErrorResponse, 429: api_schemas.SingleErrorResponse})
     async def register(self, payload: api_schemas.RegisterRequest):
@@ -264,7 +264,7 @@ class AuthController:
             samesite='Lax'
         )
 
-        return status.HTTP_204_NO_CONTENT, {}
+        return status.HTTP_204_NO_CONTENT, None
 
     @route.get("/test-auth/", response={200: api_schemas.TestAuthResponse})
     async def test_auth(self, request: HttpRequest):
@@ -354,29 +354,24 @@ class TracksController:
         
     @route.delete('/{track_name}/', permissions=[NinjaIsSuperUser], response={204: None, 404: api_schemas.ErrorResponse})
     async def delete(self, track_name: str):
-        count,_ = await Track.objects.filter(name=track_name).adelete()
+        count, _ = await Track.objects.filter(name=track_name).adelete()
         
         if count == 0:
             return status.HTTP_404_NOT_FOUND, {"details": "Track Not Found"}
         
         await cache.adelete_many([TRACKS_CACHE_KEY, track_cache_key(track_name)])
-        return status.HTTP_204_NO_CONTENT, {}
+        return status.HTTP_204_NO_CONTENT, None
 
 @api_controller("/", tags=['Auth'], permissions=[NinjaIsSuperUser])
 class ResetAll:
     
-    @sync_to_async
-    def delete_tracks(self) -> None:
-        with transaction.atomic():
-            Track.objects.select_for_update().delete()
-    
-    @route.delete('/reset-all/', response={204: None, 500: api_schemas.ErrorResponse, 403: api_schemas.ErrorResponse})
+    @route.delete('/reset-all/', response={202: None, 500: api_schemas.ErrorResponse, 403: api_schemas.ErrorResponse})
     async def reset_all(self):
         "Very Dangores, Deletes all tracks and members and tasks and technicals."
         try:
-            await self.delete_tracks()
+            delete_all_tracks()
             cache.clear()
-            return status.HTTP_204_NO_CONTENT, {}
+            return status.HTTP_202_ACCEPTED, None
         except Exception as e:
             return status.HTTP_500_INTERNAL_SERVER_ERROR, {"details": repr(e)}
 

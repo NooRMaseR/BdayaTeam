@@ -83,7 +83,7 @@ export default function ResetAll() {
     return (isSuperUser &&
         <>
             <ResetDialog open={open} isLoading={isLoading} onReset={handleReset} onCancel={closeDialog} />
-            <div onClick={openDialog}>
+            <div onClick={openDialog} role='button'>
                 <NavigationCard
                     title={tr('resetTitle')}
                     desc={tr('resetTitle')}

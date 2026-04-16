@@ -85,7 +85,7 @@
         "resetSuccess": "Reset Successfully",
         "wrong": "Somthing Went Wrong, Try again",
         "noPerm": "You don't have the permissions",
-        "metaTitle": "Organizer Team Bdaya",
+        "metaTitle": "Organizer",
         "metaDesc": "Organizer Team Bdaya, Manage tracks members and attendance",
         "metaKeys": "Organizer,organizer,Track,Settings"
     },
@@ -216,7 +216,7 @@
         "go": "Go",
         "seeProfile": "Member Profile",
         "seeProfileDesc": "See Member Profile By his Code",
-        "metaTitle": "Technical Team Bdaya",
+        "metaTitle": "Technical",
         "metaDesc": "Technical Team Bdaya, Come and manage your members tasks and create some tasks for them",
         "metaKeys": "Technical,technical,Tasks,Members,Profile"
     },
@@ -247,9 +247,11 @@
         "taskNum": "Task Number",
         "expiresAt": "Expires At",
         "taskDesc": "Task Decription",
-        "create": "Create"
+        "create": "Create",
+        "metaTitle": "Track Tasks"
     },
     "taskPage": {
+        "taskView": "Task View",
         "yes": "Yes",
         "notes": "Notes",
         "techNotes": "Technical Notes",
@@ -269,6 +271,7 @@
         "edit": "Edit",
         "delete": "Delete",
         "editTask": "Edit Task {taskNumber}",
+        "editingTask": "Edit Task",
         "taskNum": "Task Number",
         "taskDesc": "Task Decription",
         "cancel": "Cancel",
@@ -296,7 +299,7 @@
         "profileDesc": "View My Profile",
         "tasks": "My Tasks",
         "tasksDesc": "check if you have tasks left",
-        "metaTitle": "Member Team Bdaya",
+        "metaTitle": "Member",
         "metaDesc": "Member Team Bdaya, Come and solve your tasks to get bonus and win a certificate",
         "metaKeys": "Member,member,Tasks,Profile,Task"
     },
@@ -306,7 +309,8 @@
         "expired": "Expired",
         "signed": "Signed",
         "late": "Late {time}",
-        "noTasks": "No Tasks to send"
+        "noTasks": "No Tasks to send",
+        "metaTitle": "Tasks"
     },
     "filePicker": {
         "changeImg": "Change Image",

@@ -8,7 +8,6 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { getHomeUrl } from "../utils/api.client";
 import { useAuthStore } from '../utils/store';
 import { useTranslations } from 'next-intl';
-import NormalAnimation from './animations';
 import { Link } from '@/i18n/navigation';
 
 export default function NavButtons() {
@@ -20,7 +19,7 @@ export default function NavButtons() {
 
     if (isLoading) {
         return (
-            <Box sx={{display: "flex", gap: "1rem"}}>
+            <Box sx={{ display: "flex", gap: "1rem" }}>
                 <Skeleton variant='rounded' width={150} height={50} />
                 <Skeleton variant='rounded' width={150} height={50} />
             </Box>
@@ -29,17 +28,15 @@ export default function NavButtons() {
 
     if (isAuthed) {
         return (
-            <NormalAnimation component='div' initial={{opacity: 0, y: 50}} animate={{opacity: 1, y: 0}}>
-                <Link href={link}>
-                    <Button
-                        variant="outlined"
-                        size="large"
-                        sx={{ borderRadius: '50px', borderColor: 'white', color: 'white' }}
-                    >
-                        {tr('homePage')}
-                    </Button>
-                </Link>
-            </NormalAnimation>
+            <Link href={link}>
+                <Button
+                    variant="outlined"
+                    size="large"
+                    sx={{ borderRadius: '50px', borderColor: 'white', color: 'white' }}
+                >
+                    {tr('homePage')}
+                </Button>
+            </Link>
         );
     };
     return (
@@ -49,7 +46,7 @@ export default function NavButtons() {
                     variant="contained"
                     size="large"
                     color="secondary"
-                    endIcon={<ArrowForwardIcon sx={{color: "white"}} />}
+                    endIcon={<ArrowForwardIcon sx={{ color: "white" }} />}
                     sx={{ borderRadius: '50px', color: "white" }}
                 >
                     {tr('register')}
