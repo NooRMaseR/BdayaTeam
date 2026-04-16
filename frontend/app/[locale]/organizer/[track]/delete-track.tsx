@@ -79,7 +79,7 @@ export default function DeleteTrack({ name }: DeleteTrackProps) {
                     <Button variant='outlined' color='error' onClick={performDeleteTrack}>{tr('delete')}</Button>
                 </DialogActions>
             </Dialog>
-            <div onClick={openDialog}>
+            <div onClick={openDialog} role='button'>
                 <NavigationCard
                     title={tr('deleteTitle', {name})}
                     desc={tr("deleteDesc")}

@@ -3,6 +3,15 @@ import { getTranslations } from 'next-intl/server';
 import Typography from '@mui/material/Typography';
 import BodyM from '@/app/components/bodyM';
 import API from '@/app/utils/api.server';
+import type { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+    const tr = await getTranslations("tasksPage");
+    
+    return {
+        title: tr("metaTitle")
+    }
+}
 
 export default async function TasksPage() {
     const [tr, { data, response }] = await Promise.all(

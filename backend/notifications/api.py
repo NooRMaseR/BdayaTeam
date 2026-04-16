@@ -1,7 +1,8 @@
-from django.http import HttpRequest
 from .models import PushSubscription
-from ninja_extra import api_controller, route, status
 from .api_schemas import SubscriptionRequest, UnsubscribeRequest
+
+from django.http import HttpRequest
+from ninja_extra import api_controller, route, status
 
 @api_controller("notifications")
 class NotificationController:

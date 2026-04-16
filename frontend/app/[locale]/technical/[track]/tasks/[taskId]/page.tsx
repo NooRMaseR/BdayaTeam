@@ -10,6 +10,15 @@ import dayjs from '@/app/utils/dayjs.client';
 import BodyM from '@/app/components/bodyM';
 import API from '@/app/utils/api.server';
 import TaskActions from './task_actions';
+import type { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+    const tr = await getTranslations("taskPage");
+    
+    return {
+        title: tr("taskView")
+    }
+}
 
 export default async function TaskViewPage({ params }: { params: Promise<{locale: LocaleOptions, taskId: number, track: string }> }) {
     const {locale, track, taskId } = await params;

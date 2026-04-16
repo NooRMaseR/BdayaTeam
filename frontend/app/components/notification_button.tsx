@@ -1,77 +1,105 @@
 "use client";
 
 import Button from "@mui/material/Button";
-import { useState, useEffect } from "react";
+import { useEffect, useReducer } from "react";
 import { subscribeToPush } from "@/app/utils/notifications"; 
 
-export default function AskNotificationButton() {
-    const [isSupported, setIsSupported] = useState(false);
-    const [isSubscribed, setIsSubscribed] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+type NotificationState = {
+  isSupported: boolean;
+  isSubscribed: boolean;
+  isLoading: boolean;
+};
 
+const initialState: NotificationState = {
+  isSupported: false,
+  isSubscribed: false,
+  isLoading: false,
+};
+
+type Action = 
+    { type: 'SET_SUPPORTED'; payload: boolean }
+  | { type: 'SET_SUBSCRIBED'; payload: boolean }
+  | { type: 'SET_LOADING'; payload: boolean };
+
+function reducer(state: NotificationState, action: Action): NotificationState {
+  switch (action.type) {
+    case 'SET_SUPPORTED':
+      return { ...state, isSupported: action.payload };
+    case 'SET_SUBSCRIBED':
+      return { ...state, isSubscribed: action.payload };
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
+    default:
+      return state;
+  }
+}
+
+export default function AskNotificationButton() {
+    const [state, dispatch] = useReducer(reducer, initialState);
+    
     useEffect(() => {
         async function checkSubscriptionState() {
             if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                setIsLoading(false);
+                dispatch({ type: "SET_LOADING", payload: false });
                 return;
             }
-
-            setIsSupported(true);
-
+            
+            dispatch({ type: "SET_SUPPORTED", payload: true });
+            
             if (Notification.permission === "granted") {
                 try {
                     // Check if we ACTUALLY have a subscription key generated
                     const registration = await navigator.serviceWorker.ready;
                     const existingSubscription = await registration.pushManager.getSubscription();
-
+                    
                     if (existingSubscription) {
-                        setIsSubscribed(true);
+                        dispatch({ type: "SET_SUBSCRIBED", payload: true });
                     } else {
                         // ORPHANED STATE: Allowed, but the API request failed previously!
                         console.warn("Permission granted, but no subscription found. User needs to resync.");
-                        setIsSubscribed(false);
+                        dispatch({ type: "SET_SUBSCRIBED", payload: false });
                     }
                 } catch (err) {
                     console.error("Error checking subscription state", err);
-                    setIsSubscribed(false);
+                    dispatch({ type: "SET_SUBSCRIBED", payload: false });
                 }
             } else {
-                setIsSubscribed(false);
+                dispatch({ type: "SET_SUBSCRIBED", payload: false });
             }
-            setIsLoading(false);
+            dispatch({ type: "SET_LOADING", payload: false });
         }
 
         checkSubscriptionState();
     }, []);
 
     const handleSubscribe = async () => {
-        setIsLoading(true);
+        dispatch({ type: "SET_LOADING", payload: true });
         try {
             await subscribeToPush();
-            setIsSubscribed(true);
+            dispatch({ type: "SET_SUBSCRIBED", payload: true });
         } catch (error) {
             console.error("Failed to subscribe:", error);
             alert("Could not enable notifications. Please check your browser settings.");
         } finally {
-            setIsLoading(false);
+            dispatch({ type: "SET_LOADING", payload: false });
         }
     };
 
-    if (!isSupported) {
+    if (!state.isSupported) {
         return null;
     }
 
-    if (isSubscribed) {
+    if (state.isSubscribed) {
         return null;
     }
 
     return (
         <Button
             onClick={handleSubscribe} 
-            loading={isLoading}
+            loading={state.isLoading}
             variant="contained"
         >
-            {isLoading ? "Checking..." : Notification.permission === "granted" ? "Repair Notifications" : "Enable Notifications"}
+            {state.isLoading ? "Checking..." : Notification.permission === "granted" ? "Repair Notifications" : "Enable Notifications"}
         </Button>
     );
 }

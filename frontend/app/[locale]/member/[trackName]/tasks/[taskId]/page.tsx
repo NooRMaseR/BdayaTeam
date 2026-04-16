@@ -9,6 +9,7 @@ import type { LocaleOptions } from '@/app/utils/api_types_helper';
 import BodyM from '@/app/components/bodyM';
 import API from '@/app/utils/api.server';
 import TaskForm from './task_form';
+import type { Metadata } from 'next';
 
 export type TaskViewProps = {
     params: Promise<{
@@ -16,6 +17,14 @@ export type TaskViewProps = {
         taskId: number,
         trackName: string
     }>;
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+    const tr = await getTranslations("taskPage");
+    
+    return {
+        title: tr("taskView")
+    }
 }
 
 export default async function TaskViewPage({ params }: TaskViewProps) {

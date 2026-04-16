@@ -41,7 +41,7 @@ export default function SeeProfileCard() {
                     </DialogActions>
                 </form>
             </Dialog>
-            <div onClick={handleOpenDialog}>
+            <div onClick={handleOpenDialog} role='button'>
                 <NavigationCard
                     title={tr('seeProfile')}
                     desc={tr('seeProfileDesc')}

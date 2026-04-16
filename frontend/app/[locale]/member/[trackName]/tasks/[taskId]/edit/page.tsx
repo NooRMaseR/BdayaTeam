@@ -9,6 +9,15 @@ import type { TaskViewProps } from '../page';
 import TaskEditForm from './task_edit_form';
 import BodyM from '@/app/components/bodyM';
 import API from '@/app/utils/api.server';
+import type { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+    const tr = await getTranslations("taskPage");
+    
+    return {
+        title: tr("editingTask")
+    }
+}
 
 export default async function TaskViewEditPage({ params }: TaskViewProps) {
     const { locale, trackName, taskId } = await params;

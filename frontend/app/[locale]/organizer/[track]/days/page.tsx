@@ -1,6 +1,16 @@
+import { getTranslations } from 'next-intl/server';
 import Days from '@/app/components/day_card';
 import BodyM from '@/app/components/bodyM';
 import API from '@/app/utils/api.server';
+import type { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+    const tr = await getTranslations("trackPage");
+    
+    return {
+        title: tr("days")
+    }
+}
 
 export default async function DaysPage({ params }: { params: Promise<{ track: string }> }) {
     const { track } = await params;

@@ -29,11 +29,9 @@ export function RegisterThemeProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
   const isAr = locale === 'ar';
   
-  // 1. GRAB THE DARK MODE STATE
   const { resolvedTheme } = useTheme(); 
   const [mounted, setMounted] = React.useState(false);
 
-  // 2. PREVENT HYDRATION MISMATCH
   React.useEffect(() => {
     setMounted(true);
   }, []);
@@ -60,7 +58,7 @@ export function RegisterThemeProvider({ children }: { children: ReactNode }) {
   }, [isAr, resolvedTheme]);
 
   if (!mounted) {
-      return <div style={{ visibility: 'hidden' }}>{children}</div>;
+    return <div style={{ visibility: 'hidden' }}>{children}</div>;
   }
 
   return (

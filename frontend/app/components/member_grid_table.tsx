@@ -31,18 +31,22 @@ type SocketResponse = {
     }
 }
 
-export default function MembersGridTable({ rows, columns, columnGroupingModel = [], track, forTech = false, disableWebSocket = false }: GridProps) {
+const ACTIONS_COLUMN_BASE: Omit<GridColDef, 'headerName' | 'renderCell'> = {
+    align: "center",
+    headerAlign: "center",
+    field: "actions",
+    width: 120,
+    filterable: false,
+    sortable: false,
+};
+
+export default function MembersGridTable({ rows, columns, columnGroupingModel, track, forTech = false, disableWebSocket = false }: GridProps) {
     const tr = useTranslations('showMembersPage');
     const trackReadableName = track.replaceAll("%20", ' ');
     const [localRows, setLocalRows] = useState<GridRowsProp>(rows);
     const memoColumns = useMemo<GridColDef[]>(() => [{
-        align: "center",
-        headerAlign: "center",
-        field: "actions",
+        ...ACTIONS_COLUMN_BASE,
         headerName: tr("actions"),
-        width: 120,
-        filterable: false,
-        sortable: false,
         renderCell(params) {
             return <Link href={`/profile/${params.id}`}>
                 <Button variant='contained'>{tr('profile')}</Button>

@@ -22,8 +22,7 @@ export default function AuthLoader({ authData, imagesData, children }: AuthLoade
     const logout = useAuthStore(state => state.logout);
     const setImages = useSettingsStore(state => state.setImages);
     
-    // Track if we are actively fixing the cookies in the browser
-    const [isRefreshingClient, setIsRefreshingClient] = React.useState(false);
+    const [isRefreshingClient, setIsRefreshingClient] = React.useState<boolean>(false);
 
     React.useEffect(() => {
         if (imagesData) {
@@ -34,7 +33,6 @@ export default function AuthLoader({ authData, imagesData, children }: AuthLoade
             });
         }
 
-        // 1. If the Server succeeded, sync to Zustand!
         if (authData) {
             setCredentials({
                 isLoading: false,
@@ -47,13 +45,9 @@ export default function AuthLoader({ authData, imagesData, children }: AuthLoade
                 }
             });
         } 
-        // 2. The Server failed. Time for the Browser to fix the cookies!
         else {
             const runClientFallback = async () => {
                 setIsRefreshingClient(true);
-                
-                // This request triggers your api.client.ts interceptor.
-                // The interceptor will fetch the new HttpOnly cookies and the browser will save them!
                 const res = await API.GET("/api/test-auth/");
                 
                 if (res.data) {
@@ -62,10 +56,8 @@ export default function AuthLoader({ authData, imagesData, children }: AuthLoade
                         isAuthed: true,
                         user: { ...res.data }
                     });
-                    // Tell Next.js to re-run the Server Components now that the browser has the new cookies!
                     router.refresh(); 
                 } else {
-                    // The refresh token is completely dead. Log out.
                     logout();
                 }
                 setIsRefreshingClient(false);

@@ -36,7 +36,6 @@ export default function NavigationCard({ title, desc, imageUrl, url, badgeConten
     <RenderLinkOrDiv url={url}>
       <Card
         id={title}
-        // Added dark mode specific hover borders (blue-400) and softer shadows (shadow-black/50)
         className="hover:shadow-xl dark:hover:shadow-2xl dark:hover:shadow-black/50 border-t-4 border-transparent hover:border-blue-500 dark:hover:border-blue-400 hover:-translate-y-2 cursor-pointer flex flex-col"
         sx={{ transition: "translate ease-out 250ms, border-color ease-out 250ms, box-shadow ease-out 250ms", width: "20rem", height: "19rem" }}
       >
@@ -50,7 +49,6 @@ export default function NavigationCard({ title, desc, imageUrl, url, badgeConten
                 fill
                 style={{ objectFit: 'cover' }}
                 unoptimized
-                // Dark Mode fix: Dropped the opacity and brightness slightly so images don't blind the user at night
                 className="dark:opacity-90 dark:brightness-90 transition-all duration-300" 
               />
             </CardMedia>
@@ -62,7 +60,6 @@ export default function NavigationCard({ title, desc, imageUrl, url, badgeConten
             </Typography>
 
             {typeof desc === 'string' ? (
-              // MUI's color="text.secondary" automatically handles dark mode text colors!
               <Typography component="p" variant="subtitle2" color="text.secondary" className="leading-relaxed line-clamp-2">
                 {desc}
               </Typography>
