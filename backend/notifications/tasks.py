@@ -30,9 +30,8 @@ def send_notification_to_track_members(track_id: int, title: str, body: str, url
                 vapid_private_key=settings.VAPID_PRIVATE_KEY,
                 vapid_claims={"sub": settings.VAPID_ADMIN_EMAIL}
             )
-        except WebPushException as ex:
-            if ex.response is not None and ex.response.status in [404, 410]:
-                sub.delete()
+        except WebPushException:
+            sub.delete()
 
 async def _send_to_single_user(sub: PushSubscription, payload: str) -> None:
     sub_info = {
@@ -47,9 +46,8 @@ async def _send_to_single_user(sub: PushSubscription, payload: str) -> None:
             vapid_private_key=settings.VAPID_PRIVATE_KEY,
             vapid_claims={"sub": settings.VAPID_ADMIN_EMAIL}
         )
-    except WebPushException as ex:
-        if ex.response is not None and ex.response.status in [404, 410]:
-            await sub.adelete()
+    except WebPushException:
+        await sub.adelete()
 
 async def send_notification_to_user(user_id: int, title: str, body: str, url: str = "/") -> None:
     subscriptions = PushSubscription.objects.filter(user_id=user_id)

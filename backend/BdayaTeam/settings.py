@@ -35,7 +35,7 @@ DEBUG = False
 ALLOWED_HOSTS = (
     "localhost",
     "127.0.0.1",
-    "associates-qld-nasa-logo.trycloudflare.com"
+    "align-opposed-hydraulic-insured.trycloudflare.com"
 )
 
 # Application definition
@@ -344,13 +344,13 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
-    "https://associates-qld-nasa-logo.trycloudflare.com",
+    "https://twins-jill-requirements-citizenship.trycloudflare.com",
 )
 
 CSRF_TRUSTED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
-    "https://associates-qld-nasa-logo.trycloudflare.com",
+    "https://twins-jill-requirements-citizenship.trycloudflare.com",
 )
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"

@@ -26,10 +26,11 @@ self.addEventListener('push', function (event) {
 
         const options: NotificationOptions = {
             body: data.body,
-            icon: '/web-app-manifest-192x192.png',
-            badge: '/favicon-96x96.png',
+            icon: '/favicon-96x96.png',
+            badge: '/web-app-manifest-192x192.png',
             data: { url: data.url || '/' },
-            silent: false
+            silent: false,
+            requireInteraction: true
         };
 
         event.waitUntil(

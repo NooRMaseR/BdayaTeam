@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: tr('metaTitle'),
       description: tr('metaDesc'),
-      images: ["/favicon.svg"],
+      images: ['/favicon.ico'],
     },
   }
 }
@@ -41,11 +41,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-slate-900 color-trans">
-      {
-        hero.success && hero.data.allSettings?.heroImage
-          ? <Image src={`${process.env.NEXT_PUBLIC_MEDIA_URL}${hero.data.allSettings?.heroImage}`} alt='Team pic' fill priority style={{ objectFit: "cover" }} unoptimized />
-          : null
-      }
+      <section className="relative bg-sky-500 py-24 overflow-hidden aspect-16/10">
+        {
+          hero.success && hero.data.allSettings?.heroImage
+            ? <Image src={`${process.env.NEXT_PUBLIC_MEDIA_URL}${hero.data.allSettings?.heroImage}`} alt='Team pic' fill priority style={{ objectFit: "cover" }} unoptimized />
+            : null
+        }
+      </section>
       {/* Hero Section */}
       <section className={`relative bg-blue-700 dark:bg-blue-900 text-white py-8 px-4 overflow-hidden transition-colors duration-300`}>
         <Container maxWidth="lg" className="relative z-10 text-center">
