@@ -266,19 +266,18 @@ async def delete_day(track_name: str, day: str):
 async def update_day(track_name: str, payload: DayUpdateRequestMSG):
     TRACK = track_name.replace("%20", " ")
 
-    try:
-        attendace = await (
-            AttendanceAllowedDay.objects.only("day").aget(
-                track__name=TRACK,
-                day=payload.oldDay,
-            )
+        attendace = await aget_object_or_404(
+            AttendanceAllowedDay.objects.only("day"),
+            track__name=TRACK,
+            day=payload.oldDay,
         )
-    except AttendanceAllowedDay.DoesNotExist:
-        raise NotFound(detail=f"Day {payload.oldDay} not found")
-    
-    if attendace.day == payload.newDay:
-        raise BadRequest(detail="new day cannot be the same as old day")
+        if attendace.day == payload.newDay:
+            return status.HTTP_400_BAD_REQUEST, {"details": "new day cannot be the same as old day"}
 
+    attendace.day = payload.newDay
+    await attendace.asave()
+    cache.delete(attendance_cache_key(TRACK))
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
     attendace.day = payload.newDay
     await attendace.asave()
     cache.delete(attendance_cache_key(TRACK))

@@ -62,6 +62,7 @@ INSTALLED_APPS = (
     "solo",
     "django_cleanup.apps.CleanupConfig",
     "ninja_extra",
+    "django_bolt",
     'channels',
     "core",
     "technical",
