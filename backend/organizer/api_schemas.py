@@ -1,15 +1,27 @@
 from pydantic import PositiveInt, field_validator
-from typing import Any, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 from datetime import date
 from ninja import Schema
 from . import models
+import msgspec
+
+class DayRequestMSG(msgspec.Struct):
+    day: date
 
 class DayRequest(Schema):
     day: date
 
+class DayUpdateRequestMSG(msgspec.Struct):
+    oldDay: date
+    newDay: date
+
 class DayUpdateRequest(Schema):
     oldDay: date
     newDay: date
+
+class AttendanceDayResponseMSG(msgspec.Struct):
+    id: Annotated[int, msgspec.Meta(gt=0)]
+    day: date
     
 class AttendanceDayResponse(Schema):
     id: PositiveInt
@@ -24,6 +36,13 @@ class AttendanceSmallResponse(Schema):
     status: models.AttendanceStatus
     by: AttendanceBy
     excuse_reason: str | None = None
+
+class MemberEditGridRequestMSG(msgspec.Struct):
+    type: models.MemberEditType
+    code: str
+    field: str
+    value: str | int
+    excuse: str | None = None
 
 class MemberEditGridRequest(Schema):
     type: models.MemberEditType
@@ -47,6 +66,10 @@ class SettingsRequest(Schema):
             return [item.strip() for item in value[0].split(',') if item.strip()]
                 
         return value
+    
+class SettingsImagesResponseMSG(msgspec.Struct):
+    site_image: str | None = None
+    hero_image: str | None = None
     
 class SettingsImagesResponse(Schema):
     site_image: str | None

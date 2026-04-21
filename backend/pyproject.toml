@@ -8,6 +8,7 @@ dependencies = [
     "channels>=4.3.2",
     "channels-redis>=4.3.0",
     "django>=6.0.1",
+    "django-bolt>=0.7.5",
     "django-cleanup>=9.0.0",
     "django-cors-headers>=4.9.0",
     "django-imagekit>=6.0.0",

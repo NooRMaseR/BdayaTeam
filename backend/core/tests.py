@@ -119,8 +119,8 @@ class TestCore(TestCase):
     async def test_get_one_track(self) -> None:
         response = await self.async_client.get("/api/tracks/Python/")
         
-        data = response.json()
         self.assertEqual(response.status_code, 200)
+        data = response.json()
         self.assertEqual(data['name'], "Python")
 
     async def test_add_track(self) -> None:
@@ -164,7 +164,7 @@ class TestCore(TestCase):
             "/api/test-auth/",
             content_type=JSON_CONTENT_TYPE
         )
-        data = response.json()
         self.assertEqual(response.status_code, 200)
+        data = response.json()
         self.assertEqual(data['username'], self.org_user.username)
         self.assertFalse(data['is_admin'])
