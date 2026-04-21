@@ -94,52 +94,6 @@ class CookiesJWTAuthentication(JWTAuthentication):
 
         return user
     
-class AsyncCookiesJWTAuth(AsyncAPIKeyCookie):
-    param_name = "access_token"
-
-    async def authenticate(self, request, key):
-        
-        if not key:
-            header = request.headers.get("Authorization")
-            if header and header.startswith("Bearer"):
-                key = header.split(" ")[1]
-
-        if not key:
-            return None
-
-        try:
-            validated_token = AccessToken(key) # type: ignore
-            user_id = validated_token[api_settings.USER_ID_CLAIM] # type: ignore
-        except (TokenError, KeyError) as e:
-            return None
-        
-        cache_key = f"auth_user_{user_id}"
-        user = await cache.aget(cache_key)
-        
-        if not user:
-            try:
-                user = await (
-                    BdayaUser.objects
-                    .defer("track__prefix", "is_staff", "joined_at", "last_login", "track__en_description", "track__ar_description", "track__image", "member__joined_at", "member__status")
-                    .select_related("track", "member")
-                    .aget(**{api_settings.USER_ID_FIELD: user_id}) # type: ignore
-                )
-            except BdayaUser.DoesNotExist:
-                return None
-
-            # Security Checks
-            if api_settings.CHECK_USER_IS_ACTIVE and not user.is_active:
-                return None
-
-            if api_settings.CHECK_REVOKE_TOKEN:
-                if validated_token.get(api_settings.REVOKE_TOKEN_CLAIM) != get_md5_hash_password(user.password): # type: ignore
-                    return None
-            
-            await cache.aset(cache_key, user, 3600)
-
-        request.user = user
-        return user
-
 @database_sync_to_async
 def get_user_from_socket(token) -> BdayaUser | AnonymousUser:
     auth = CookiesJWTAuthentication()
@@ -173,18 +127,8 @@ class JWTSocketMiddleware(BaseMiddleware):
         
         return await super().__call__(scope, receive, send)
 
-
-class RawJsonMSGRenderer(NinjaBaseRenderer):
-    media_type = "application/json"
-    
-    def render(self, request, data, *, response_status) -> bytes:
-        if isinstance(data, bytes):
-            return data
-            
-        return serializer_encoder.encode(data)
-
-
 class AsyncSafeThrottle(AnonRateThrottle):
     def get_cache_key(self, request, *args, **kwargs) -> str:
         ident = self.get_ident(request)
         return self.cache_format % {'scope': self.scope, 'ident': ident}
+    

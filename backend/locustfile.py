@@ -1,5 +1,6 @@
-# import random
-# from faker import Faker
+from pprint import pprint
+import random
+from faker import Faker
 from locust import FastHttpUser, task, between
 
 # class SingleEndpint(FastHttpUser):
@@ -18,28 +19,48 @@ from locust import FastHttpUser, task, between
     
 class UserDRF(FastHttpUser):
     wait_time = between(2, 5)
-    host="https://localhost"
-    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc1MjEyMTY3LCJpYXQiOjE3NzUxODY5NjcsImp0aSI6IjIyM2RhM2FlZTVhYzQ1ODRhNGZmODViMjM2ZjJmZTVkIiwidXNlcl9pZCI6IjEwMzYxIiwicm9sZSI6Im9yZ2FuaXplciJ9.TAc38k09EXNtu2ONbDQgVW9V5GMKqfwLUR486ympi-k"
+    host="http://localhost:8000"
+    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NzI1NDM0LCJpYXQiOjE3NzY3MDAyMzQsImp0aSI6IjY5YWUwNzE3NmY5NDQ4M2RhMzA1NmY4MjI0OTE5ZGYxIiwidXNlcl9pZCI6IjEwIiwicm9sZSI6Im9yZ2FuaXplciJ9.HPTitUzGIPIko4r3gde4XzijPg-V_yEMiEzG5nAw8b0"
     
     @task
     def see_track_members_FrontEnd(self):
-        self.client.get(f"/api/organizer/members/frontend/", headers={"Authorization": self.TOKEN})
+        self.client.get(f"/api/v2/organizer/members/Frontend", headers={"Authorization": self.TOKEN})
     
     @task
     def see_track_members_CCNA(self):
-        self.client.get(f"/api/organizer/members/CCNA/", headers={"Authorization": self.TOKEN})
+        self.client.get(f"/api/v2/organizer/members/CCNA", headers={"Authorization": self.TOKEN})
     
     @task
     def see_track_members_Python(self):
-        self.client.get(f"/api/organizer/members/Python/", headers={"Authorization": self.TOKEN})
+        self.client.get(f"/api/v2/organizer/members/Python", headers={"Authorization": self.TOKEN})
     
     @task
     def see_track_members_C_Sharp(self):
-        self.client.get(f"/api/organizer/members/C-Sharp/", headers={"Authorization": self.TOKEN})
+        self.client.get(f"/api/v2/organizer/members/C-Sharp", headers={"Authorization": self.TOKEN})
     
     @task
     def see_track_members_Graphic(self):
-        self.client.get(f"/api/organizer/members/Graphic%20Design/", headers={"Authorization": self.TOKEN})
+        self.client.get(f"/api/v2/organizer/members/Graphic%20Design", headers={"Authorization": self.TOKEN})
+    
+    # @task
+    # def see_track_members_FrontEnd(self):
+    #     self.client.get(f"/api/organizer/members/Frontend/", headers={"Authorization": self.TOKEN})
+    
+    # @task
+    # def see_track_members_CCNA(self):
+    #     self.client.get(f"/api/organizer/members/CCNA/", headers={"Authorization": self.TOKEN})
+    
+    # @task
+    # def see_track_members_Python(self):
+    #     self.client.get(f"/api/organizer/members/Python/", headers={"Authorization": self.TOKEN})
+    
+    # @task
+    # def see_track_members_C_Sharp(self):
+    #     self.client.get(f"/api/organizer/members/C-Sharp/", headers={"Authorization": self.TOKEN})
+    
+    # @task
+    # def see_track_members_Graphic(self):
+    #     self.client.get(f"/api/organizer/members/Graphic%20Design/", headers={"Authorization": self.TOKEN})
 
     # @task
     # def do_register(self):
@@ -50,9 +71,9 @@ class UserDRF(FastHttpUser):
     #         "email": faker.email(domain="gmail.com"),
     #         "collage_code": code,
     #         "phone_number": faker.phone_number(),
-    #         "request_track_id": random.randint(12,16),
+    #         "request_track_id": random.choice((1, 2, 7, 8 ,11)),
     #     }
-    #     res = self.client.post(
+    #     self.client.post(
     #         "/api/register/", json=body, headers={"Content-Type": "application/json"}
     #     )
 

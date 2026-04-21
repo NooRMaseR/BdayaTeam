@@ -1,3 +1,6 @@
+from typing import Annotated
+
+import msgspec
 from pydantic import EmailStr, PositiveInt, field_validator, NonNegativeInt
 from core.api_schemas import SimpleTrackSchema
 from member.models import MemberStatus
@@ -6,6 +9,16 @@ from datetime import datetime
 from ninja import Schema
 from . import models
 
+class TaskCreateRequestMSG(msgspec.Struct):
+    task_number: Annotated[int, msgspec.Meta(gt=0)]
+    expires_at: datetime
+    description: str
+    
+    def __post_init__(self) -> None:
+        if self.expires_at <= timezone.now():
+            raise msgspec.ValidationError("expires_at cannot be in the past")
+        
+    
 class TaskCreateRequest(Schema):
     task_number: PositiveInt
     expires_at: datetime
@@ -22,6 +35,10 @@ class TaskCreateRequest(Schema):
     
 class TaskAlreadyExistsError(Schema):
     task_number: str = "This task number already exists"
+    
+class TaskSignRequestMSG(msgspec.Struct):
+    degree: str | int
+    technical_notes: str
     
 class TaskSignRequest(Schema):
     degree: NonNegativeInt
@@ -54,6 +71,12 @@ class TechnicalMembersResponse(Schema):
     track: SimpleTrackSchema
     status: MemberStatus
     tasks: list[SimpleRecivedTaskResponse]
+    
+class TechnicalMembersTasksUpdateRequestMSG(msgspec.Struct):
+    task_id: Annotated[int, msgspec.Meta(gt=0)]
+    code: str
+    value: int | str
+    field: models.MemberTechEditType
     
 class TechnicalMembersTasksUpdateRequest(Schema):
     task_id: PositiveInt

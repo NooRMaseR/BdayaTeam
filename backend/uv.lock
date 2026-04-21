@@ -121,6 +121,7 @@ dependencies = [
     { name = "channels" },
     { name = "channels-redis" },
     { name = "django" },
+    { name = "django-bolt" },
     { name = "django-cleanup" },
     { name = "django-cors-headers" },
     { name = "django-imagekit" },
@@ -163,6 +164,7 @@ requires-dist = [
     { name = "channels", specifier = ">=4.3.2" },
     { name = "channels-redis", specifier = ">=4.3.0" },
     { name = "django", specifier = ">=6.0.1" },
+    { name = "django-bolt", specifier = ">=0.7.5" },
     { name = "django-cleanup", specifier = ">=9.0.0" },
     { name = "django-cors-headers", specifier = ">=4.9.0" },
     { name = "django-imagekit", specifier = ">=6.0.0" },
@@ -447,6 +449,27 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d1/a2/e58bec8d7941b914af52a67c35b5709eceed2caa2848f28437f1666ed668/django_appconf-1.2.0.tar.gz", hash = "sha256:15a88d60dd942d6059f467412fe4581db632ef03018a3c183fb415d6fc9e5cec", size = 16127, upload-time = "2025-11-08T15:46:27.304Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e8/e6/4c34d94dfb74bbcbc489606e61f1924933de30d22c593dd1f429f35fbd7f/django_appconf-1.2.0-py3-none-any.whl", hash = "sha256:b81bce5ef0ceb9d84df48dfb623a32235d941c78cc5e45dbb6947f154ea277f4", size = 6500, upload-time = "2025-11-08T15:46:25.957Z" },
+]
+
+[[package]]
+name = "django-bolt"
+version = "0.7.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "django" },
+    { name = "httpx" },
+    { name = "msgspec" },
+    { name = "pyjwt" },
+    { name = "pyyaml" },
+    { name = "typing-extensions" },
+    { name = "uvloop", marker = "sys_platform != 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/55/9d/66fea5c67d4b5fe853fd2a96e0ad447569efcde9d8fa8bb331829d7b82e7/django_bolt-0.7.5.tar.gz", hash = "sha256:8e7e0d371b109d24dc747bf93b7f5d568c103cd2b210034ff6cfb8622f51d182", size = 15146489, upload-time = "2026-04-17T13:01:29.216Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fb/72/a847d6229a2d0d2bc33a34577e7136a65eaf151d1ad07012b13a1361be37/django_bolt-0.7.5-cp312-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:bcf058fbc03fab287e653e7b31e1f4ceb45274e86a581962e6d95fb82c00893d", size = 6388402, upload-time = "2026-04-17T13:01:31.218Z" },
+    { url = "https://files.pythonhosted.org/packages/00/97/98997c2cd24a43444ab8a9eb85822bc536c77f6100b48e0295dd6f6e4a00/django_bolt-0.7.5-cp312-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:41863ac06412c1b6b773245b999ffc85af9d4723fc39ef197035a48770499d98", size = 3679337, upload-time = "2026-04-17T13:01:27.167Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/f2/c1982157db0263e69d07a369ca29130c4ff9f5fb31f7ea04235e375eee96/django_bolt-0.7.5-cp312-abi3-win_amd64.whl", hash = "sha256:13d92ea376ed23c9c7124128676746f6ac701a91d3380366a7584d7c2b69762c", size = 3417120, upload-time = "2026-04-17T13:01:25.449Z" },
 ]
 
 [[package]]
@@ -945,6 +968,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7c/af/249d1576653b69c20b9ac30e284b63bd94af6a175d72d87813235caf2482/http_ece-1.2.1.tar.gz", hash = "sha256:8c6ab23116bbf6affda894acfd5f2ca0fb8facbcbb72121c11c75c33e7ce8cff", size = 8830, upload-time = "2024-08-08T00:10:47.301Z" }
 
 [[package]]
+name = "httpcore"
+version = "1.0.9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "h11" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/06/94/82699a10bca87a5556c9c59b5963f2d039dbd239f25bc2a63907a05a14cb/httpcore-1.0.9.tar.gz", hash = "sha256:6e34463af53fd2ab5d807f399a9b45ea31c3dfa2276f15a2c3f00afff6e176e8", size = 85484, upload-time = "2025-04-24T22:06:22.219Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7e/f5/f66802a942d491edb555dd61e3a9961140fd64c90bce1eafd741609d334d/httpcore-1.0.9-py3-none-any.whl", hash = "sha256:2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55", size = 78784, upload-time = "2025-04-24T22:06:20.566Z" },
+]
+
+[[package]]
 name = "httptools"
 version = "0.7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -957,6 +993,21 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4d/31/14df99e1c43bd132eec921c2e7e11cda7852f65619bc0fc5bdc2d0cb126c/httptools-0.7.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:f084813239e1eb403ddacd06a30de3d3e09a9b76e7894dcda2b22f8a726e9c60", size = 452631, upload-time = "2025-10-10T03:54:58.219Z" },
     { url = "https://files.pythonhosted.org/packages/22/d2/b7e131f7be8d854d48cb6d048113c30f9a46dca0c9a8b08fcb3fcd588cdc/httptools-0.7.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:7347714368fb2b335e9063bc2b96f2f87a9ceffcd9758ac295f8bbcd3ffbc0ca", size = 452910, upload-time = "2025-10-10T03:54:59.366Z" },
     { url = "https://files.pythonhosted.org/packages/53/cf/878f3b91e4e6e011eff6d1fa9ca39f7eb17d19c9d7971b04873734112f30/httptools-0.7.1-cp314-cp314-win_amd64.whl", hash = "sha256:cfabda2a5bb85aa2a904ce06d974a3f30fb36cc63d7feaddec05d2050acede96", size = 88205, upload-time = "2025-10-10T03:55:00.389Z" },
+]
+
+[[package]]
+name = "httpx"
+version = "0.28.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "certifi" },
+    { name = "httpcore" },
+    { name = "idna" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc", size = 141406, upload-time = "2024-12-06T15:37:23.222Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad", size = 73517, upload-time = "2024-12-06T15:37:21.509Z" },
 ]
 
 [[package]]

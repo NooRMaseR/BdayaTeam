@@ -53,6 +53,7 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "django.contrib.postgres",
     # "django_er_diagram", #! debug only
+    "django_bolt",
     "graphene_django",
     "corsheaders",
     "phonenumber_field",
@@ -75,11 +76,11 @@ MIDDLEWARE = (
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "ninja.compatibility.files.fix_request_files_middleware",
+    # "ninja.compatibility.files.fix_request_files_middleware",
 )
 
 SECURE_CSP = {
@@ -114,7 +115,7 @@ GRAPHENE = {
 ROOT_URLCONF = "BdayaTeam.urls"
 AUTH_USER_MODEL = "core.BdayaUser"
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USE_TLS = True

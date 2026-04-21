@@ -1,3 +1,6 @@
+from typing import Annotated
+
+import msgspec
 from pydantic import EmailStr, PositiveInt, NonNegativeInt
 from organizer.api_schemas import AttendanceSmallResponse
 from core.api_schemas import SimpleTrackSchema
@@ -24,6 +27,10 @@ class TaskResponse(Schema):
     description: str
     expired: bool
     unsigned_tasks_count: int
+    
+class TaskRequestMSG(msgspec.Struct):
+    task_id: Annotated[int, msgspec.Meta(gt=0)]
+    notes: str | None = None
     
 class TaskRequest(Schema):
     task_id: PositiveInt
