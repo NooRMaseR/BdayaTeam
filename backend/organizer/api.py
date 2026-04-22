@@ -1,6 +1,3 @@
-import sys
-from typing import Annotated
-
 from core.permissions import (
     get_tech_or_org_user,
     get_org_user,
@@ -41,6 +38,7 @@ from django.db import transaction
 
 from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, serializer_encoder
 from asgiref.sync import sync_to_async
+from typing import Annotated
 from datetime import date
 
 from django_bolt import BoltAPI, Depends, Response, UploadFile, status
@@ -50,15 +48,6 @@ from django_bolt.param_functions import Form, File
 bolt = BoltAPI(
     prefix="/api/organizer/",
     trailing_slash="append",
-    django_middleware=[
-        "corsheaders.middleware.CorsMiddleware",
-        "django.middleware.security.SecurityMiddleware",
-        "django.contrib.sessions.middleware.SessionMiddleware",
-        "django.middleware.locale.LocaleMiddleware",
-        "django.middleware.common.CommonMiddleware",
-        "django.contrib.auth.middleware.AuthenticationMiddleware",
-        "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    ],
     validate_response=False,
 )
 

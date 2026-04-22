@@ -45,15 +45,6 @@ from django_bolt.exceptions import NotFound, BadRequest, Forbidden
 bolt = BoltAPI(
     prefix="/api/technical/",
     trailing_slash="append",
-    django_middleware=[
-        "corsheaders.middleware.CorsMiddleware",
-        "django.middleware.security.SecurityMiddleware",
-        "django.contrib.sessions.middleware.SessionMiddleware",
-        "django.middleware.locale.LocaleMiddleware",
-        "django.middleware.common.CommonMiddleware",
-        "django.contrib.auth.middleware.AuthenticationMiddleware",
-        "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    ],
     validate_response=False,
 )
 

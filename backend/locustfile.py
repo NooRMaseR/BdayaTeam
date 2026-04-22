@@ -17,51 +17,31 @@ from locust import FastHttpUser, task, between
 #         self.client.get(f"/api/v2/tracks/", headers={"Authorization": self.TOKEN})
     
     
-class UserDRF(FastHttpUser):
+class BoltUser(FastHttpUser):
     wait_time = between(2, 5)
-    host="http://localhost:8000"
-    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2NzI1NDM0LCJpYXQiOjE3NzY3MDAyMzQsImp0aSI6IjY5YWUwNzE3NmY5NDQ4M2RhMzA1NmY4MjI0OTE5ZGYxIiwidXNlcl9pZCI6IjEwIiwicm9sZSI6Im9yZ2FuaXplciJ9.HPTitUzGIPIko4r3gde4XzijPg-V_yEMiEzG5nAw8b0"
+    host="http://localhost:8000/api"
+    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2ODg1NjY4LCJpYXQiOjE3NzY4NjA0NjgsImp0aSI6ImVmODI0Y2QyMDQxYjQ1MGM4NmQ2MTc2NTYwNWE2MGM2IiwidXNlcl9pZCI6IjEwIiwicm9sZSI6Im9yZ2FuaXplciJ9._4RFUn1PNoQFdV4TighWdOn5YxjcuOJxsMNjxXQHslA"
     
     @task
     def see_track_members_FrontEnd(self):
-        self.client.get(f"/api/v2/organizer/members/Frontend", headers={"Authorization": self.TOKEN})
+        self.client.get(f"/organizer/members/Frontend", headers={"Authorization": self.TOKEN})
     
     @task
     def see_track_members_CCNA(self):
-        self.client.get(f"/api/v2/organizer/members/CCNA", headers={"Authorization": self.TOKEN})
+        self.client.get(f"/organizer/members/CCNA", headers={"Authorization": self.TOKEN})
     
     @task
     def see_track_members_Python(self):
-        self.client.get(f"/api/v2/organizer/members/Python", headers={"Authorization": self.TOKEN})
+        self.client.get(f"/organizer/members/Python", headers={"Authorization": self.TOKEN})
     
     @task
     def see_track_members_C_Sharp(self):
-        self.client.get(f"/api/v2/organizer/members/C-Sharp", headers={"Authorization": self.TOKEN})
+        self.client.get(f"/organizer/members/C-Sharp", headers={"Authorization": self.TOKEN})
     
     @task
     def see_track_members_Graphic(self):
-        self.client.get(f"/api/v2/organizer/members/Graphic%20Design", headers={"Authorization": self.TOKEN})
+        self.client.get(f"/organizer/members/Graphic%20Design", headers={"Authorization": self.TOKEN})
     
-    # @task
-    # def see_track_members_FrontEnd(self):
-    #     self.client.get(f"/api/organizer/members/Frontend/", headers={"Authorization": self.TOKEN})
-    
-    # @task
-    # def see_track_members_CCNA(self):
-    #     self.client.get(f"/api/organizer/members/CCNA/", headers={"Authorization": self.TOKEN})
-    
-    # @task
-    # def see_track_members_Python(self):
-    #     self.client.get(f"/api/organizer/members/Python/", headers={"Authorization": self.TOKEN})
-    
-    # @task
-    # def see_track_members_C_Sharp(self):
-    #     self.client.get(f"/api/organizer/members/C-Sharp/", headers={"Authorization": self.TOKEN})
-    
-    # @task
-    # def see_track_members_Graphic(self):
-    #     self.client.get(f"/api/organizer/members/Graphic%20Design/", headers={"Authorization": self.TOKEN})
-
     # @task
     # def do_register(self):
     #     faker = Faker()

@@ -1,4 +1,3 @@
-from ninja_extra.exceptions import ErrorDetail as NinjaErrorDetail
 from phonenumber_field.phonenumber import PhoneNumber
 from rest_framework.exceptions import ErrorDetail
 from PIL import Image
@@ -15,7 +14,7 @@ def generate_dummy_image() -> bytes:
 def enc_str(obj) -> str:
     if isinstance(obj, PhoneNumber):
         return obj.as_e164
-    elif isinstance(obj, (ErrorDetail, NinjaErrorDetail)):
+    elif isinstance(obj, ErrorDetail):
         return str(obj)
     
     raise TypeError(f"Object of Type {type(obj)} is not a json serializer")

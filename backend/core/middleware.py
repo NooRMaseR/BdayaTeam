@@ -1,9 +1,9 @@
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.utils import get_md5_hash_password
-from rest_framework_simplejwt.tokens import Token, AccessToken
+from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.tokens import Token
 
 from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
@@ -11,14 +11,7 @@ from channels.db import database_sync_to_async
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AnonymousUser
 from django.http import SimpleCookie
-from django.core.cache import cache
-
-from utils import serializer_encoder
 from .models import BdayaUser
-
-from ninja.renderers import BaseRenderer as NinjaBaseRenderer
-from ninja_extra.security import AsyncAPIKeyCookie
-from ninja.throttling import AnonRateThrottle
 
 class GraphQLAuthMiddleware:
 
@@ -127,8 +120,4 @@ class JWTSocketMiddleware(BaseMiddleware):
         
         return await super().__call__(scope, receive, send)
 
-class AsyncSafeThrottle(AnonRateThrottle):
-    def get_cache_key(self, request, *args, **kwargs) -> str:
-        ident = self.get_ident(request)
-        return self.cache_format % {'scope': self.scope, 'ident': ident}
     

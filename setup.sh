@@ -93,14 +93,33 @@ User=$USER
 Group=www-data
 WorkingDirectory=/home/$USER/BdayaTeam/backend/
 ExecStart=/home/$USER/BdayaTeam/backend/.venv/bin/gunicorn \
-        --workers 4 \
+        --workers 2 \
         --worker-connections 600 \
         --timeout 30 \
-        --keep-alive 2 \
         --worker-class uvicorn.workers.UvicornWorker \
         --forwarded-allow-ips="*" \
         --bind unix:/run/gunicorn.sock \
         BdayaTeam.asgi:application
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+cat <<EOF | sudo tee /etc/systemd/system/bolt.service 
+[Unit]
+Description=bolt daemon
+After=network.target
+
+[Service]
+User=$USER
+Group=www-data
+WorkingDirectory=/home/$USER/BdayaTeam/backend/
+ExecStart=/home/$USER/BdayaTeam/backend/.venv/bin/python \
+        manage.py \
+        runbolt \
+        --processes ${nproc - 1} \
+        --keep-alive 2
 
 [Install]
 WantedBy=multi-user.target

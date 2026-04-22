@@ -1,5 +1,5 @@
 import asyncio
-from ninja_extra import status
+from django_bolt import status
 from django.test import TestCase
 from django.core.cache import cache
 from django.test.client import AsyncClient

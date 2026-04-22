@@ -1,4 +1,3 @@
-from typing import Annotated
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -8,10 +7,10 @@ from organizer.models import SiteSetting
 from organizer.serializers import SiteSettingsImagesMSGSerializer
 
 from .serializers import TrackMSGSerializer, TrackNameOnlyMSGSerializer
-from .models import BdayaUser, Track, TrackCounter, UserRole
 from .permissions import get_any_authenticated_user, get_org_user
-from .caches import TRACKS_CACHE_KEY, track_cache_key
+from .models import BdayaUser, Track, TrackCounter, UserRole
 from .tasks import delete_all_tracks, send_member_email
+from .caches import TRACKS_CACHE_KEY, track_cache_key
 from . import api_schemas
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -19,12 +18,12 @@ from django.utils.translation import gettext_lazy as _
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.core.cache import cache
-from django.middleware import csrf
 from django.conf import settings
 from django.contrib import auth
 
 from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, serializer_encoder
 from asgiref.sync import sync_to_async
+from typing import Annotated
 import asyncio
 
 from django_bolt import BoltAPI, Depends, Response, Request, status, OpenAPIConfig
@@ -96,7 +95,6 @@ async def login(request: Request, body: api_schemas.LoginRequestMSG):
 
     if not user:
         raise BadRequest(detail="invalid email or password")
-        # return 400, {"details": "invalid email or password"}
 
     user = await BdayaUser.objects.select_related('track', 'member').aget(id=user.id) # type: ignore
     
@@ -118,37 +116,30 @@ async def login(request: Request, body: api_schemas.LoginRequestMSG):
     access_token = str(refresh.access_token)
     refresh_token = str(refresh)
 
-    encoded_data = {
-        "username": user.username,
-        "is_admin": user.is_superuser,
-        "role": UserRole(user.role),
-        "track": track_data,
-    }
+    data = api_schemas.LoginResponseMSG(
+        username= user.username,
+        is_admin= user.is_superuser,
+        role= UserRole(user.role),
+        track= track_data,
+    )
     
-    response = Response(encoded_data) 
-    response.set_cookie(
+    response = Response(data) \
+    .set_cookie(
         name="access_token",
         value=access_token,
-        expires=str(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].seconds),
+        max_age=int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds()),
         secure=True,
         httponly=True,
-        samesite='Lax'
-    )
-    response.set_cookie(
+    ) \
+    .set_cookie(
         name='refresh_token',
         value=refresh_token,
-        expires=str(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].seconds),
+        max_age=int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()),
         secure=True,
         httponly=True,
-        samesite='Lax'
     )
-    response.set_cookie(
-        name='csrftoken',
-        value=csrf.get_token(request), # type: ignore
-        secure=True,
-        httponly=True,
-        samesite='Lax'
-    )
+    
+    
     
     return response
 
@@ -162,7 +153,7 @@ async def logout():
     return response
 
 @bolt.post("/register/", status_code=201, tags=['Auth'], response_model=api_schemas.RegisterResponseMSG)
-async def register(request: Request, payload: api_schemas.RegisterRequestMSG):
+async def register(payload: api_schemas.RegisterRequestMSG):
     errors: dict[str, str] = {}
     email_exists, phone_exists, collage_code_exists = await asyncio.gather(
         BdayaUser.objects.filter(email=payload.email).aexists(),
@@ -198,13 +189,13 @@ async def register(request: Request, payload: api_schemas.RegisterRequestMSG):
     
     cache.delete_pattern("*member*") # type: ignore
     
-    encoded_data = {
-        "code": member.code,
-        "name": user.username,
-        "email": user.email,
-        "track": TrackNameOnlyMSGSerializer.from_model(member.bdaya_user.track) # type: ignore
-    }
-    response = Response(encoded_data, status_code=status.HTTP_201_CREATED)
+    data = api_schemas.RegisterResponseMSG(
+        code = member.code,
+        name = user.username,
+        email = user.email,
+        track = TrackNameOnlyMSGSerializer.from_model(member.bdaya_user.track) # type: ignore
+    )
+    response = Response(data, status_code=status.HTTP_201_CREATED)
     response.set_cookie(
         name='access_token',
         value=access_token,
@@ -220,13 +211,6 @@ async def register(request: Request, payload: api_schemas.RegisterRequestMSG):
         secure=True,
         samesite='Lax',
         expires=str(settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME').seconds)
-    )
-    response.set_cookie(
-        name='csrftoken',
-        value=csrf.get_token(request), # type: ignore
-        secure=True,
-        httponly=True,
-        samesite='Lax'
     )
 
     return response
@@ -278,18 +262,10 @@ async def refresh_tokens(request: Request, payload: api_schemas.RefreshTokenRequ
         samesite='Lax'
     )
     
-    response.set_cookie(
-        name='csrftoken',
-        value=csrf.get_token(request), # type: ignore
-        secure=True,
-        httponly=True,
-        samesite='Lax'
-    )
-
     return response
 
 @bolt.get("/test-auth/", tags=['Auth'], response_model=api_schemas.TestAuthResponseMSG)
-async def test_auth(request: Request, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+async def test_auth(user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
     track: TrackNameOnlyMSGSerializer | None = None
     
     if not user.is_organizer:
@@ -297,24 +273,15 @@ async def test_auth(request: Request, user: BdayaUser = Depends(get_any_authenti
     
     settings = await sync_to_async(SiteSetting.get_solo)()
     
-    encoded_data = {
-        "username": user.username,
-        "is_admin": user.is_superuser,
-        "role": UserRole(user.role),
-        "track": track,
-        "settings": SiteSettingsImagesMSGSerializer.from_model(settings),
-    }
-    
-    response = Response(encoded_data)
-    response.set_cookie(
-        name='csrftoken',
-        value=csrf.get_token(request), # type: ignore
-        secure=True,
-        httponly=True,
-        samesite='Lax'
+    data = api_schemas.TestAuthResponseMSG(
+        username= user.username,
+        is_admin= user.is_superuser,
+        role= UserRole(user.role),
+        track= track,
+        settings= SiteSettingsImagesMSGSerializer.from_model(settings),
     )
     
-    return response
+    return Response(data)
 
 @bolt.get("/tracks/", tags=['Track'], response_model=list[TrackMSGSerializer], validate_response=False)
 async def get_all():

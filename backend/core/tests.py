@@ -1,10 +1,12 @@
 import asyncio
+from .api import bolt
+from pprint import pprint
 from django.test import TestCase
 from django.core.cache import cache
-from django.test.client import AsyncClient
+from utils import generate_dummy_image
 from .models import BdayaUser, Track, UserRole
+from django_bolt.testing import AsyncTestClient
 from asgiref.sync import async_to_sync, sync_to_async
-from utils import JSON_CONTENT_TYPE, generate_dummy_image
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 # Create your tests here.
@@ -13,7 +15,7 @@ class TestCore(TestCase):
     
     @classmethod
     async def asetUpTestData(cls) -> None:
-        cls.async_client = AsyncClient()
+        cls.async_client = AsyncTestClient(bolt)
         
         cls.org_user = BdayaUser(
             username="ahmed",
@@ -37,18 +39,18 @@ class TestCore(TestCase):
         async_to_sync(cls.asetUpTestData)()
     
     def setUp(self) -> None:
-        self.async_client = AsyncClient()
+        self.async_client = AsyncTestClient(bolt)
         cache.clear()
         
     async def test_valid_login(self) -> None:
-        response = await self.async_client.post(
-            "/api/login/",
-            data={
-                "email": self.org_user.email,
-                "password": "password",
-            },
-            content_type=JSON_CONTENT_TYPE
-        )
+        async with self.async_client as client:
+            response = await client.post(
+                "/api/login/",
+                json={
+                    "email": self.org_user.email,
+                    "password": "password",
+                },
+            )
         
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.json()['is_admin'])
@@ -56,31 +58,32 @@ class TestCore(TestCase):
         self.assertIn("refresh_token", response.cookies)
         
     async def test_invalid_login(self) -> None:
-        response = await self.async_client.post(
-            "/api/login/",
-            data={
-                "email": self.org_user.email,
-                "password": "passdwsword",
-            },
-            content_type=JSON_CONTENT_TYPE
-        )
+        async with self.async_client as client:
+            response = await client.post(
+                "/api/login/",
+                json={
+                    "email": self.org_user.email,
+                    "password": "passdwsword",
+                },
+            )
         
         self.assertEqual(response.status_code, 400)
         
     async def test_valid_register(self) -> None:
-        response = await self.async_client.post(
-            "/api/register/",
-            data={
-                "name": "ali",
-                "email": "ali@gmail.com",
-                "password": "ali111213",
-                "phone_number": "+201288849905",
-                "collage_code": "C2301261",
-                "request_track_id": self.track_python.pk
-            },
-            content_type=JSON_CONTENT_TYPE
-        )
+        async with self.async_client as client:
+            response = await client.post(
+                "/api/register/",
+                json={
+                    "name": "ali",
+                    "email": "ali@gmail.com",
+                    "password": "ali111213",
+                    "phone_number": "+201288849905",
+                    "collage_code": "C2301261",
+                    "request_track_id": self.track_python.pk
+                },
+            )
         data = response.json()
+        pprint(data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(data['code'], 'p-1')
         self.assertEqual(data['track']['name'], self.track_python.name)
@@ -88,27 +91,30 @@ class TestCore(TestCase):
         self.assertIn("refresh_token", response.cookies)
     
     async def test_invalid_register(self) -> None:
-        response = await self.async_client.post(
-            "/api/register/",
-            data={
-                "name": "ali",
-                "email": "ali@gmail.com",
-                "password": "ali111213",
-                "phone_number": "+2012888499",
-                "collage_code": "B2301261",
-                "request_track_id": self.track_python.pk
-            },
-            content_type=JSON_CONTENT_TYPE
-        )
-        data = response.json()['detail']
+        async with self.async_client as client:
+            response = await client.post(
+                "/api/register/",
+                json={
+                    "name": "ali",
+                    "email": "ali@gmail.com",
+                    "password": "ali111213",
+                    "phone_number": "+2012888499",
+                    "collage_code": "B2301261",
+                    "request_track_id": self.track_python.pk
+                },
+            )
+        print(response.status_code)
         self.assertEqual(response.status_code, 422)
+        data = response.json()['detail']
         self.assertEqual(data[0]['loc'][-1], 'phone_number')
         self.assertEqual(data[0]['type'], 'value_error')
         self.assertEqual(data[1]['loc'][-1], 'collage_code')
         self.assertEqual(data[1]['type'], 'value_error')
     
     async def test_tracks_get(self) -> None:
-        response = await self.async_client.get("/api/tracks/")
+        async with self.async_client as client:
+            response = await client.get("/api/tracks/")
+
         data = response.json()
         
         self.assertEqual(response.status_code, 200)
@@ -117,21 +123,21 @@ class TestCore(TestCase):
         self.assertEqual(data[1]['name'], self.track_java.name)
     
     async def test_get_one_track(self) -> None:
-        response = await self.async_client.get("/api/tracks/Python/")
-        
+        async with self.async_client as client:
+            response = await client.get(f"/api/tracks/{self.track_python.name}/")
+
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data['name'], "Python")
+        self.assertEqual(data['name'], self.track_python.name)
 
     async def test_add_track(self) -> None:
-        client = AsyncClient()
+        client = AsyncTestClient(bolt)
         await client.post(
             "/api/login/",
-            data={
+            json={
                 "email": self.org_user.email,
                 "password": "password",
             },
-            content_type=JSON_CONTENT_TYPE
         )
         fake_image = SimpleUploadedFile(
             name='test_image.jpg', 
@@ -140,30 +146,28 @@ class TestCore(TestCase):
         )
         response = await client.post(
             "/api/tracks/",
-            data={
+            json={
                 "name": "C-Sharp",
                 "en_description": "test desc",
                 "ar_description": "وصف اختبار",
                 "prefix": "c",
+            },
+            files={
                 "image": fake_image
             }
         )
         self.assertEqual(response.status_code, 201)
 
     async def test_auth(self) -> None:
-        client = AsyncClient()
+        client = AsyncTestClient(bolt)
         await client.post(
             "/api/login/",
-            data={
+            json={
                 "email": self.org_user.email,
                 "password": "password",
             },
-            content_type=JSON_CONTENT_TYPE
         )
-        response = await client.get(
-            "/api/test-auth/",
-            content_type=JSON_CONTENT_TYPE
-        )
+        response = await client.get("/api/test-auth/")
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['username'], self.org_user.username)

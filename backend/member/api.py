@@ -1,11 +1,9 @@
-from typing import Annotated
-
 from django.utils.translation import gettext_lazy as _
-from django.http import HttpResponse
 from django.db import IntegrityError, transaction
 from django.shortcuts import aget_object_or_404
 from django.db.models.functions import Coalesce
 from asgiref.sync import sync_to_async
+from django.http import HttpResponse
 from django.core.cache import cache
 from django.utils import timezone
 from django.db.models import (
@@ -20,7 +18,6 @@ from django.db.models import (
     F,
 )
 
-import msgspec
 
 from core.permissions import get_member_user, get_any_authenticated_user
 from core.models import BdayaUser, Track
@@ -48,7 +45,9 @@ from utils import (
 )
 from .caches import member_profile_cache_key, tasks_cache_key
 from channels.layers import get_channel_layer
+from typing import Annotated
 import mimetypes
+import msgspec
 import asyncio
 import logging
 import os
@@ -62,15 +61,6 @@ logger = logging.getLogger("member")
 bolt = BoltAPI(
     prefix="/api/member/",
     trailing_slash="append",
-    django_middleware=[
-        "corsheaders.middleware.CorsMiddleware",
-        "django.middleware.security.SecurityMiddleware",
-        "django.contrib.sessions.middleware.SessionMiddleware",
-        "django.middleware.locale.LocaleMiddleware",
-        "django.middleware.common.CommonMiddleware",
-        "django.contrib.auth.middleware.AuthenticationMiddleware",
-        "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    ],
     validate_response=False,
 )
 
