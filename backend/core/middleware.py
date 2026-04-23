@@ -1,17 +1,53 @@
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.utils import get_md5_hash_password
-from rest_framework_simplejwt.exceptions import InvalidToken
-from rest_framework_simplejwt.settings import api_settings
-from rest_framework.exceptions import AuthenticationFailed
-from rest_framework_simplejwt.tokens import Token
-
-from channels.middleware import BaseMiddleware
-from channels.db import database_sync_to_async
-
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AnonymousUser
+from channels.middleware import BaseMiddleware
+from asgiref.sync import async_to_sync
 from django.http import SimpleCookie
+from django.conf import settings
 from .models import BdayaUser
+from utils import STORE
+import jwt
+
+async def get_user_from_token(raw_token: str) -> BdayaUser | AnonymousUser:
+    """
+    Universal async authenticator. Replaces CookiesJWTAuthentication.
+    """
+    if not raw_token:
+        return AnonymousUser()
+        
+    try:
+        payload = jwt.decode(
+            raw_token, 
+            settings.SECRET_KEY, 
+            algorithms=['HS256'],
+        )
+        
+        if payload.get("token_type") != "access":
+            return AnonymousUser()
+        
+        jti = payload.get("jti")
+        if jti and await STORE.is_revoked(jti):
+            return AnonymousUser()
+
+        user_id = payload.get('sub')
+        if not user_id:
+            return AnonymousUser()
+
+        user = await (
+            BdayaUser.objects
+            .defer("track__prefix", "is_staff", "joined_at", "last_login", "track__en_description", "track__ar_description", "track__image","member__joined_at", "member__status")
+            .select_related("track", 'member')
+            .aget(id=user_id)
+        )
+
+        if not user.is_active:
+            return AnonymousUser()
+
+        return user
+
+    except (jwt.PyJWTError, BdayaUser.DoesNotExist):
+        return AnonymousUser()
+
 
 class GraphQLAuthMiddleware:
 
@@ -20,83 +56,20 @@ class GraphQLAuthMiddleware:
         if request.user.is_authenticated:
             return next(root, info, **kwargs)
         
-        try:
-            token_auth = CookiesJWTAuthentication()
-            user_token_auth = token_auth.authenticate(request)
-            
-            if user_token_auth:
-                info.context.user = user_token_auth[0]
-            else:
-                info.context.user = AnonymousUser()
-        except AuthenticationFailed:
+        raw_token = request.COOKIES.get("access_token")
+        if not raw_token:
+            auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+            if auth_header.startswith('Bearer '):
+                raw_token = auth_header.split(' ')[1]
+        
+        if raw_token:
+            user = async_to_sync(get_user_from_token)(raw_token)
+            info.context.user = user
+        else:
             info.context.user = AnonymousUser()
         
         return next(root, info, **kwargs)
 
-
-class CookiesJWTAuthentication(JWTAuthentication):
-    def authenticate(self, request) -> None | tuple[BdayaUser, Token]:
-        header = self.get_header(request)
-        if header is not None:
-            raw_token = self.get_raw_token(header)
-        else:
-            raw_token = request.COOKIES.get('access_token')
-            
-        if raw_token is None:
-            return None
-
-        try:
-            validated_token = self.get_validated_token(raw_token)
-            return self.get_user(validated_token), validated_token
-        except:
-            return None
-        
-    def get_user(self, validated_token: Token) -> BdayaUser:
-        """
-        Attempts to find and return a user using the given validated token.
-        """
-        try:
-            user_id = validated_token[api_settings.USER_ID_CLAIM] # type: ignore
-        except KeyError as e:
-            raise InvalidToken(
-                _("Token contained no recognizable user identification")
-            ) from e
-
-        try:
-            user = (
-                self.user_model.objects
-                .defer("track__prefix", "is_staff", "joined_at", "last_login", "track__en_description", "track__ar_description", "track__image","member__joined_at", "member__status",)
-                .select_related("track", 'member')
-                .get(**{api_settings.USER_ID_FIELD: user_id}) # type: ignore
-            )
-        except self.user_model.DoesNotExist as e:
-            raise AuthenticationFailed(
-                _("User not found"), code="user_not_found"
-            ) from e
-
-        if api_settings.CHECK_USER_IS_ACTIVE and not user.is_active:
-            raise AuthenticationFailed(_("User is inactive"), code="user_inactive")
-
-        if api_settings.CHECK_REVOKE_TOKEN:
-            if validated_token.get(
-                api_settings.REVOKE_TOKEN_CLAIM # type: ignore
-            ) != get_md5_hash_password(user.password):
-                raise AuthenticationFailed(
-                    _("The user's password has been changed."), code="password_changed"
-                )
-
-        return user
-    
-@database_sync_to_async
-def get_user_from_socket(token) -> BdayaUser | AnonymousUser:
-    auth = CookiesJWTAuthentication()
-    
-    try:
-        token = auth.get_validated_token(token)
-        user = auth.get_user(token)
-        return user
-    except:
-        return AnonymousUser()
 
 class JWTSocketMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send): # type: ignore
@@ -109,7 +82,7 @@ class JWTSocketMiddleware(BaseMiddleware):
             
             token = cookie_parser.get('access_token')
             if token:
-                scope['user'] = await get_user_from_socket(token.value) # type: ignore
+                scope['user'] = await get_user_from_token(token.value) # type: ignore
         
         if scope['user'].is_anonymous:
             await send({

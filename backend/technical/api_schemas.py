@@ -1,11 +1,11 @@
 from django.utils import timezone
 from datetime import datetime
-from typing import Annotated
+from utils import IntId
 from . import models
 import msgspec
 
 class TaskCreateRequestMSG(msgspec.Struct):
-    task_number: Annotated[int, msgspec.Meta(gt=0)]
+    task_number: IntId
     expires_at: datetime
     description: str
     
@@ -14,11 +14,11 @@ class TaskCreateRequestMSG(msgspec.Struct):
             raise msgspec.ValidationError("expires_at cannot be in the past")
 
 class TaskSignRequestMSG(msgspec.Struct):
-    degree: str | int
+    degree: int
     technical_notes: str
 
 class TechnicalMembersTasksUpdateRequestMSG(msgspec.Struct):
-    task_id: Annotated[int, msgspec.Meta(gt=0)]
+    task_id: IntId
     code: str
     value: int | str
     field: models.MemberTechEditType

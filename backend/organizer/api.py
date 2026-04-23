@@ -29,8 +29,8 @@ from .models import (
 )
 from .serializers import AttendanceDayMSGSerializer, SiteSettingsMSGSerializer
 
-from django.shortcuts import aget_object_or_404, get_object_or_404
 from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
 from django.http import HttpResponse
 from django.core.cache import cache
@@ -89,11 +89,13 @@ async def get_track_members(track_name: str, user: BdayaUser = Depends(get_tech_
 
     CACHE_KEY = members_by_organizer_cache_key(track_name)
     if cached_data := await cache.aget(CACHE_KEY):
-        return cached_data
+        return HttpResponse(cached_data, content_type=JSON_CONTENT_TYPE)
 
-    target_track = await aget_object_or_404(
-        Track.objects.only("id", "name"), name=TRACK
-    )
+    try:
+        target_track = await Track.objects.only("id", "name").aget(name=TRACK)
+    except Track.DoesNotExist:
+        raise NotFound(detail=f"Track {track_name} does not exists")
+    
     track_serialized = TrackNameOnlyMSGSerializer.from_model(target_track)
 
     members = (
@@ -114,7 +116,7 @@ async def get_track_members(track_name: str, user: BdayaUser = Depends(get_tech_
     data = serializer_encoder.encode(data)
 
     await cache.aset(CACHE_KEY, data, DEFAULT_CACHE_DURATION)
-    return data
+    return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.post("/members/{track_name}/", tags=["Organizer"])
 async def edit_member_grid(track_name: str, payload: MemberEditGridRequestMSG, user=Depends(get_org_user)):
@@ -286,7 +288,7 @@ async def get_settings():
 
 @bolt.put("/settings/", status_code=204)
 async def update_settings(
-    is_register_enabled: Annotated[bool, Form()] = False, # type: ignore
+    is_register_enabled: Annotated[bool, Form()] = False,
     organizer_can_edit: Annotated[list[str], Form()] = [], 
     site_image: Annotated[UploadFile, File(alias="site_image")] = None,  # type: ignore
     hero_image: Annotated[UploadFile, File(alias="hero_image")] = None,  # type: ignore

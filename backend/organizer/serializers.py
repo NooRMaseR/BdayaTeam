@@ -3,7 +3,7 @@ from typing import Self
 
 from core.models import BdayaUser
 from core.serializers import BaseMSGSerializer
-from .models import Attendance, AttendanceAllowedDay, SiteSetting
+from .models import Attendance, AttendanceAllowedDay, AttendanceStatus, SiteSetting
 
 class AttendanceDayMSGSerializer(BaseMSGSerializer[AttendanceAllowedDay], frozen=True):
     id: int
@@ -29,7 +29,7 @@ class AttendanceMSGBy(BaseMSGSerializer[BdayaUser], frozen=True):
     
 class AttendanceMSGSerializer(BaseMSGSerializer[Attendance], frozen=True):
     date: AttendanceDayMSGSerializer
-    status: str
+    status: AttendanceStatus
     by: AttendanceMSGBy
     excuse_reason: str | None = None
     
@@ -37,7 +37,7 @@ class AttendanceMSGSerializer(BaseMSGSerializer[Attendance], frozen=True):
     def from_model(cls, model: Attendance) -> Self:
         return cls(
             date=AttendanceDayMSGSerializer.from_model(model.date),
-            status=model.status,
+            status=AttendanceStatus(model.status),
             excuse_reason=model.excuse_reason,
             by=AttendanceMSGBy.from_model(model.by)
         )

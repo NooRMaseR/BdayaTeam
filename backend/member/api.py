@@ -39,18 +39,17 @@ from technical.caches import (
 
 from utils import (
     DEFAULT_CACHE_DURATION,
+    serializer_encoder,
     JSON_CONTENT_TYPE,
     SAFE_MIMETYPES,
-    serializer_encoder,
+    FormStr,
+    IntId,
 )
 from .caches import member_profile_cache_key, tasks_cache_key
 from channels.layers import get_channel_layer
+import mimetypes, asyncio, logging, os
+from urllib.parse import quote
 from typing import Annotated
-import mimetypes
-import msgspec
-import asyncio
-import logging
-import os
 
 from django_bolt import BoltAPI, Depends, Response, UploadFile, status
 from django_bolt.exceptions import NotFound, BadRequest
@@ -100,7 +99,7 @@ async def get_all_tasks(user: BdayaUser = Depends(get_member_user)):  # type: ig
 
 
 @bolt.post("/tasks/", status_code=201)
-async def submit_task(task_id: Annotated[Annotated[int, msgspec.Meta(gt=0)], Form()], notes: Annotated[str | None, Form()] = None, files: Annotated[list[UploadFile], File(alias="files")] = [], user: BdayaUser = Depends(get_member_user)):  # type: ignore
+async def submit_task(task_id: Annotated[IntId, Form()], notes: Annotated[str | None, Form()] = None, files: Annotated[list[UploadFile], File(alias="files")] = [], user: BdayaUser = Depends(get_member_user)):  # type: ignore
     member: Member = user.member  # type: ignore
     TRACK: Track = user.track  # type: ignore
 
@@ -219,7 +218,7 @@ def get_sub_queries():
 
 
 @bolt.get("/profile/{member_code}/", response_model=MemberProfileMSGSerializer)
-async def get_profile(member_code: str, user: BdayaUser = Depends(get_member_user)):  # type: ignore
+async def get_profile(member_code: str, user: BdayaUser = Depends(get_any_authenticated_user)):  # type: ignore
     if user.is_member:  # type: ignore
         target_code = user.member.code  # type: ignore
     else:
@@ -266,7 +265,7 @@ async def get_editable_task(sent_task_id: int, user: BdayaUser = Depends(get_mem
     return HttpResponse(task_serialized_encoded, content_type=JSON_CONTENT_TYPE)
 
 @bolt.put("/edit-task/{sent_task_id}/", status_code=204)
-async def update_my_task(sent_task_id: int, notes: Annotated[str, Form()], files: Annotated[list[UploadFile], File(alias='files')] = [], user: BdayaUser = Depends(get_member_user)): # type: ignore
+async def update_my_task(sent_task_id: int, notes: FormStr, files: Annotated[list[UploadFile], File(alias='files')] = [], user: BdayaUser = Depends(get_member_user)): # type: ignore
     try:
         task = await (
             ReciviedTask.objects
@@ -315,23 +314,26 @@ async def update_my_task(sent_task_id: int, notes: Annotated[str, Form()], files
 async def get_protected_file(sent_task_id: int, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
 
     try:
-        document = await aget_object_or_404(ReciviedTaskFile.objects.only("id", 'file', "file_name", "recivied_task__member__bdaya_user__email").select_related('recivied_task__member__bdaya_user'), id=sent_task_id)
+        document = await ReciviedTaskFile.objects \
+            .only("id", 'file', "file_name", "recivied_task__member__bdaya_user__email") \
+            .select_related('recivied_task__member__bdaya_user') \
+            .aget(id=sent_task_id)
     except ReciviedTaskFile.DoesNotExist:
         raise NotFound(detail=f"File with recived task id {sent_task_id} does not exists")
     
     # check if it's an organizer or technical to get the file or check if the user is a member and it's the same member that uplouded this task
-    if (user.is_member and document.recivied_task.member.bdaya_user.email != user.email): # type: ignore
+    if (user.is_member and document.recivied_task.member.bdaya_user.email != user.email):
         raise NotFound()
 
     content_type, _ = mimetypes.guess_type(document.file.url)
 
-    nginx_url = f"/api/media/{document.file.name}"
+    nginx_url = quote(f"/api/media/{document.file.name}")
     final_content_type = content_type or 'application/octet-stream'
 
     disposition_type = 'inline' if final_content_type in SAFE_MIMETYPES else 'attachment'
 
     response = HttpResponse(b"", content_type=final_content_type)
     response['X-Accel-Redirect'] = nginx_url
-    response['Content-Disposition'] = f'{disposition_type}; filename="{document.file_name}"'
+    response['Content-Disposition'] = f"{disposition_type}; filename*=UTF-8''{quote(document.file_name)}"
 
     return response

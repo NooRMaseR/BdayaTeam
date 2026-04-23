@@ -1,16 +1,16 @@
 import jwt
+from utils import STORE
 from .models import UserRole
 from django_bolt import Request
 from django.conf import settings
 from .models import BdayaUser, UserRole
-from django_bolt.exceptions import Unauthorized, Forbidden
-    
+from django_bolt.exceptions import Unauthorized, Forbidden, BadRequest
+
 def require_role(role_label: str, allowed_jwt_roles: list[UserRole]):
     """
     A Dependency Factory that builds a specific security gatekeeper.
     """
     
-    # This inner function is what Bolt actually executes
     async def security_dependency(request: Request) -> BdayaUser:
         token = request.cookies.get('access_token')
         
@@ -25,10 +25,17 @@ def require_role(role_label: str, allowed_jwt_roles: list[UserRole]):
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
             
+            jti = payload.get("jti")
+            if not jti:
+                raise Unauthorized(detail="Invalid Token")
+            
+            if await STORE.is_revoked(jti):
+                raise Unauthorized(detail="Token is revoked")
+            
             if payload.get('role') not in allowed_jwt_roles:
                 raise Forbidden(detail=f"Only {role_label} are Allowed")
 
-            user_id = payload.get('user_id')
+            user_id = payload.get('sub')
 
             user = await (
                 BdayaUser.objects
@@ -43,6 +50,8 @@ def require_role(role_label: str, allowed_jwt_roles: list[UserRole]):
             raise Unauthorized(detail="Token expired")
         except jwt.InvalidTokenError:
             raise Unauthorized(detail="Invalid token")
+        except BdayaUser.DoesNotExist:
+            raise BadRequest(detail=f"User with id does not exists")
             
     return security_dependency
 

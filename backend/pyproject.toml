@@ -16,7 +16,6 @@ dependencies = [
     "django-redis>=6.0.0",
     "django-solo>=2.4.0",
     "django-unfold>=0.72.0",
-    "djangorestframework-simplejwt>=5.5.1",
     "graphene-django>=3.2.3",
     "graphene-django-optimizer>=0.10.0",
     "gunicorn>=23.0.0",

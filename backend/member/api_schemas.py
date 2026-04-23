@@ -1,6 +1,6 @@
-from typing import Annotated
 import msgspec
+from utils import IntId
     
 class TaskRequestMSG(msgspec.Struct):
-    task_id: Annotated[int, msgspec.Meta(gt=0)]
+    task_id: IntId
     notes: str | None = None

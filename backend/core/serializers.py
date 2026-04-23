@@ -19,7 +19,7 @@ class BaseMSGSerializer[T](msgspec.Struct, frozen=True, metaclass=CombinedMetaCl
     
     @classmethod
     def from_model_values(cls, model: dict[str, Any]) -> Self:
-        "Converts a `Model` converted using `.values()` into a `Struct`"
+        "Converts a `Model` using `.values()` into a `Struct`"
         return msgspec.convert(model, cls)
         
     @classmethod

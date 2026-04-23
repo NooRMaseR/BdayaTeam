@@ -1,4 +1,5 @@
-from typing import Annotated, Any, Literal, TypedDict
+from typing import Any, Literal, TypedDict
+from utils import IntId
 from datetime import date
 from . import models
 import msgspec
@@ -11,7 +12,7 @@ class DayUpdateRequestMSG(msgspec.Struct):
     newDay: date
 
 class AttendanceDayResponseMSG(msgspec.Struct):
-    id: Annotated[int, msgspec.Meta(gt=0)]
+    id: IntId
     day: date
 
 class MemberEditGridRequestMSG(msgspec.Struct):

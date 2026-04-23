@@ -35,8 +35,7 @@ DEBUG = False
 ALLOWED_HOSTS = (
     "localhost",
     "127.0.0.1",
-    "align-opposed-hydraulic-insured.trycloudflare.com",
-    "testserver.local"
+    "align-opposed-hydraulic-insured.trycloudflare.com"
 )
 
 # Application definition
@@ -96,7 +95,7 @@ SECURE_CSP = {
 #         "127.0.0.1",
 #     )
 
-SIMPLE_JWT = {
+BOLT_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(weeks=1),
     'ROTATE_REFRESH_TOKENS': True,

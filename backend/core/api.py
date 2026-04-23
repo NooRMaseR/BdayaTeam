@@ -1,7 +1,3 @@
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.settings import api_settings
-from rest_framework_simplejwt.tokens import RefreshToken
-
 from member.models import Member
 from organizer.models import SiteSetting
 from organizer.serializers import SiteSettingsImagesMSGSerializer
@@ -13,7 +9,6 @@ from .tasks import delete_all_tracks, send_member_email
 from .caches import TRACKS_CACHE_KEY, track_cache_key
 from . import api_schemas
 
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.translation import gettext_lazy as _
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
@@ -21,14 +16,15 @@ from django.core.cache import cache
 from django.conf import settings
 from django.contrib import auth
 
-from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, serializer_encoder
+from utils import DEFAULT_CACHE_DURATION, STORE, FormStr, JSON_CONTENT_TYPE, generate_jwts_for_user, serializer_encoder
 from asgiref.sync import sync_to_async
 from typing import Annotated
 import asyncio
+import jwt
 
-from django_bolt import BoltAPI, Depends, Response, Request, status, OpenAPIConfig
-from django_bolt.exceptions import BadRequest, Unauthorized, NotFound, Forbidden
-from django_bolt.param_functions import Form, File
+from django_bolt.exceptions import BadRequest, Unauthorized, NotFound, Forbidden, InternalServerError
+from django_bolt import BoltAPI, Depends, Response, Request, UploadFile, status, OpenAPIConfig, JSON
+from django_bolt.param_functions import File
 
 bolt = BoltAPI(
     prefix="/api/",
@@ -102,19 +98,7 @@ async def login(request: Request, body: api_schemas.LoginRequestMSG):
     if not user.is_organizer and user.track:
         track_data = TrackNameOnlyMSGSerializer.from_model(user.track)
     
-    claims = {
-        "role": user.role
-    }
-    if user.is_member and hasattr(user, "member"):
-        claims['code'] = user.member.code # type: ignore
-    
-    refresh = RefreshToken.for_user(user)
-    refresh['role'] = user.role
-    if user.is_member and hasattr(user, "member"):
-        refresh['code'] = user.member.code # type: ignore
-        
-    access_token = str(refresh.access_token)
-    refresh_token = str(refresh)
+    tokens = generate_jwts_for_user(user)
 
     data = api_schemas.LoginResponseMSG(
         username= user.username,
@@ -123,33 +107,50 @@ async def login(request: Request, body: api_schemas.LoginRequestMSG):
         track= track_data,
     )
     
-    response = Response(data) \
+    response = JSON(data) \
     .set_cookie(
         name="access_token",
-        value=access_token,
-        max_age=int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds()),
+        value=tokens.access,
+        max_age=tokens.access_exp,
         secure=True,
         httponly=True,
     ) \
     .set_cookie(
         name='refresh_token',
-        value=refresh_token,
-        max_age=int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()),
+        value=tokens.refresh,
+        max_age=tokens.refresh_exp,
         secure=True,
         httponly=True,
     )
     
-    
-    
     return response
 
 @bolt.get("/logout/", status_code=204, tags=["Auth"])
-async def logout():
-    response = Response(status_code=204)
-    response.delete_cookie("csrftoken")
-    response.delete_cookie("sessionid")
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
+async def logout(request: Request):
+    token = request.cookies.get('access_token')
+    if not token:
+        token = request.headers.get("authorization")
+        if token:
+            token = token.split(' ')[1]
+    
+    if token:
+        try:
+            payload = jwt.decode(token, options={"verify_signature": False})
+            
+            jti = payload.get("jti")
+            exp = payload.get("exp")
+            
+            if jti and exp:
+                await STORE.revoke(jti=jti, ttl=exp)
+                
+        except jwt.DecodeError:
+            pass
+    
+    response = Response(status_code=204) \
+    .delete_cookie("csrftoken") \
+    .delete_cookie("sessionid") \
+    .delete_cookie("access_token") \
+    .delete_cookie("refresh_token")
     return response
 
 @bolt.post("/register/", status_code=201, tags=['Auth'], response_model=api_schemas.RegisterResponseMSG)
@@ -180,12 +181,7 @@ async def register(payload: api_schemas.RegisterRequestMSG):
 
     user = await BdayaUser.objects.aget(id=member.bdaya_user_id) # type: ignore
 
-    refresh = RefreshToken.for_user(user)
-    refresh['role'] = user.role
-    refresh['code'] = member.code
-            
-    access_token = str(refresh.access_token)
-    refresh_token = str(refresh)
+    tokens = generate_jwts_for_user(user)
     
     cache.delete_pattern("*member*") # type: ignore
     
@@ -195,22 +191,21 @@ async def register(payload: api_schemas.RegisterRequestMSG):
         email = user.email,
         track = TrackNameOnlyMSGSerializer.from_model(member.bdaya_user.track) # type: ignore
     )
-    response = Response(data, status_code=status.HTTP_201_CREATED)
-    response.set_cookie(
+    response = JSON(data, status_code=status.HTTP_201_CREATED) \
+    .set_cookie(
         name='access_token',
-        value=access_token,
+        value=tokens.access,
         httponly=True,
         secure=True,
         samesite='Lax',
-        expires=str(settings.SIMPLE_JWT.get('ACCESS_TOKEN_LIFETIME').seconds)
-    )
-    response.set_cookie(
+        max_age=tokens.access_exp,
+    ).set_cookie(
         name='refresh_token',
-        value=refresh_token,
+        value=tokens.refresh,
         httponly=True,
         secure=True,
         samesite='Lax',
-        expires=str(settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME').seconds)
+        max_age=tokens.refresh_exp
     )
 
     return response
@@ -224,39 +219,44 @@ async def refresh_tokens(request: Request, payload: api_schemas.RefreshTokenRequ
         raise Unauthorized(detail="Refresh token missing")
 
     try:
-        refresh = RefreshToken(raw_refresh) # type: ignore
-    except TokenError:
-        raise Unauthorized(detail="Refresh token is invalid or expired")
-
-    access_token = str(refresh.access_token)
+        decoded = jwt.decode(raw_refresh, settings.SECRET_KEY, ['HS256'])
+    except jwt.ExpiredSignatureError:
+        raise Unauthorized(detail="Refresh token expired. Please log in again.")
+    except jwt.InvalidTokenError:
+        raise Unauthorized(detail="Invalid refresh token")
     
-    if api_settings.ROTATE_REFRESH_TOKENS:
-        if api_settings.BLACKLIST_AFTER_ROTATION:
-            try:
-                await sync_to_async(refresh.blacklist)()
-            except AttributeError:
-                pass
-        
-        # Mint the new refresh token parameters
-        refresh.set_jti()
-        refresh.set_exp()
-        refresh.set_iat()
-        
-    new_refresh_token = str(refresh)
-    response = Response(status_code=status.HTTP_204_NO_CONTENT)
-    response.set_cookie(
+    if decoded.get("token_type") != "refresh":
+        raise Unauthorized(detail="Invalid token type")
+    
+    jti = decoded.get("jti")
+    exp = decoded.get("exp")
+    user_id = decoded.get("sub")
+    
+    if jti and await STORE.is_revoked(jti):
+        raise Unauthorized(detail="Refresh token has been revoked or already used.")
+    
+    try:
+        user = await BdayaUser.objects.select_related("member").aget(id=user_id)
+    except BdayaUser.DoesNotExist:
+        raise NotFound(detail="User Does not exists")
+    
+    if jti and exp:
+        await STORE.revoke(jti=jti, ttl=exp)
+    
+    tokens = generate_jwts_for_user(user)
+    
+    response = Response(status_code=status.HTTP_204_NO_CONTENT) \
+    .set_cookie(
         name="access_token",
-        value=access_token,
-        expires=str(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].seconds),
+        value=tokens.access,
+        max_age=tokens.access_exp,
         secure=True,
         httponly=True,
         samesite='Lax'
-    )
-    
-    response.set_cookie(
+    ).set_cookie(
         name='refresh_token',
-        value=new_refresh_token,
-        expires=str(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].seconds),
+        value=tokens.refresh,
+        max_age=tokens.refresh_exp,
         secure=True,
         httponly=True,
         samesite='Lax'
@@ -265,7 +265,7 @@ async def refresh_tokens(request: Request, payload: api_schemas.RefreshTokenRequ
     return response
 
 @bolt.get("/test-auth/", tags=['Auth'], response_model=api_schemas.TestAuthResponseMSG)
-async def test_auth(user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+async def test_auth(request: Request, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
     track: TrackNameOnlyMSGSerializer | None = None
     
     if not user.is_organizer:
@@ -281,7 +281,7 @@ async def test_auth(user: BdayaUser = Depends(get_any_authenticated_user)): # ty
         settings= SiteSettingsImagesMSGSerializer.from_model(settings),
     )
     
-    return Response(data)
+    return JSON(data)
 
 @bolt.get("/tracks/", tags=['Track'], response_model=list[TrackMSGSerializer], validate_response=False)
 async def get_all():
@@ -303,7 +303,7 @@ async def get_all():
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.post('/tracks/', tags=["Track"], status_code=201)
-async def create(name: Annotated[str, Form()], prefix: Annotated[str, Form()], en_description: Annotated[str, Form()], ar_description: Annotated[str, Form()], image: Annotated[list[dict], File(alias="image")] = File(...), user = Depends(get_org_user)): # type: ignore
+async def create(name: FormStr, prefix: FormStr, en_description: FormStr, ar_description: FormStr, image: Annotated[UploadFile, File(alias="image")] = File(...), user = Depends(get_org_user)): # type: ignore
 
     errors: dict[str, str] = {}
     track_exists, prefix_exists = await asyncio.gather(
@@ -320,17 +320,12 @@ async def create(name: Annotated[str, Form()], prefix: Annotated[str, Form()], e
     if errors:
         raise BadRequest(detail=errors)
     try:
-        converted_image = SimpleUploadedFile(
-            name=image[0]['filename'],
-            content=image[0]['content'],
-            content_type=image[0]['content_type']
-        )
         await Track.objects.acreate(
             name=name,
             prefix=prefix,
             en_description=en_description,
             ar_description=ar_description,
-            image=converted_image,
+            image=image.file,
         )
     except IntegrityError:
         raise BadRequest(detail=str(_("this track already exists")))
@@ -379,4 +374,4 @@ async def reset_all(user: BdayaUser = Depends(get_any_authenticated_user)): # ty
         cache.clear()
         return Response(status_code=status.HTTP_202_ACCEPTED)
     except Exception as e:
-        return Response({"details": repr(e)}, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        raise InternalServerError(detail=repr(e))

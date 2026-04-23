@@ -47,7 +47,7 @@ const Transition = React.forwardRef(function Transition(
 
 export default function TaskShowCase({ open, task, onSuccess, onClose, editable = true }: TaskShowCaseProps) {
     const tr = useTranslations('taskPage');
-    const { register, handleSubmit, reset } = useForm<SignTask>();
+    const { register, handleSubmit, reset, formState: {errors} } = useForm<SignTask>();
     const onCloseRef = React.useRef(onClose);
 
     React.useEffect(() => {
@@ -174,10 +174,12 @@ export default function TaskShowCase({ open, task, onSuccess, onClose, editable 
                                 </Typography>
                                 <Divider />
                                 <LocaledTextField
-                                    {...register('degree', { required: true })}
+                                    {...register('degree', { required: true, valueAsNumber: true, min: {message: tr("min_degree"), value: 0} })}
                                     label={tr("degree")}
                                     type="number"
                                     inputMode="numeric"
+                                    error={!!errors.degree}
+                                    helperText={errors.degree?.message}
                                     fullWidth
                                     variant="outlined"
                                     required
