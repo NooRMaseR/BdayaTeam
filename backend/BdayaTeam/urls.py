@@ -25,8 +25,7 @@ from django.contrib import admin
 
 urlpatterns = (
     path('api/super/s/secure/admin/', admin.site.urls),
-    path("api/", include("core.urls")),
-    path("api/graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True, middleware=[GraphQLAuthMiddleware()], schema=schema))),
+    path("graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True, middleware=[GraphQLAuthMiddleware()], schema=schema))),
     path('api/i18n/', include('django.conf.urls.i18n')),
 )
 

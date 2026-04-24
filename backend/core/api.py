@@ -9,10 +9,12 @@ from .tasks import delete_all_tracks, send_member_email
 from .caches import TRACKS_CACHE_KEY, track_cache_key
 from . import api_schemas
 
+from django.db import IntegrityError, transaction, connection
 from django.utils.translation import gettext_lazy as _
-from django.db import IntegrityError, transaction
+from django.db.utils import OperationalError
+from django.core.cache import cache, caches
+from asgiref.sync import sync_to_async
 from django.http import HttpResponse
-from django.core.cache import cache
 from django.conf import settings
 from django.contrib import auth
 
@@ -23,8 +25,18 @@ import asyncio
 import jwt
 
 from django_bolt.exceptions import BadRequest, Unauthorized, NotFound, Forbidden, InternalServerError
-from django_bolt import BoltAPI, Depends, Response, Request, UploadFile, status, OpenAPIConfig, JSON
+from django_bolt.health import register_health_checks, add_health_check
 from django_bolt.param_functions import File
+from django_bolt import (
+    OpenAPIConfig,
+    UploadFile,
+    Response,
+    BoltAPI,
+    Depends,
+    Request,
+    status,
+    JSON,
+)
 
 bolt = BoltAPI(
     prefix="/api/",
@@ -33,8 +45,38 @@ bolt = BoltAPI(
         title="Bdaya Team Api",
         version="1.2.0",
         path="/api/docs"
-    )
+    ),
+    validate_response=False
 )
+bolt.mount_django("/")
+register_health_checks(bolt)
+
+@sync_to_async(thread_sensitive=True)
+def database_check() -> tuple[bool, str]:
+    try:
+        connection.ensure_connection()
+        return True, "ok"
+    except OperationalError as e:
+        return False, str(e)
+    except Exception as e:
+        return False, f"Unexpected error: {str(e)}"
+
+async def redis_check() -> tuple[bool, str]:
+    try:
+        cache = caches['default'] 
+        
+        await cache.aset("health_ping", "pong", timeout=1)
+        val = await cache.aget("health_ping")
+        
+        if val == "pong":
+            return True, "ok"
+        return False, "Cache connected but returned invalid data"
+    except Exception as e:
+        return False, f"Cache error: {str(e)}"
+
+add_health_check(database_check)
+add_health_check(redis_check)
+
 
 def create_member_transaction(payload: api_schemas.RegisterRequestMSG) -> Member:
     try:
@@ -87,6 +129,10 @@ def create_member_transaction(payload: api_schemas.RegisterRequestMSG) -> Member
 
 @bolt.post("/login/", tags=['Auth'], response_model=api_schemas.LoginResponseMSG)
 async def login(request: Request, body: api_schemas.LoginRequestMSG):
+    """Login
+    
+    a login endpoint with the cookies
+    """
     user: BdayaUser | None = await auth.aauthenticate(request, email=body.email, password=body.password) # type: ignore
 
     if not user:
@@ -99,6 +145,8 @@ async def login(request: Request, body: api_schemas.LoginRequestMSG):
         track_data = TrackNameOnlyMSGSerializer.from_model(user.track)
     
     tokens = generate_jwts_for_user(user)
+    print(tokens.access)
+    print(tokens.refresh)
 
     data = api_schemas.LoginResponseMSG(
         username= user.username,
@@ -127,6 +175,12 @@ async def login(request: Request, body: api_schemas.LoginRequestMSG):
 
 @bolt.get("/logout/", status_code=204, tags=["Auth"])
 async def logout(request: Request):
+    """Logout
+    A Logout endpoint that removes the cookies from the user `cookies`
+    
+    this endpoint is also stores the token in the `revokation store`
+    """
+    
     token = request.cookies.get('access_token')
     if not token:
         token = request.headers.get("authorization")
@@ -155,6 +209,8 @@ async def logout(request: Request):
 
 @bolt.post("/register/", status_code=201, tags=['Auth'], response_model=api_schemas.RegisterResponseMSG)
 async def register(payload: api_schemas.RegisterRequestMSG):
+    "Register"
+    
     errors: dict[str, str] = {}
     email_exists, phone_exists, collage_code_exists = await asyncio.gather(
         BdayaUser.objects.filter(email=payload.email).aexists(),
@@ -172,7 +228,7 @@ async def register(payload: api_schemas.RegisterRequestMSG):
         errors["collage_code"] = str(_("collage_code_exists"))
         
     if errors:
-        raise BadRequest(detail=errors)
+        return Response(errors, status.HTTP_400_BAD_REQUEST)
 
     try:
         member = await sync_to_async(create_member_transaction)(payload)
@@ -212,6 +268,12 @@ async def register(payload: api_schemas.RegisterRequestMSG):
 
 @bolt.post("/token/refresh/", tags=['Auth'], auth=None, status_code=204)
 async def refresh_tokens(request: Request, payload: api_schemas.RefreshTokenRequestMSG):
+    """Refresh Tokens
+    
+    refreshes the tokens from the cookies
+    
+    it looks for the the refresh token in the `cookies`, if not found then search for it in the `payload`
+    """
     
     raw_refresh = request.cookies.get("refresh_token") or payload.refresh
     
@@ -265,7 +327,12 @@ async def refresh_tokens(request: Request, payload: api_schemas.RefreshTokenRequ
     return response
 
 @bolt.get("/test-auth/", tags=['Auth'], response_model=api_schemas.TestAuthResponseMSG)
-async def test_auth(request: Request, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+async def test_auth(user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+    """test authentication
+    
+    test if the user is authenticated and return the user `credentials`
+    """
+    
     track: TrackNameOnlyMSGSerializer | None = None
     
     if not user.is_organizer:
@@ -285,6 +352,8 @@ async def test_auth(request: Request, user: BdayaUser = Depends(get_any_authenti
 
 @bolt.get("/tracks/", tags=['Track'], response_model=list[TrackMSGSerializer], validate_response=False)
 async def get_all():
+    "get all tracks"
+    
     cached = await cache.aget(TRACKS_CACHE_KEY)
     
     if cached:
@@ -304,7 +373,11 @@ async def get_all():
 
 @bolt.post('/tracks/', tags=["Track"], status_code=201)
 async def create(name: FormStr, prefix: FormStr, en_description: FormStr, ar_description: FormStr, image: Annotated[UploadFile, File(alias="image")] = File(...), user = Depends(get_org_user)): # type: ignore
-
+    """create a track
+    
+    the `name` and `prefix` must be `unique`
+    """
+    
     errors: dict[str, str] = {}
     track_exists, prefix_exists = await asyncio.gather(
         Track.objects.filter(name__iexact=name).aexists(),
@@ -318,7 +391,8 @@ async def create(name: FormStr, prefix: FormStr, en_description: FormStr, ar_des
         errors['prefix'] = str(_("this prefix already exists"))
         
     if errors:
-        raise BadRequest(detail=errors)
+        return Response(errors, status.HTTP_400_BAD_REQUEST)
+    
     try:
         await Track.objects.acreate(
             name=name,
@@ -335,6 +409,8 @@ async def create(name: FormStr, prefix: FormStr, en_description: FormStr, ar_des
 
 @bolt.get('/tracks/{track_name}/', tags=['Track'], status_code=200, response_model=TrackMSGSerializer)
 async def get_one(track_name: str):
+    "get one track"
+    
     CACHE_KEY = track_cache_key(track_name)
     if (data:= await cache.aget(CACHE_KEY)):
         return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
@@ -351,6 +427,11 @@ async def get_one(track_name: str):
 
 @bolt.delete('/tracks/{track_name}/', tags=['Track'], status_code=204)
 async def delete(track_name: str, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+    """delete a track (Very Dangerios)
+
+    this endpoint deletes a track along with `all related fields`
+    """
+    
     if not user.is_superuser:
         raise Forbidden(detail="Only Admin allowed")
     
@@ -364,7 +445,10 @@ async def delete(track_name: str, user: BdayaUser = Depends(get_any_authenticate
 
 @bolt.delete('/reset-all/', status_code=202, tags=['Auth'])
 async def reset_all(user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
-    "Very Dangores, Deletes all tracks and members and tasks and technicals."
+    """Reset All
+    
+    `Very Dangerios`, Deletes all tracks and members and tasks and technicals, every thing related to the `tracks`
+    """
     
     if not user.is_superuser:
         raise Forbidden(detail="Only Admin allowed")

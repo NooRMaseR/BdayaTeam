@@ -1,10 +1,12 @@
 from core.serializers import BaseMSGSerializer
 from datetime import datetime
+
 from .models import Task
+from utils import IntId
 from typing import Self
     
 class TaskSmallMSGSerializer(BaseMSGSerializer[Task], frozen=True):
-    id: int
+    id: IntId
     task_number: int
 
     @classmethod

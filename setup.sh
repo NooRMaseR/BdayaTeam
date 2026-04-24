@@ -50,7 +50,7 @@ sudo sysctl -p
 cat <<EOF | sudo tee /etc/systemd/system/huey-worker.service
 [Unit]
 Description=huey Worker
-After=network.target redis-server.service gunicorn.service
+After=network.target redis-server.service bolt.service
 
 [Service]
 User=$USER
@@ -68,44 +68,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable huey-worker
 sudo systemctl start huey-worker
 
-# setup systemd gunicorn
-
-cat <<EOF | sudo tee /etc/systemd/system/gunicorn.socket
-[Unit]
-Description=gunicorn socket
-
-[Socket]
-ListenStream=/run/gunicorn.sock
-
-[Install]
-WantedBy=sockets.target
-EOF
-
-
-cat <<EOF | sudo tee /etc/systemd/system/gunicorn.service 
-[Unit]
-Description=gunicorn daemon
-Requires=gunicorn.socket
-After=network.target
-
-[Service]
-User=$USER
-Group=www-data
-WorkingDirectory=/home/$USER/BdayaTeam/backend/
-ExecStart=/home/$USER/BdayaTeam/backend/.venv/bin/gunicorn \
-        --workers 2 \
-        --worker-connections 600 \
-        --timeout 30 \
-        --worker-class uvicorn.workers.UvicornWorker \
-        --forwarded-allow-ips="*" \
-        --bind unix:/run/gunicorn.sock \
-        BdayaTeam.asgi:application
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-
+# setup systemd for django-bolt
 cat <<EOF | sudo tee /etc/systemd/system/bolt.service 
 [Unit]
 Description=bolt daemon
@@ -118,16 +81,35 @@ WorkingDirectory=/home/$USER/BdayaTeam/backend/
 ExecStart=/home/$USER/BdayaTeam/backend/.venv/bin/python \
         manage.py \
         runbolt \
-        --processes ${nproc - 1} \
-        --keep-alive 2
+        --processes ${nproc} \
+        --keep-alive 10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# setup systemd for daphne
+
+cat <<EOF | sudo tee /etc/systemd/system/daphne.service 
+[Unit]
+Description=daphne daemon
+After=network.target
+
+[Service]
+User=kali
+Group=www-data
+WorkingDirectory=/home/kali/BdayaTeam/backend/
+ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/daphne \
+        -u /tmp/daphne.sock \
+        BdayaTeam.asgi:application
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
-sudo systemctl start gunicorn
-sudo systemctl enable gunicorn
+sudo systemctl start bolt daphne
+sudo systemctl enable bolt daphne
 
 # setup nginx
 sudo apt install nginx

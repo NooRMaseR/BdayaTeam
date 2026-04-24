@@ -62,7 +62,13 @@ export default function RegisterForm({ tracks, canRegister = false }: RegisterFo
         return await Promise.resolve(body);
       } else if (error) {
         if (response.status === 422 && typeof error.detail[0] !== "string") {
-          setError(error.detail[0].loc[error.detail[0].loc.length - 1] as keyof SendRegister, { message: error.detail[0].ctx.error });
+          for (let i = 0; i < error.detail.length; i++) {
+            const errorObj = error.detail[i];
+            if (typeof errorObj !== "string") {
+              const [field, Error] = errorObj.msg.split(": ", 2);
+              setError(field.split('.')[1] as keyof SendRegister, { message: Error });
+            }
+          }
         } else if (response.status === 400 && error) {
           Object.entries(error).forEach(er => {
             setError(er[0] as keyof SendRegister, { message: er[1] });

@@ -27,48 +27,35 @@ class RegisterRequestMSG(Serializer):
     phone_number: str
     collage_code: str
     
-    @field_validator('email')
-    def validate_email(cls, v: str):
+    @field_validator('email', 'before')
+    def validate_email(cls, v: str) -> str:
         try:
             validate_email(v)
         except ValidationError as e:
             error = e.message if hasattr(e, 'message') else e.messages[0]
             raise ValueError(error)
+
+        return v
     
-    @field_validator('collage_code')
-    def validate_collage(cls, v: str):
+    @field_validator('collage_code', 'before')
+    def validate_collage(cls, v: str) -> str:
         try:
             validators.validate_collage_code(v)
         except ValidationError as e:
             error = e.message if hasattr(e, 'message') else e.messages[0]
             raise ValueError(error)
+        
+        return v
     
-    @field_validator('phone_number')
-    def validate_phone(cls, v: str):
+    @field_validator('phone_number', 'before')
+    def validate_phone(cls, v: str) -> str:
         try:
             validate_international_phonenumber(v)
         except ValidationError as e:
             error = e.message if hasattr(e, 'message') else e.messages[0]
             raise ValueError(error)
-    
-    # def __post_init__(self) -> None:
-    #     try:
-    #         validate_email(self.email)
-    #     except ValidationError as e:
-    #         error = e.message if hasattr(e, 'message') else e.messages[0]
-    #         raise msgspec.ValidationError(f"email: {error}")
-
-    #     try:
-    #         validators.validate_collage_code(self.collage_code)
-    #     except ValidationError as e:
-    #         error = e.message if hasattr(e, 'message') else e.messages[0]
-    #         raise msgspec.ValidationError(f"collage_code: {error}")
-
-    #     try:
-    #         validate_international_phonenumber(self.phone_number)
-    #     except ValidationError as e:
-    #         error = e.message if hasattr(e, 'message') else e.messages[0]
-    #         raise msgspec.ValidationError(f"phone_number: {error}")
+        
+        return v
     
 class RefreshTokenRequestMSG(msgspec.Struct):
     refresh: str | None = None

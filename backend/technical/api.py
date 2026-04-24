@@ -21,7 +21,7 @@ from .caches import (
     task_view_cache_key,
 )
 
-from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, serializer_encoder
+from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, IntId, serializer_encoder
 
 from django.db.models.functions import Coalesce
 from asgiref.sync import sync_to_async
@@ -29,6 +29,7 @@ from django.http import HttpResponse
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
+from django.conf import settings
 from django.db.models import (
     ExpressionWrapper,
     BooleanField,
@@ -46,11 +47,14 @@ bolt = BoltAPI(
     prefix="/api/technical/",
     trailing_slash="append",
     validate_response=False,
+    django_middleware=settings.BOLT_MIDDLEWARE
 )
 
 
 @bolt.get("/tasks/", response_model=list[TaskMSGSerializer])
 async def tech_get_all(user: BdayaUser = Depends(get_tech_user)): # type: ignore
+    "get all created tasks"
+    
     TRACK: Track = user.track # type: ignore
     if cached := await cache.aget(technical_tasks_cache_key(TRACK.name)):
         return HttpResponse(cached, content_type=JSON_CONTENT_TYPE)
@@ -87,6 +91,8 @@ async def tech_get_all(user: BdayaUser = Depends(get_tech_user)): # type: ignore
 
 @bolt.post("/tasks/", status_code=201, response_model=TaskMSGSerializer)
 async def add_task(payload: TaskCreateRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+    "create a task"
+    
     TRACK: Track = user.track # type: ignore
     
     if await Task.objects.filter(track=TRACK, task_number=payload.task_number).aexists():
@@ -112,7 +118,9 @@ async def add_task(payload: TaskCreateRequestMSG, user: BdayaUser = Depends(get_
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE, status=status.HTTP_201_CREATED)
 
 @bolt.get("/tasks/{task_id}/", response_model=TaskMSGSerializer)
-async def get_one(task_id: int, user = Depends(get_tech_or_member_user)):
+async def get_one(task_id: IntId, user = Depends(get_tech_or_member_user)):
+    "get one task"
+    
     CACHE_KEY = task_view_cache_key(task_id)
     if cached := await cache.aget(CACHE_KEY):
         return HttpResponse(cached, content_type=JSON_CONTENT_TYPE)
@@ -138,7 +146,9 @@ async def get_one(task_id: int, user = Depends(get_tech_or_member_user)):
 
 
 @bolt.put('/tasks/{task_id}/', status_code=204)
-async def update_task(task_id: int, payload: TaskCreateRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+async def update_task(task_id: IntId, payload: TaskCreateRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+    "update task info"
+    
     TRACK: Track = user.track # type: ignore
     data_to_update: set[str] = set()
 
@@ -181,7 +191,11 @@ async def update_task(task_id: int, payload: TaskCreateRequestMSG, user: BdayaUs
         raise BadRequest(detail=repr(e))
 
 @bolt.delete('/tasks/{task_id}/', status_code=204)
-async def delete_task(task_id: int, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+async def delete_task(task_id: IntId, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+    """delete task
+    
+    delete a task and all sent tasks to this task
+    """
     
     @sync_to_async
     def safe_transaction() -> None:
@@ -200,7 +214,9 @@ async def delete_task(task_id: int, user: BdayaUser = Depends(get_tech_user)): #
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @bolt.get("/tasks/{task_id}/recived/", response_model=list[RecivedTaskMSGSerializer])
-async def get_recived_tasks_from_members(task_id: int, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+async def get_recived_tasks_from_members(task_id: IntId, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+    "get recived tasks from members"
+    
     track: Track = user.track # type: ignore
     
     CACHE_KEY = tasks_from_memebrs_cache_key(track.name, task_id)
@@ -231,7 +247,9 @@ async def get_recived_tasks_from_members(task_id: int, user: BdayaUser = Depends
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.post("/tasks/{task_id}/recived/", status_code=204)
-async def sign_task(task_id: int, payload: TaskSignRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+async def sign_task(task_id: IntId, payload: TaskSignRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+    "sign a task with a `degree` and `message`"
+    
     track: Track = user.track # type: ignore
     try:
         recived_task = await (
@@ -272,6 +290,8 @@ async def sign_task(task_id: int, payload: TaskSignRequestMSG, user: BdayaUser =
 
 @bolt.get("/members/{track_name}/with-tasks/", response_model=list[MemberTechnicalMSGSerializer])
 async def get_members(track_name: str, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+    "get all track members with their sent tasks"
+    
     TRACK = track_name.replace("%20", " ")
     track_obj: Track = user.track # type: ignore
     
@@ -305,6 +325,8 @@ async def get_members(track_name: str, user: BdayaUser = Depends(get_tech_user))
 
 @bolt.put("/members/{track_name}/with-tasks/", status_code=204)
 async def update_member_task(track_name: str, payload: TechnicalMembersTasksUpdateRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+    "update a reviewed task"
+    
     try:
         recivied_task = await (
             ReciviedTask.objects

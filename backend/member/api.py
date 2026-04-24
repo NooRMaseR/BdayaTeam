@@ -6,6 +6,7 @@ from asgiref.sync import sync_to_async
 from django.http import HttpResponse
 from django.core.cache import cache
 from django.utils import timezone
+from django.conf import settings
 from django.db.models import (
     PositiveSmallIntegerField,
     ExpressionWrapper,
@@ -61,11 +62,17 @@ bolt = BoltAPI(
     prefix="/api/member/",
     trailing_slash="append",
     validate_response=False,
+    django_middleware=settings.BOLT_MIDDLEWARE
 )
 
 
 @bolt.get("/tasks/", response_model=list[TaskMSGSerializer])
 async def get_all_tasks(user: BdayaUser = Depends(get_member_user)):  # type: ignore
+    """get all unsigned tasks
+    
+    fetches all the tasks that hasen't reviewed yet by a technical `signed=False`
+    """
+    
     TRACK: Track = user.track  # type: ignore
     CACHE_KEY = tasks_cache_key(TRACK.name, user.id)  # type: ignore
 
@@ -100,6 +107,8 @@ async def get_all_tasks(user: BdayaUser = Depends(get_member_user)):  # type: ig
 
 @bolt.post("/tasks/", status_code=201)
 async def submit_task(task_id: Annotated[IntId, Form()], notes: Annotated[str | None, Form()] = None, files: Annotated[list[UploadFile], File(alias="files")] = [], user: BdayaUser = Depends(get_member_user)):  # type: ignore
+    "submit task solution"
+    
     member: Member = user.member  # type: ignore
     TRACK: Track = user.track  # type: ignore
 
@@ -219,6 +228,13 @@ def get_sub_queries():
 
 @bolt.get("/profile/{member_code}/", response_model=MemberProfileMSGSerializer)
 async def get_profile(member_code: str, user: BdayaUser = Depends(get_any_authenticated_user)):  # type: ignore
+    """get member profile
+    
+    if the requested user is a `member` the `member_code` parameter is ignored
+    
+    else then it uses the `member_code` parameter
+    """
+    
     if user.is_member:  # type: ignore
         target_code = user.member.code  # type: ignore
     else:
@@ -243,7 +259,12 @@ async def get_profile(member_code: str, user: BdayaUser = Depends(get_any_authen
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.get("/edit-task/{sent_task_id}/", response_model=RecivedTaskMSGSerializer)
-async def get_editable_task(sent_task_id: int, user: BdayaUser = Depends(get_member_user)):  # type: ignore
+async def get_editable_task(sent_task_id: IntId, user: BdayaUser = Depends(get_member_user)):  # type: ignore
+    """get the signed task to edit
+    
+    it allows the `member` to get the task that he sent to edit it
+    """
+    
     try:
         task = await (
             ReciviedTask.objects.select_related("task", "member__bdaya_user", "track")
@@ -265,7 +286,12 @@ async def get_editable_task(sent_task_id: int, user: BdayaUser = Depends(get_mem
     return HttpResponse(task_serialized_encoded, content_type=JSON_CONTENT_TYPE)
 
 @bolt.put("/edit-task/{sent_task_id}/", status_code=204)
-async def update_my_task(sent_task_id: int, notes: FormStr, files: Annotated[list[UploadFile], File(alias='files')] = [], user: BdayaUser = Depends(get_member_user)): # type: ignore
+async def update_my_task(sent_task_id: IntId, notes: FormStr, files: Annotated[list[UploadFile], File(alias='files')] = [], user: BdayaUser = Depends(get_member_user)): # type: ignore
+    """send task edits
+    
+    once the `member` finish editing and sends it here it marks the task to be `signed=False`
+    """
+    
     try:
         task = await (
             ReciviedTask.objects
@@ -311,8 +337,14 @@ async def update_my_task(sent_task_id: int, notes: FormStr, files: Annotated[lis
     return Response(status.HTTP_204_NO_CONTENT)
 
 @bolt.get("/protected_media/tasks/{sent_task_id}/")
-async def get_protected_file(sent_task_id: int, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
-
+async def get_protected_file(sent_task_id: IntId, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+    """access a protected file
+    
+    it check if the requested user is an `organizer` or `technical` to get the file
+    
+    or check if the user is a `member` and it's the same `member` that uplouded this task to get open the file
+    """
+    
     try:
         document = await ReciviedTaskFile.objects \
             .only("id", 'file', "file_name", "recivied_task__member__bdaya_user__email") \
