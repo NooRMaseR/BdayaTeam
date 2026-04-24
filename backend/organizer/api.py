@@ -35,6 +35,7 @@ from django.db.models import Prefetch
 from django.http import HttpResponse
 from django.core.cache import cache
 from django.db import transaction
+from django.conf import settings
 
 from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, serializer_encoder
 from asgiref.sync import sync_to_async
@@ -49,6 +50,7 @@ bolt = BoltAPI(
     prefix="/api/organizer/",
     trailing_slash="append",
     validate_response=False,
+    django_middleware=settings.BOLT_MIDDLEWARE
 )
 
 
@@ -81,6 +83,8 @@ def move_member_to_another_track(code: str, current_track: str, move_to_track: s
 
 @bolt.get("/members/{track_name}/", tags=["Organizer"], response_model=MemberORGMSGSerializer)
 async def get_track_members(track_name: str, user: BdayaUser = Depends(get_tech_or_org_user)):  # type: ignore
+    "get track members with attendances"
+    
     TRACK = track_name.replace("%20", " ")
     track: Track = user.track  # type: ignore
 
@@ -118,8 +122,13 @@ async def get_track_members(track_name: str, user: BdayaUser = Depends(get_tech_
     await cache.aset(CACHE_KEY, data, DEFAULT_CACHE_DURATION)
     return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
 
-@bolt.post("/members/{track_name}/", tags=["Organizer"])
+@bolt.post("/members/{track_name}/", status_code=204, tags=["Organizer"])
 async def edit_member_grid(track_name: str, payload: MemberEditGridRequestMSG, user=Depends(get_org_user)):
+    """edit a member from DataGrid
+    
+    if the `field=track` then it deletes the user and creates a new user with the new `track`
+    """
+    
     TRACK = track_name.replace("%20", " ")
     CACHE_KEY = members_by_organizer_cache_key(track_name)
 
@@ -159,7 +168,7 @@ async def edit_member_grid(track_name: str, payload: MemberEditGridRequestMSG, u
                             member=member, date=day, status=payload.value, by=user
                         )
                         cache.delete(CACHE_KEY)
-                        return Response()
+                        return Response(status_code=status.HTTP_204_NO_CONTENT)
                 case MemberEditType.DATA:
                     if payload.field == "track":
                         move_member_to_another_track(
@@ -171,7 +180,7 @@ async def edit_member_grid(track_name: str, payload: MemberEditGridRequestMSG, u
                                 members_by_organizer_cache_key(str(payload.value)),
                             ]
                         )
-                        return Response()
+                        return Response(status_code=status.HTTP_204_NO_CONTENT)
                     else:
                         settings = SiteSetting.get_solo()
                         if not payload.field in settings.organizer_can_edit:
@@ -184,14 +193,16 @@ async def edit_member_grid(track_name: str, payload: MemberEditGridRequestMSG, u
                         )
                         cache.delete(CACHE_KEY)
                 case _:
-                    raise BadRequest()
+                    raise BadRequest(detail="unknow type")
 
-            return Response()
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     return await safe_transaction()
 
 @bolt.get("/attendance/{track_name}/days/", response_model=list[AttendanceDayResponseMSG])
 async def get_attendance_days(track_name: str, user=Depends(get_tech_or_org_user)):
+    "get track days for the attendace"
+    
     TRACK = track_name.replace("%20", " ")
     CACHE_KEY = attendance_cache_key(TRACK)
 
@@ -204,10 +215,12 @@ async def get_attendance_days(track_name: str, user=Depends(get_tech_or_org_user
         await AttendanceDayMSGSerializer.afrom_queryset_values(days)
     )
     await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
-    return encoded_data
+    return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.post("/attendance/{track_name}/days/", status_code=201, response_model=AttendanceDayResponseMSG)
 async def create_day(track_name: str, payload: DayRequestMSG):
+    "create day"
+    
     TRACK = track_name.replace("%20", " ")
 
     try:
@@ -241,6 +254,8 @@ async def create_day(track_name: str, payload: DayRequestMSG):
 
 @bolt.delete("/attendance/{track_name}/days/", status_code=204)
 async def delete_day(track_name: str, day: str):
+    "delete day"
+    
     TRACK = track_name.replace("%20", " ")
 
     try:
@@ -255,6 +270,8 @@ async def delete_day(track_name: str, day: str):
 
 @bolt.put("/attendance/{track_name}/days/", status_code=204)
 async def update_day(track_name: str, payload: DayUpdateRequestMSG):
+    "update day"
+    
     TRACK = track_name.replace("%20", " ")
 
     try:
@@ -277,6 +294,7 @@ async def update_day(track_name: str, payload: DayUpdateRequestMSG):
 
 @bolt.get("/settings/", response_model=SiteSettingsMSGSerializer)
 async def get_settings():
+    "get the site settings"
     
     if cached := await cache.aget(SETTINGS_CACHE_KEY):
         return HttpResponse(cached, content_type=JSON_CONTENT_TYPE)
@@ -294,6 +312,7 @@ async def update_settings(
     hero_image: Annotated[UploadFile, File(alias="hero_image")] = None,  # type: ignore
     user: BdayaUser = Depends(get_org_user)  # type: ignore
 ):
+    "update the site settings"
 
     @sync_to_async
     def safe_update_settings() -> None:

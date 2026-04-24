@@ -7,6 +7,7 @@ requires-python = ">=3.14"
 dependencies = [
     "channels>=4.3.2",
     "channels-redis>=4.3.0",
+    "daphne>=4.2.1",
     "django>=6.0.1",
     "django-bolt>=0.7.5",
     "django-cleanup>=9.0.0",
@@ -18,7 +19,6 @@ dependencies = [
     "django-unfold>=0.72.0",
     "graphene-django>=3.2.3",
     "graphene-django-optimizer>=0.10.0",
-    "gunicorn>=23.0.0",
     "huey>=2.6.0",
     "msgspec>=0.20.0",
     "pillow>=12.0.0",
@@ -26,7 +26,6 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "pywebpush>=2.3.0",
     "redis[hiredis]>=7.1.0",
-    "uvicorn[standard]>=0.42.0",
 ]
 
 [dependency-groups]

@@ -63,12 +63,12 @@ function LogoutDialog({ open, onSucces, onClose }: LogoutDialogProps) {
 
 async function performSecureLogout() {
   try {
-    console.log("checking...");
     if ('serviceWorker' in navigator && 'PushManager' in window) {
       
       const registration = await navigator.serviceWorker.getRegistration();
       
-      if (!registration) {console.log("No active service worker found. Skipping push cleanup.");
+      if (!registration) {
+        console.log("No active service worker found. Skipping push cleanup.");
         return; 
       }
 

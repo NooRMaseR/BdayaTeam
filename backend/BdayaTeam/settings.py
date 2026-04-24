@@ -80,6 +80,10 @@ MIDDLEWARE = (
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 )
 
+BOLT_MIDDLEWARE = (
+    "django.middleware.locale.LocaleMiddleware",
+)
+
 SECURE_CSP = {
     "default-src": [CSP.SELF, "https://cdn.jsdelivr.net", CSP.UNSAFE_INLINE],
     "script-src": [CSP.SELF, "https://cdn.jsdelivr.net", CSP.UNSAFE_INLINE],
@@ -98,10 +102,6 @@ SECURE_CSP = {
 BOLT_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(weeks=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': False,
-    'SIGNING_KEY': SECRET_KEY,
-    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 GRAPHENE = {
