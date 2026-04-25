@@ -16,28 +16,27 @@ import { useTranslations } from 'next-intl';
 import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { MemberTaskSend } from '@/app/utils/api_types_helper';
 
 type TaskActionsProps = {
-    task: components['schemas']['TaskResponse'];
+    task: components['schemas']['TaskMSGSerializer'];
     track_name: string;
 }
-
-type TaskMemberSend = components['schemas']['TaskRequest'] & {file?: string};
 
 export default function TaskForm({ task, track_name }: TaskActionsProps) {
     const [isLoading, setIsloading] = useState<boolean>(false);
     const tr = useTranslations('taskPage');
     const router = useRouter();
     
-    const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<TaskMemberSend>({
+    const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<MemberTaskSend>({
         defaultValues: {
             task_id: task.id
         }
     });
 
-    const selectedFiles = useWatch({ control, name: 'file' });
+    const selectedFiles = useWatch({ control, name: 'files' });
 
-    const sendTaskRequest = (data: TaskMemberSend) => {
+    const sendTaskRequest = (data: MemberTaskSend) => {
         setIsloading(true);
         
         const promise = async () => {
@@ -45,7 +44,7 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                 body: {
                     task_id: data.task_id,
                     notes: data.notes,
-                    files: data.file ? Array.from(data.file) : []
+                    files: (data.files ? Array.from(data.files) : []) as unknown as string
                 },
                 bodySerializer(body) {
                     const fd = new FormData();
@@ -55,7 +54,7 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                         fd.append('notes', JSON.stringify(body.notes));
 
                     if (body.files && body.files.length > 0) {
-                        body.files.forEach(f => fd.append('files', f));
+                        (body.files as unknown as string[]).forEach(f => fd.append('files', f));
                     }
                     return fd;
                 }
@@ -78,7 +77,7 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
         });
     };
 
-    const clearFiles = () => setValue('file', undefined);
+    const clearFiles = () => setValue('files', undefined);
 
     return (
         <Paper elevation={0} className="border border-slate-200 rounded-2xl overflow-hidden bg-white p-6 md:p-8">
@@ -101,7 +100,7 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                                 type="file" 
                                 className="hidden" 
                                 multiple 
-                                {...register('file')} 
+                                {...register('files')} 
                             />
                         </label>
                     ) : (

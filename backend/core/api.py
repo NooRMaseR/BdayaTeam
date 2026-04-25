@@ -1,54 +1,92 @@
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.settings import api_settings
-from rest_framework_simplejwt.tokens import RefreshToken
-
-from member.api import MemberEditTaskController, MemberProfileController, ProtectedTaskController, TasksController
 from member.models import Member
-
-from notifications.api import NotificationController
-from organizer.api import AttendanceDaysConrtoller, MembersController, SettingsController
-from organizer.serializers import SiteSettingsImagesMSGSerializer
 from organizer.models import SiteSetting
+from organizer.serializers import SiteSettingsImagesMSGSerializer
 
-from technical.api import TechnicalMembersController, TechnicalTasksController
-
-from .middleware import AsyncCookiesJWTAuth, AsyncSafeThrottle, RawJsonMSGRenderer
 from .serializers import TrackMSGSerializer, TrackNameOnlyMSGSerializer
+from .permissions import get_any_authenticated_user, get_org_user
 from .models import BdayaUser, Track, TrackCounter, UserRole
-from .permissions import NinjaIsOrganizer, NinjaIsSuperUser
-from .caches import TRACKS_CACHE_KEY, track_cache_key
 from .tasks import delete_all_tracks, send_member_email
+from .caches import TRACKS_CACHE_KEY, track_cache_key
 from . import api_schemas
 
-from django.shortcuts import get_object_or_404, aget_object_or_404
+from django.db import IntegrityError, transaction, connection
 from django.utils.translation import gettext_lazy as _
-from django.db import IntegrityError, transaction
-from django.http import HttpRequest, HttpResponse
-from django.core.cache import cache
-from django.middleware import csrf
+from django.db.utils import OperationalError
+from django.core.cache import cache, caches
+from asgiref.sync import sync_to_async
+from django.http import HttpResponse
 from django.conf import settings
 from django.contrib import auth
 
-from ninja_extra import NinjaExtraAPI, api_controller, route, status
-from ninja_extra.permissions import AllowAny
-from ninja import File, Form, UploadedFile
-
-from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, serializer_encoder
+from utils import DEFAULT_CACHE_DURATION, STORE, FormStr, JSON_CONTENT_TYPE, generate_jwts_for_user, serializer_encoder
 from asgiref.sync import sync_to_async
+from typing import Annotated
 import asyncio
+import jwt
 
-api = NinjaExtraAPI(
-    title="Bdaya Team Api",
-    version="1.1.0",
-    renderer=RawJsonMSGRenderer(),
-    auth=AsyncCookiesJWTAuth(),
-    app_name="Bdaya Team"
+from django_bolt.exceptions import BadRequest, Unauthorized, NotFound, Forbidden, InternalServerError
+from django_bolt.health import register_health_checks, add_health_check
+from django_bolt.param_functions import File
+from django_bolt import (
+    OpenAPIConfig,
+    UploadFile,
+    Response,
+    BoltAPI,
+    Depends,
+    Request,
+    status,
+    JSON,
 )
 
-def create_member_transaction(payload: api_schemas.RegisterRequest) -> Member:
+bolt = BoltAPI(
+    prefix="/api/",
+    trailing_slash='append',
+    openapi_config=OpenAPIConfig(
+        title="Bdaya Team Api",
+        version="1.2.0",
+        path="/api/docs"
+    ),
+    validate_response=False,
+    django_middleware=settings.BOLT_MIDDLEWARE
+)
+
+bolt.mount_django("/")
+register_health_checks(bolt)
+
+@sync_to_async(thread_sensitive=True)
+def database_check() -> tuple[bool, str]:
+    try:
+        connection.ensure_connection()
+        return True, "ok"
+    except OperationalError as e:
+        return False, str(e)
+    except Exception as e:
+        return False, f"Unexpected error: {str(e)}"
+
+async def redis_check() -> tuple[bool, str]:
+    try:
+        cache = caches['default'] 
+        
+        await cache.aset("health_ping", "pong", timeout=1)
+        val = await cache.aget("health_ping")
+        
+        if val == "pong":
+            return True, "ok"
+        return False, "Cache connected but returned invalid data"
+    except Exception as e:
+        return False, f"Cache error: {str(e)}"
+
+add_health_check(database_check)
+add_health_check(redis_check)
+
+
+def create_member_transaction(payload: api_schemas.RegisterRequestMSG) -> Member:
     try:
         with transaction.atomic():
-            track = get_object_or_404(Track, id=payload.request_track_id)
+            try:
+                track = Track.objects.get(id=payload.request_track_id)
+            except Track.DoesNotExist:
+                raise NotFound(detail="Track Does not exists")
             
             counter, _ = TrackCounter.objects.select_for_update().get_or_create(
                 track=track
@@ -91,312 +129,343 @@ def create_member_transaction(payload: api_schemas.RegisterRequest) -> Member:
     except IntegrityError:
         raise ValueError("something went wrong, Please try again.")
 
-@api_controller('', tags=['Auth'], permissions=[AllowAny])
-class AuthController:
-
-    @route.post("/login/", throttle=AsyncSafeThrottle("10/1h"), auth=None, response={200: api_schemas.LoginResponse, 400: api_schemas.ErrorResponse, 429: api_schemas.SingleErrorResponse})
-    async def login(self, request: HttpRequest, payload: api_schemas.LoginRequest):
-        
-        user: BdayaUser | None = await auth.aauthenticate(request, email=payload.email, password=payload.password) # type: ignore
-
-        if not user:
-            return 400, {"details": "invalid email or password"}
-
-        user = await BdayaUser.objects.select_related('track', 'member').aget(id=user.id) # type: ignore
-        
-        track_data = None
-        if not user.is_organizer and user.track:
-            track_data = TrackNameOnlyMSGSerializer.from_model(user.track)
-
-        refresh = RefreshToken.for_user(user)
-        refresh['role'] = user.role
-        if user.is_member and hasattr(user, "member"):
-            refresh['code'] = user.member.code # type: ignore
-            
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
-
-        encoded_data = serializer_encoder.encode({
-            "username": user.username,
-            "is_admin": user.is_superuser,
-            "role": user.role,
-            "track": track_data,
-        })
-        
-        csrf.get_token(request)
-        response = HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE) 
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            expires=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
-            secure=True,
-            httponly=True,
-            samesite='Lax'
-        )
-        response.set_cookie(
-            key='refresh_token',
-            value=refresh_token,
-            expires=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
-            secure=True,
-            httponly=True,
-            samesite='Lax'
-        )
-        
-        return response
-
-    @route.get("/logout/", response={204: None, 401: api_schemas.ErrorResponse})
-    async def logout(self, request: HttpRequest, response: HttpResponse):
-        auth.logout(request)
-        response.delete_cookie("csrftoken")
-        response.delete_cookie("sessionid")
-        response.delete_cookie("access_token")
-        response.delete_cookie("refresh_token")
-        return status.HTTP_204_NO_CONTENT, None
-  
-    @route.post("/register/", throttle=AsyncSafeThrottle("10/1h"), auth=None, response={201: api_schemas.RegisterResponse, 400: dict[str, str], 422: api_schemas.PydanticErrorResponse, 429: api_schemas.SingleErrorResponse})
-    async def register(self, payload: api_schemas.RegisterRequest):
-        errors: dict[str, str] = {}
-        email_exists, phone_exists, collage_code_exists = await asyncio.gather(
-            BdayaUser.objects.filter(email=payload.email).aexists(),
-            BdayaUser.objects.filter(phone_number=payload.phone_number).aexists(),
-            Member.objects.filter(collage_code=payload.collage_code).aexists()
-        )
-        
-        if email_exists:
-            errors["email"] = str(_("email_exists"))
-        
-        if phone_exists:
-            errors["phone"] = str(_("phone_exists"))
-        
-        if collage_code_exists:
-            errors["collage_code"] = str(_("collage_code_exists"))
-            
-        if errors:
-            return 400, errors
-
-        try:
-            member = await sync_to_async(create_member_transaction)(payload)
-        except ValueError as e:
-            return 400, {"details": str(e)}
-
-        user = await BdayaUser.objects.aget(id=member.bdaya_user_id) # type: ignore
-
-        refresh = RefreshToken.for_user(user)
-        refresh['role'] = user.role
-        refresh['code'] = member.code
-                
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
-        
-        cache.delete_pattern("*member*") # type: ignore
-        
-        encoded_data = serializer_encoder.encode({
-            "code": member.code,
-            "name": user.username,
-            "email": user.email,
-            "track": TrackNameOnlyMSGSerializer.from_model(member.bdaya_user.track) # type: ignore
-        })
-        response = HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE, status=status.HTTP_201_CREATED)
-
-        response.set_cookie(
-            key='access_token',
-            value=access_token,
-            httponly=True,
-            secure=True,
-            samesite='Lax',
-            expires=settings.SIMPLE_JWT.get('ACCESS_TOKEN_LIFETIME')
-        )
-        response.set_cookie(
-            key='refresh_token',
-            value=refresh_token,
-            httponly=True,
-            secure=True,
-            samesite='Lax',
-            expires=settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME')
-        )
-
-        return response
-        
-    @route.post("/token/refresh/", auth=None, response={204: None, 401: api_schemas.ErrorResponse})
-    async def refresh_tokens(self, request: HttpRequest, payload: api_schemas.RefreshTokenRequest, response: HttpResponse):
-        
-        raw_refresh = request.COOKIES.get("refresh_token") or payload.refresh
-        
-        if not raw_refresh:
-            return 401, {"details": "Refresh token missing"}
-
-        try:
-            refresh = RefreshToken(raw_refresh) # type: ignore
-        except TokenError:
-            return 401, {"details": "Refresh token is invalid or expired"}
-
-        access_token = str(refresh.access_token)
-        
-        if api_settings.ROTATE_REFRESH_TOKENS:
-            if api_settings.BLACKLIST_AFTER_ROTATION:
-                try:
-                    await sync_to_async(refresh.blacklist)()
-                except AttributeError:
-                    pass
-            
-            # Mint the new refresh token parameters
-            refresh.set_jti()
-            refresh.set_exp()
-            refresh.set_iat()
-            
-        new_refresh_token = str(refresh)
-
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            expires=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
-            secure=True,
-            httponly=True,
-            samesite='Lax'
-        )
-        
-        response.set_cookie(
-            key='refresh_token',
-            value=new_refresh_token,
-            expires=settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
-            secure=True,
-            httponly=True,
-            samesite='Lax'
-        )
-
-        return status.HTTP_204_NO_CONTENT, None
-
-    @route.get("/test-auth/", response={200: api_schemas.TestAuthResponse})
-    async def test_auth(self, request: HttpRequest):
-        track: TrackNameOnlyMSGSerializer | None = None
-        USER: BdayaUser = request.user # type: ignore
-        
-        if not USER.is_organizer:
-            track = TrackNameOnlyMSGSerializer.from_model(USER.track) # type: ignore
-        
-        settings = await sync_to_async(SiteSetting.get_solo)()
-        
-        encoded_data = serializer_encoder.encode({
-            "username": USER.username,
-            "is_admin": USER.is_superuser,
-            "role": USER.role,
-            "track": track,
-            "settings": SiteSettingsImagesMSGSerializer.from_model(settings),
-        })
-        csrf.get_token(request)
-        
-        return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
-
-
-@api_controller("/tracks/", tags=['Track'], permissions=[NinjaIsOrganizer])
-class TracksController:
+@bolt.get("/test-auth/", tags=['Auth'], response_model=api_schemas.TestAuthResponseMSG)
+async def test_auth(user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+    """test authentication
     
-    @route.get("", response={200: list[api_schemas.TrackSchema]}, auth=None, permissions=[AllowAny])
-    async def get_all(self):
-        cached = await cache.aget(TRACKS_CACHE_KEY)
-        
-        if cached:
-            return HttpResponse(cached, "application/json")
+    test if the user is authenticated and return the user `credentials`
+    """
+    
+    track: TrackNameOnlyMSGSerializer | None = None
+    
+    if not user.is_organizer:
+        track = TrackNameOnlyMSGSerializer.from_model(user.track) # type: ignore
+    
+    settings = await sync_to_async(SiteSetting.get_solo)()
+    
+    data = api_schemas.TestAuthResponseMSG(
+        username= user.username,
+        is_admin= user.is_superuser,
+        role= UserRole(user.role),
+        track= track,
+        settings= SiteSettingsImagesMSGSerializer.from_model(settings),
+    )
+    
+    return JSON(data)
 
-        query_set = Track.objects.defer("prefix").values(
-            "id", "name", "image", "en_description", "ar_description"
+@bolt.get("/tracks/", tags=['Track'], response_model=list[TrackMSGSerializer], validate_response=False)
+async def get_all():
+    "get all tracks"
+    
+    cached = await cache.aget(TRACKS_CACHE_KEY)
+    
+    if cached:
+        return HttpResponse(cached, content_type=JSON_CONTENT_TYPE)
+
+    query_set = Track.objects.defer("prefix").values(
+        "id", "name", "image", "en_description", "ar_description"
+    )
+    track_list = [track async for track in query_set]
+    
+    data = TrackMSGSerializer.from_queryset_values(track_list)
+
+    encoded_data = serializer_encoder.encode(data)
+    await cache.aset(TRACKS_CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
+    
+    return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
+
+@bolt.post('/tracks/', tags=["Track"], status_code=201)
+async def create(name: FormStr, prefix: FormStr, en_description: FormStr, ar_description: FormStr, image: Annotated[UploadFile, File(alias="image")] = File(...), user = Depends(get_org_user)): # type: ignore
+    """create a track
+    
+    the `name` and `prefix` must be `unique`
+    """
+    
+    errors: dict[str, str] = {}
+    track_exists, prefix_exists = await asyncio.gather(
+        Track.objects.filter(name__iexact=name).aexists(),
+        Track.objects.filter(prefix__iexact=prefix).aexists(),
+    )
+    
+    if track_exists:
+        errors['name'] = str(_("this track already exists"))
+    
+    if prefix_exists:
+        errors['prefix'] = str(_("this prefix already exists"))
+        
+    if errors:
+        return JSON(errors, status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        await Track.objects.acreate(
+            name=name,
+            prefix=prefix,
+            en_description=en_description,
+            ar_description=ar_description,
+            image=image.file,
         )
-        track_list = [track async for track in query_set]
-        
-        data = TrackMSGSerializer.from_queryset_values(track_list)
+    except IntegrityError:
+        raise BadRequest(detail=str(_("this track already exists")))
+    
+    cache.delete(TRACKS_CACHE_KEY)
+    return Response(status_code=status.HTTP_201_CREATED)
 
-        encoded_data = serializer_encoder.encode(data)
-        await cache.aset(TRACKS_CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
-        
-        return HttpResponse(encoded_data, content_type="application/json")
+@bolt.get('/tracks/{track_name}/', tags=['Track'], status_code=200, response_model=TrackMSGSerializer)
+async def get_one_track(track_name: str):
+    "get one track"
     
-    @route.post('', response={201: None, 400: dict[str, str]})
-    async def create(self, payload: Form[api_schemas.TrackCreateSchema], image: UploadedFile = File(...)): # type: ignore
-        errors: dict[str, str] = {}
-        track_exists, prefix_exists = await asyncio.gather(
-            Track.objects.filter(name__iexact=payload.name).aexists(),
-            Track.objects.filter(prefix__iexact=payload.prefix).aexists(),
-        )
-        
-        if track_exists:
-            errors['name'] = str(_("this track already exists"))
-        
-        if prefix_exists:
-            errors['prefix'] = str(_("this prefix already exists"))
-            
-        if errors:
-            return status.HTTP_400_BAD_REQUEST, errors
-        try:
-            await sync_to_async(Track.objects.create)(
-                name=payload.name,
-                prefix=payload.prefix,
-                en_description=payload.en_description,
-                ar_description=payload.ar_description,
-                image=image,
-            )
-        except IntegrityError:
-            return status.HTTP_400_BAD_REQUEST, {'detail': str(_("this track already exists"))}
-        
-        cache.delete(TRACKS_CACHE_KEY)
-        return status.HTTP_201_CREATED, None
+    CACHE_KEY = track_cache_key(track_name)
+    if (data:= await cache.aget(CACHE_KEY)):
+        return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
     
-    @route.get('/{track_name}/', response={200: api_schemas.TrackSchema}, auth=None, permissions=[AllowAny])
-    async def get_one(self, track_name: str):
-        CACHE_KEY = track_cache_key(track_name)
-        if (data:= await cache.aget(CACHE_KEY)):
-            return HttpResponse(data, content_type="application/json")
-        
-        track = await aget_object_or_404(Track, name=track_name)
-        track_encoded = TrackMSGSerializer.from_model(track).encode()
-        await cache.aset(CACHE_KEY, track_encoded, DEFAULT_CACHE_DURATION)
-        
-        return HttpResponse(track_encoded, content_type="application/json")
-        
-    @route.delete('/{track_name}/', permissions=[NinjaIsSuperUser], response={204: None, 404: api_schemas.ErrorResponse})
-    async def delete(self, track_name: str):
-        count, _ = await Track.objects.filter(name=track_name).adelete()
-        
-        if count == 0:
-            return status.HTTP_404_NOT_FOUND, {"details": "Track Not Found"}
-        
-        await cache.adelete_many([TRACKS_CACHE_KEY, track_cache_key(track_name)])
-        return status.HTTP_204_NO_CONTENT, None
+    try:
+        track = await Track.objects.aget(name=track_name)
+    except:
+        raise NotFound(detail=f"Track {track_name} Does Not Exists")
+    
+    track_encoded = TrackMSGSerializer.from_model(track).encode()
+    await cache.aset(CACHE_KEY, track_encoded, DEFAULT_CACHE_DURATION)
+    
+    return HttpResponse(track_encoded, content_type=JSON_CONTENT_TYPE)
 
-@api_controller("/", tags=['Auth'], permissions=[NinjaIsSuperUser])
-class ResetAll:
+@bolt.delete('/tracks/{track_name}/', tags=['Track'], status_code=204)
+async def delete(track_name: str, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+    """delete a track (Very Dangerios)
+
+    this endpoint deletes a track along with `all related fields`
+    """
     
-    @route.delete('/reset-all/', response={202: None, 500: api_schemas.ErrorResponse, 403: api_schemas.ErrorResponse})
-    async def reset_all(self):
-        "Very Dangores, Deletes all tracks and members and tasks and technicals."
-        try:
-            delete_all_tracks()
-            cache.clear()
-            return status.HTTP_202_ACCEPTED, None
-        except Exception as e:
-            return status.HTTP_500_INTERNAL_SERVER_ERROR, {"details": repr(e)}
+    if not user.is_superuser:
+        raise Forbidden(detail="Only Admin allowed")
+    
+    count, _ = await Track.objects.filter(name=track_name).adelete()
+    
+    if count == 0:
+        raise NotFound(detail="Track Not Found")
+    
+    await cache.adelete_many([TRACKS_CACHE_KEY, track_cache_key(track_name)])
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@bolt.delete('/reset-all/', status_code=202, tags=['Auth'])
+async def reset_all(user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+    """Reset All
+    
+    `Very Dangerios`, Deletes all tracks and members and tasks and technicals, every thing related to the `tracks`
+    """
+    
+    if not user.is_superuser:
+        raise Forbidden(detail="Only Admin allowed")
+    
+    try:
+        delete_all_tracks()
+        cache.clear()
+        return Response(status_code=status.HTTP_202_ACCEPTED)
+    except Exception as e:
+        raise InternalServerError(detail=repr(e))
 
 
-api.register_controllers(
-    # ======= core ========
-    AuthController,
-    TracksController,
-    ResetAll,
-    
-    # ======= organizers =======
-    MembersController,
-    AttendanceDaysConrtoller,
-    SettingsController,
-    
-    # ======= members ========
-    TasksController,
-    ProtectedTaskController,
-    MemberProfileController,
-    MemberEditTaskController,
-    
-    # ======= technicals ========
-    TechnicalTasksController,
-    TechnicalMembersController,
-    
-    # ======= notifications =======
-    NotificationController
+bolt_auth = BoltAPI(
+    trailing_slash='append',
+    validate_response=False
 )
+
+@bolt_auth.post("/login/", tags=['Auth'], response_model=api_schemas.LoginResponseMSG)
+async def login(request: Request, body: api_schemas.LoginRequestMSG):
+    """Login
+    
+    a login endpoint with the cookies
+    """
+    user: BdayaUser | None = await auth.aauthenticate(request, email=body.email, password=body.password) # type: ignore
+
+    if not user:
+        raise BadRequest(detail="invalid email or password")
+
+    user = await BdayaUser.objects.select_related('track', 'member').aget(id=user.id) # type: ignore
+    
+    track_data = None
+    if not user.is_organizer and user.track:
+        track_data = TrackNameOnlyMSGSerializer.from_model(user.track)
+    
+    tokens = generate_jwts_for_user(user)
+    print(tokens.access)
+    print(tokens.refresh)
+
+    data = api_schemas.LoginResponseMSG(
+        username= user.username,
+        is_admin= user.is_superuser,
+        role= UserRole(user.role),
+        track= track_data,
+    )
+    
+    response = JSON(data) \
+    .set_cookie(
+        name="access_token",
+        value=tokens.access,
+        max_age=tokens.access_exp,
+        secure=True,
+        httponly=True,
+    ) \
+    .set_cookie(
+        name='refresh_token',
+        value=tokens.refresh,
+        max_age=tokens.refresh_exp,
+        secure=True,
+        httponly=True,
+    )
+    
+    return response
+
+@bolt_auth.get("/logout/", status_code=204, tags=["Auth"])
+async def logout(request: Request):
+    """Logout
+    A Logout endpoint that removes the cookies from the user `cookies`
+    
+    this endpoint is also stores the token in the `revokation store`
+    """
+    
+    token = request.cookies.get('access_token')
+    if not token:
+        token = request.headers.get("authorization")
+        if token:
+            token = token.split(' ')[1]
+    
+    if token:
+        try:
+            payload = jwt.decode(token, options={"verify_signature": False})
+            
+            jti = payload.get("jti")
+            exp = payload.get("exp")
+            
+            if jti and exp:
+                await STORE.revoke(jti=jti, ttl=exp)
+                
+        except jwt.DecodeError:
+            pass
+    
+    response = Response(status_code=204) \
+    .delete_cookie("csrftoken") \
+    .delete_cookie("sessionid") \
+    .delete_cookie("access_token") \
+    .delete_cookie("refresh_token")
+    return response
+
+@bolt_auth.post("/register/", status_code=201, tags=['Auth'], response_model=api_schemas.RegisterResponseMSG)
+async def register(payload: api_schemas.RegisterRequestMSG):
+    "Register"
+    
+    errors: dict[str, str] = {}
+    email_exists, phone_exists, collage_code_exists = await asyncio.gather(
+        BdayaUser.objects.filter(email=payload.email).aexists(),
+        BdayaUser.objects.filter(phone_number=payload.phone_number).aexists(),
+        Member.objects.filter(collage_code=payload.collage_code).aexists()
+    )
+    
+    if email_exists:
+        errors["email"] = str(_("email_exists"))
+    
+    if phone_exists:
+        errors["phone"] = str(_("phone_exists"))
+    
+    if collage_code_exists:
+        errors["collage_code"] = str(_("collage_code_exists"))
+        
+    if errors:
+        return JSON(errors, status.HTTP_400_BAD_REQUEST)
+
+    try:
+        member = await sync_to_async(create_member_transaction)(payload)
+    except ValueError as e:
+        raise BadRequest(detail=str(e))
+
+    user = await BdayaUser.objects.aget(id=member.bdaya_user_id) # type: ignore
+
+    tokens = generate_jwts_for_user(user)
+    
+    cache.delete_pattern("*member*") # type: ignore
+    
+    data = api_schemas.RegisterResponseMSG(
+        code = member.code,
+        name = user.username,
+        email = user.email,
+        track = TrackNameOnlyMSGSerializer.from_model(member.bdaya_user.track) # type: ignore
+    )
+    response = JSON(data, status_code=status.HTTP_201_CREATED) \
+    .set_cookie(
+        name='access_token',
+        value=tokens.access,
+        httponly=True,
+        secure=True,
+        samesite='Lax',
+        max_age=tokens.access_exp,
+    ).set_cookie(
+        name='refresh_token',
+        value=tokens.refresh,
+        httponly=True,
+        secure=True,
+        samesite='Lax',
+        max_age=tokens.refresh_exp
+    )
+
+    return response
+
+@bolt_auth.post("/token/refresh/", tags=['Auth'], auth=None, status_code=204)
+async def refresh_tokens(request: Request, payload: api_schemas.RefreshTokenRequestMSG):
+    """Refresh Tokens
+    
+    refreshes the tokens from the cookies
+    
+    it looks for the the refresh token in the `cookies`, if not found then search for it in the `payload`
+    """
+    
+    raw_refresh = request.cookies.get("refresh_token") or payload.refresh
+    
+    if not raw_refresh:
+        raise Unauthorized(detail="Refresh token missing")
+
+    try:
+        decoded = jwt.decode(raw_refresh, settings.SECRET_KEY, ['HS256'])
+    except jwt.ExpiredSignatureError:
+        raise Unauthorized(detail="Refresh token expired. Please log in again.")
+    except jwt.InvalidTokenError:
+        raise Unauthorized(detail="Invalid refresh token")
+    
+    if decoded.get("token_type") != "refresh":
+        raise Unauthorized(detail="Invalid token type")
+    
+    jti = decoded.get("jti")
+    exp = decoded.get("exp")
+    user_id = decoded.get("sub")
+    
+    if jti and await STORE.is_revoked(jti):
+        raise Unauthorized(detail="Refresh token has been revoked or already used.")
+    
+    try:
+        user = await BdayaUser.objects.select_related("member").aget(id=user_id)
+    except BdayaUser.DoesNotExist:
+        raise NotFound(detail="User Does not exists")
+    
+    if jti and exp:
+        await STORE.revoke(jti=jti, ttl=exp)
+    
+    tokens = generate_jwts_for_user(user)
+    
+    response = Response(status_code=status.HTTP_204_NO_CONTENT) \
+    .set_cookie(
+        name="access_token",
+        value=tokens.access,
+        max_age=tokens.access_exp,
+        secure=True,
+        httponly=True,
+        samesite='Lax'
+    ).set_cookie(
+        name='refresh_token',
+        value=tokens.refresh,
+        max_age=tokens.refresh_exp,
+        secure=True,
+        httponly=True,
+        samesite='Lax'
+    )
+    
+    return response
+
+bolt.mount("/api", bolt_auth)

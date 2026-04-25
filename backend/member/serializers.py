@@ -3,9 +3,10 @@ from core.serializers import TrackNameOnlyMSGSerializer, BaseMSGSerializer
 from organizer.serializers import AttendanceMSGSerializer
 from core.models import BdayaUser
 
-from .models import Member, ReciviedTask, ReciviedTaskFile
+from .models import Member, MemberStatus, ReciviedTask, ReciviedTaskFile
 from collections.abc import AsyncIterable, Iterable
 from datetime import datetime
+from utils import IntId
 from typing import Self
 
 
@@ -17,7 +18,7 @@ class MemberBaseMSG(BaseMSGSerializer[Member], frozen=True):
     phone_number: str
     bonus: int
     track: TrackNameOnlyMSGSerializer
-    status: str
+    status: MemberStatus
 
 
 class MemberORGMSGSerializer(MemberBaseMSG, frozen=True):
@@ -31,7 +32,7 @@ class MemberORGMSGSerializer(MemberBaseMSG, frozen=True):
             email=model.bdaya_user.email,
             collage_code=model.collage_code,
             phone_number=model.bdaya_user.phone_number,
-            status=model.status,
+            status=MemberStatus(model.status),
             bonus=model.bonus,
             track=TrackNameOnlyMSGSerializer.from_model(model.track),
             attendances=AttendanceMSGSerializer.from_queryset(model.attendances.all()),  # type: ignore
@@ -46,7 +47,7 @@ class MemberORGMSGSerializer(MemberBaseMSG, frozen=True):
                 email=model.bdaya_user.email,
                 collage_code=model.collage_code,
                 phone_number=model.bdaya_user.phone_number,
-                status=model.status,
+                status=MemberStatus(model.status),
                 bonus=model.bonus,
                 track=track,
                 attendances=AttendanceMSGSerializer.from_queryset(model.attendances.all()),  # type: ignore
@@ -63,7 +64,7 @@ class MemberORGMSGSerializer(MemberBaseMSG, frozen=True):
                 email=model.bdaya_user.email,
                 collage_code=model.collage_code,
                 phone_number=model.bdaya_user.phone_number,
-                status=model.status,
+                status=MemberStatus(model.status),
                 bonus=model.bonus,
                 track=track,
                 attendances=AttendanceMSGSerializer.from_queryset(model.attendances.all()),  # type: ignore
@@ -72,7 +73,7 @@ class MemberORGMSGSerializer(MemberBaseMSG, frozen=True):
         ]
 
 class SignedMSGBy(BaseMSGSerializer[BdayaUser], frozen=True):
-    id: int
+    id: IntId
     username: str
 
     @classmethod
@@ -83,7 +84,7 @@ class SignedMSGBy(BaseMSGSerializer[BdayaUser], frozen=True):
         )
 
 class RecivedTaskSmallMSGSerializer(BaseMSGSerializer[ReciviedTask], frozen=True):
-    id: int
+    id: IntId
     task: TaskSmallMSGSerializer
     member_code: str
     signed_by: SignedMSGBy | None = None
@@ -118,7 +119,7 @@ class MemberTechnicalMSGSerializer(MemberBaseMSG, frozen=True):
             phone_number=model.bdaya_user.phone_number,
             bonus=model.bonus,
             track=TrackNameOnlyMSGSerializer.from_model(model.track),
-            status=model.status,
+            status=MemberStatus(model.status),
             tasks=RecivedTaskSmallMSGSerializer.from_queryset(model.tasks_sent.all()),  # type: ignore
         )
         
@@ -133,7 +134,7 @@ class MemberTechnicalMSGSerializer(MemberBaseMSG, frozen=True):
                 phone_number=model.bdaya_user.phone_number,
                 bonus=model.bonus,
                 track=track,
-                status=model.status,
+                status=MemberStatus(model.status),
                 tasks=RecivedTaskSmallMSGSerializer.from_queryset(model.prefetched_tasks) # type: ignore
             )
             for model in models
@@ -150,7 +151,7 @@ class MemberTechnicalMSGSerializer(MemberBaseMSG, frozen=True):
                 phone_number=model.bdaya_user.phone_number,
                 bonus=model.bonus,
                 track=track,
-                status=model.status,
+                status=MemberStatus(model.status),
                 tasks=RecivedTaskSmallMSGSerializer.from_queryset(model.prefetched_tasks) # type: ignore
             )
             async for model in models
@@ -167,7 +168,7 @@ class MemberMSGSerializerForTask(BaseMSGSerializer[Member], frozen=True):
 
 
 class RecivedFile(BaseMSGSerializer[ReciviedTaskFile], frozen=True):
-    id: int
+    id: IntId
     file_url: str
     file_name: str
 
@@ -176,7 +177,7 @@ class RecivedFile(BaseMSGSerializer[ReciviedTaskFile], frozen=True):
         return cls(model.pk, model.file.url, model.file_name)
 
 class RecivedTaskMSGSerializer(BaseMSGSerializer[ReciviedTask], frozen=True):
-    id: int
+    id: IntId
     task: TaskMSGSerializer
     member: MemberMSGSerializerForTask
     track: TrackNameOnlyMSGSerializer

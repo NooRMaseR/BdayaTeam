@@ -10,7 +10,7 @@ import type { SettingsImagesQuery } from '../generated/graphql';
 import LoadingAnimation from './loading_animations/loading_animation';
 
 interface AuthLoaderProps {
-    authData: components["schemas"]["TestAuthResponse"] | null;
+    authData: components["schemas"]["TestAuthResponseMSG"] | null;
     imagesData: SettingsImagesQuery['allSettings'];
     children: React.ReactNode;
 }
@@ -28,8 +28,8 @@ export default function AuthLoader({ authData, imagesData, children }: AuthLoade
         if (imagesData) {
             const { siteImage, heroImage } = imagesData;
             setImages({
-                site_image: siteImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${siteImage}` : null,
-                hero_image: heroImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${heroImage}` : null
+                site_image: siteImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${siteImage}` : '',
+                hero_image: heroImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${heroImage}` : ''
             });
         }
 

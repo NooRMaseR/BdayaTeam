@@ -4,9 +4,9 @@ import { create } from "zustand";
 export type UserAuth = {
     isLoading: boolean;
     isAuthed: boolean;
-    user: components['schemas']['LoginResponse'] | null;
+    user: components['schemas']['LoginResponseMSG'] | null;
 }
-type SettingsImages = components['schemas']['SettingsImagesResponse'];
+type SettingsImages = components['schemas']['SiteSettingsImagesMSGSerializer'];
 
 interface UserAuthStoreType extends UserAuth {
     setCredentials: (payload: UserAuth) => void;
@@ -28,8 +28,8 @@ export const useAuthStore = create<UserAuthStoreType>((set) => ({
 }))
 
 export const useSettingsStore = create<SettingsImagesStoreType>((set) => ({
-    hero_image: null,
-    site_image: null,
+    hero_image: '',
+    site_image: '',
     setSiteImage: (url: SettingsImages['site_image']) => set({ site_image: url }),
     setHeroImage: (url: SettingsImages['hero_image']) => set({ hero_image: url }),
     setImages: (images: SettingsImages) => set(images)

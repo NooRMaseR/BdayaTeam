@@ -1,6 +1,6 @@
 import asyncio
 from datetime import timedelta
-from ninja_extra import status
+from django_bolt import status
 from django.test import TestCase
 from django.utils import timezone
 from django.core.cache import cache

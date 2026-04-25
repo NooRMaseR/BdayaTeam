@@ -1,5 +1,5 @@
 import asyncio
-from ninja_extra import status
+from django_bolt import status
 from django.test import TestCase
 from django.core.cache import cache
 from django.test.client import AsyncClient
@@ -90,6 +90,7 @@ class OrganizerAPITests(TestCase):
             data, 
             content_type=JSON_CONTENT_TYPE
         )
+        print(response.json())
         self.assertEqual(response.status_code, 200)
     
     async def test_update_not_allowed_field(self) -> None:
@@ -108,7 +109,7 @@ class OrganizerAPITests(TestCase):
         )
         
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertDictEqual(response.json(), {"details": "field name is not allowed"})
+        self.assertDictEqual(response.json(), {"detail": "field name is not allowed"})
     
     async def test_update_invalid_member_data(self) -> None:
         """Test updating a unknown member"""

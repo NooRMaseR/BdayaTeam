@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABCMeta
 from collections.abc import AsyncIterable, Iterable
 
-from utils import serializer_encoder
+from utils import IntId, serializer_encoder
 from typing import Any, Self
 from .models import Track
 import msgspec
@@ -19,7 +19,7 @@ class BaseMSGSerializer[T](msgspec.Struct, frozen=True, metaclass=CombinedMetaCl
     
     @classmethod
     def from_model_values(cls, model: dict[str, Any]) -> Self:
-        "Converts a `Model` converted using `.values()` into a `Struct`"
+        "Converts a `Model` using `.values()` into a `Struct`"
         return msgspec.convert(model, cls)
         
     @classmethod
@@ -47,7 +47,7 @@ class BaseMSGSerializer[T](msgspec.Struct, frozen=True, metaclass=CombinedMetaCl
     
         
 class TrackNameOnlyMSGSerializer(BaseMSGSerializer[Track], frozen=True):
-    id: int
+    id: IntId
     name: str
 
     @classmethod
@@ -59,7 +59,7 @@ class TrackNameOnlyMSGSerializer(BaseMSGSerializer[Track], frozen=True):
 
 
 class TrackMSGSerializer(BaseMSGSerializer[Track], frozen=True):
-    id: int
+    id: IntId
     name: str
     en_description: str
     ar_description: str
