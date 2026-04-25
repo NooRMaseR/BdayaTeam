@@ -64,10 +64,18 @@ function LogoutDialog({ open, onSucces, onClose }: LogoutDialogProps) {
 async function performSecureLogout() {
   try {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      
+      const registration = await navigator.serviceWorker.getRegistration();
+      
+      if (!registration) {
+        console.log("No active service worker found. Skipping push cleanup.");
+        return; 
+      }
 
+      const subscription = await registration.pushManager.getSubscription();
+      
       if (subscription) {
+        
         await API.POST("/api/notifications/unsubscribe/", {
           body: { endpoint: subscription.endpoint }
         });
@@ -107,6 +115,8 @@ export default function Header() {
       logout();
       closeLogoutConf();
       router.replace("/login");
+    } else {
+      closeLogoutConf();
     }
   }
 

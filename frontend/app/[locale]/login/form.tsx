@@ -19,8 +19,8 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 
-type GetLogIn = components['schemas']['LoginResponse'];
-type SendLogIn = components['schemas']['LoginRequest'];
+type GetLogIn = components['schemas']['LoginResponseMSG'];
+type SendLogIn = components['schemas']['LoginRequestMSG'];
 
 export const revalidate = 1000;
 

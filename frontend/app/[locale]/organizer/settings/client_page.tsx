@@ -15,9 +15,9 @@ import API from '@/app/utils/api.client';
 import { toast } from 'sonner';
 import React from 'react';
 
-type Settings = components['schemas']['SettingsResponse'];
+type Settings = components['schemas']['SiteSettingsMSGSerializer'];
 type OrganizerCanEditType = {
-    key: Settings['organizer_can_edit'][0];
+    key: string;
     label: string
 };
 
@@ -77,8 +77,8 @@ export default function SettingsClient({ recivedSettings }: { recivedSettings: S
         const newSettings = {
             ...state.settings,
             organizer_can_edit: checked
-                ? [...new Set([...state.settings.organizer_can_edit, field])] as OrganizerCanEditType['key'][]
-                : state.settings.organizer_can_edit.filter(s => s !== field)
+                ? [...new Set([...state.settings.organizer_can_edit as string[], field])] as OrganizerCanEditType['key'][]
+                : state.settings.organizer_can_edit?.filter(s => s !== field)
         };
         dispatch({ type: 'UPDATE_SETTINGS', payload: newSettings });
     }
@@ -118,9 +118,9 @@ export default function SettingsClient({ recivedSettings }: { recivedSettings: S
             },
             bodySerializer(body) {
                 const fd = new FormData();
-                if (isAdmin) fd.append("is_register_enabled", String(body.is_register_enabled));
+                if (isAdmin) fd.append("is_register_enabled", String(body?.is_register_enabled));
 
-                body.organizer_can_edit?.forEach(v => v.trim() != '' && fd.append("organizer_can_edit", v));
+                body?.organizer_can_edit?.forEach(v => v.trim() != '' && fd.append("organizer_can_edit", v));
 
                 if (state.images.site.file) fd.append("site_image", state.images.site.file);
                 if (state.images.hero.file) fd.append("hero_image", state.images.hero.file);

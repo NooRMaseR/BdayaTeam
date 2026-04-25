@@ -60,8 +60,8 @@ INSTALLED_APPS = (
     "imagekit",
     "solo",
     "django_cleanup.apps.CleanupConfig",
-    "ninja_extra",
     'channels',
+    "django_bolt",
     "core",
     "technical",
     "organizer",
@@ -75,17 +75,20 @@ MIDDLEWARE = (
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "ninja.compatibility.files.fix_request_files_middleware",
+)
+
+BOLT_MIDDLEWARE = (
+    "django.middleware.locale.LocaleMiddleware",
+    "django.middleware.common.CommonMiddleware",
 )
 
 SECURE_CSP = {
-    "default-src": [CSP.SELF],
-    "script-src": [CSP.SELF],
-    "style-src": [CSP.SELF, CSP.UNSAFE_INLINE],
+    "default-src": [CSP.SELF, "https://cdn.jsdelivr.net", CSP.UNSAFE_INLINE],
+    "script-src": [CSP.SELF, "https://cdn.jsdelivr.net", CSP.UNSAFE_INLINE],
+    "style-src": [CSP.SELF, "https://cdn.jsdelivr.net", CSP.UNSAFE_INLINE],
     "img-src": [CSP.SELF, "data:"],
 }
 
@@ -97,13 +100,9 @@ SECURE_CSP = {
 #         "127.0.0.1",
 #     )
 
-SIMPLE_JWT = {
+BOLT_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(weeks=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': False,
-    'SIGNING_KEY': SECRET_KEY,
-    'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 GRAPHENE = {
@@ -114,7 +113,7 @@ GRAPHENE = {
 ROOT_URLCONF = "BdayaTeam.urls"
 AUTH_USER_MODEL = "core.BdayaUser"
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USE_TLS = True
@@ -344,12 +343,16 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
+    "https://localhost:8000",
+    "http://localhost:8000",
     "https://twins-jill-requirements-citizenship.trycloudflare.com",
 )
 
 CSRF_TRUSTED_ORIGINS = (
     "https://localhost",
     "https://localhost:3000",
+    "https://localhost:8000",
+    "http://localhost:8000",
     "https://twins-jill-requirements-citizenship.trycloudflare.com",
 )
 CSRF_COOKIE_HTTPONLY = True

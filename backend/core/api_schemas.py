@@ -1,95 +1,74 @@
 from phonenumber_field.validators import validate_international_phonenumber
-from pydantic import EmailStr, PositiveInt, field_validator
-from organizer.api_schemas import SettingsImagesResponse
+from django_bolt.serializers import Serializer, field_validator
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+
+from organizer.serializers import SiteSettingsImagesMSGSerializer
+from .serializers import TrackNameOnlyMSGSerializer
 from . import models, validators
-from ninja import Schema
+from utils import IntId
+import msgspec
 
-class DetailError(Schema):
-    error: str
-    
-class PydanticErrorItem(Schema):
-    type: str
-    loc: list[str | int]
-    msg: str
-    ctx: DetailError
-
-class PydanticErrorResponse(Schema):
-    detail: list[PydanticErrorItem]
-
-class LoginRequest(Schema):
-    email: EmailStr
+class LoginRequestMSG(msgspec.Struct):
+    email: str
     password: str
 
-class LoginResponse(Schema):
+class LoginResponseMSG(msgspec.Struct):
     username: str
     is_admin: bool
     role: models.UserRole
-    track: SimpleTrackSchema | None = None
+    track: TrackNameOnlyMSGSerializer | None = None
 
-class ErrorResponse(Schema):
-    details: str
-
-class SingleErrorResponse(Schema):
-    detail: str
-    
-class RegisterRequest(Schema):
-    request_track_id: PositiveInt
-    email: EmailStr
+class RegisterRequestMSG(Serializer):
+    request_track_id: IntId
+    email: str
     name: str
     phone_number: str
     collage_code: str
-
-    @field_validator("collage_code")
-    @classmethod
-    def check_collage_code(cls, v: str) -> str:
+    
+    @field_validator('email', 'before')
+    def validate_email(cls, v: str) -> str:
         try:
-            validators.validate_collage_code(v)
-            return v
+            validate_email(v)
         except ValidationError as e:
             error = e.message if hasattr(e, 'message') else e.messages[0]
             raise ValueError(error)
+
+        return v
     
-    @field_validator("phone_number")
-    @classmethod
-    def check_phone_number(cls, v: str) -> str:
+    @field_validator('collage_code', 'before')
+    def validate_collage(cls, v: str) -> str:
         try:
-            validate_international_phonenumber(v)
-            return v
+            validators.validate_collage_code(v)
         except ValidationError as e:
             error = e.message if hasattr(e, 'message') else e.messages[0]
             raise ValueError(error)
         
-class RefreshTokenRequest(Schema):
+        return v
+    
+    @field_validator('phone_number', 'before')
+    def validate_phone(cls, v: str) -> str:
+        try:
+            validate_international_phonenumber(v)
+        except ValidationError as e:
+            error = e.message if hasattr(e, 'message') else e.messages[0]
+            raise ValueError(error)
+        
+        return v
+    
+class RefreshTokenRequestMSG(msgspec.Struct):
     refresh: str | None = None
 
-class SimpleTrackSchema(Schema):
-    id: PositiveInt
-    name: str
-
-class TrackCreateSchema(Schema):
-    name: str
-    prefix: str
-    en_description: str
-    ar_description: str
-
-class TrackSchema(Schema):
-    id: PositiveInt
-    name: str
-    en_description: str
-    ar_description: str
-    image: str
-
-class RegisterResponse(Schema):
+class RegisterResponseMSG(msgspec.Struct):
     code: str
-    track: SimpleTrackSchema
+    track: TrackNameOnlyMSGSerializer
     email: str
     name: str
-    
-class TestAuthResponse(Schema):    
+
+class TestAuthResponseMSG(msgspec.Struct):    
     username: str
     role: models.UserRole
     is_admin: bool
-    track: SimpleTrackSchema | None
-    settings: SettingsImagesResponse
+    settings: SiteSettingsImagesMSGSerializer
+    track: TrackNameOnlyMSGSerializer | None = None

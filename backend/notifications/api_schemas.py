@@ -1,9 +1,9 @@
-from ninja import Schema
+import msgspec
 
-class SubscriptionRequest(Schema):
+class SubscriptionRequestMSG(msgspec.Struct):
     endpoint: str
     auth: str
     p256dh: str
 
-class UnsubscribeRequest(Schema):
+class UnsubscribeRequestMSG(msgspec.Struct):
     endpoint: str

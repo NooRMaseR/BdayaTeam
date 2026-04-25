@@ -52,21 +52,22 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
     if (!membersRes.response.ok) {
         return Promise.reject(membersRes.error);
     };
+    
 
-    const rows: GridRowsProp = membersRes.data?.map((member) => {
+    const rows: GridRowsProp = (membersRes.data as unknown as (typeof membersRes.data)[])?.map((member) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const row: any = {
-            id: member.code,
-            code: member.code,
-            status: member.status,
-            name: member.name,
-            bonus: member.bonus,
-            track: member.track.name,
-            phone: member.phone_number,
-            email: member.email,
+            id: member?.code,
+            code: member?.code,
+            status: member?.status,
+            name: member?.name,
+            bonus: member?.bonus,
+            track: member?.track.name,
+            phone: member?.phone_number,
+            email: member?.email,
         };
 
-        member.attendances.forEach(att => {
+        member?.attendances?.forEach(att => {
             row[`${att.date.day}_date`] = att.status;
             row[`${att.date.day}_excuse`] = att.excuse_reason;
             row[`${att.date.day}_by`] = att.by.username;

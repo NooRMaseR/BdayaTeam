@@ -19,4 +19,18 @@ export type GetMemberGridType = {
     groupModel: GridColumnGroupingModel
 }
 
+export type MemberTaskSend = {
+    task_id: number;
+    notes?: string;
+    files?: string[];
+}
+
+export type TrackCreate = {
+    name: string;
+    prefix: string;
+    en_description: string;
+    ar_description: string;
+    image: string;
+}
+
 export type LocaleOptions = 'en' | 'ar';

@@ -1,12 +1,13 @@
 from datetime import date
 from typing import Self
 
+from utils import IntId
 from core.models import BdayaUser
 from core.serializers import BaseMSGSerializer
-from .models import Attendance, AttendanceAllowedDay, SiteSetting
+from .models import Attendance, AttendanceAllowedDay, AttendanceStatus, SiteSetting
 
 class AttendanceDayMSGSerializer(BaseMSGSerializer[AttendanceAllowedDay], frozen=True):
-    id: int
+    id: IntId
     day: date
 
     @classmethod
@@ -17,7 +18,7 @@ class AttendanceDayMSGSerializer(BaseMSGSerializer[AttendanceAllowedDay], frozen
         )
 
 class AttendanceMSGBy(BaseMSGSerializer[BdayaUser], frozen=True):
-    id: int
+    id: IntId
     username: str
 
     @classmethod
@@ -29,7 +30,7 @@ class AttendanceMSGBy(BaseMSGSerializer[BdayaUser], frozen=True):
     
 class AttendanceMSGSerializer(BaseMSGSerializer[Attendance], frozen=True):
     date: AttendanceDayMSGSerializer
-    status: str
+    status: AttendanceStatus
     by: AttendanceMSGBy
     excuse_reason: str | None = None
     
@@ -37,14 +38,14 @@ class AttendanceMSGSerializer(BaseMSGSerializer[Attendance], frozen=True):
     def from_model(cls, model: Attendance) -> Self:
         return cls(
             date=AttendanceDayMSGSerializer.from_model(model.date),
-            status=model.status,
+            status=AttendanceStatus(model.status),
             excuse_reason=model.excuse_reason,
             by=AttendanceMSGBy.from_model(model.by)
         )
     
 class SiteSettingsImagesMSGSerializer(BaseMSGSerializer[SiteSetting], frozen=True):
-    site_image: str | None
-    hero_image: str | None
+    site_image: str | None = None
+    hero_image: str | None = None
 
     @classmethod
     def from_model(cls, model: SiteSetting) -> Self:
@@ -55,7 +56,7 @@ class SiteSettingsImagesMSGSerializer(BaseMSGSerializer[SiteSetting], frozen=Tru
 
     
 class SiteSettingsMSGSerializer(SiteSettingsImagesMSGSerializer, frozen=True):
-    is_register_enabled: bool
+    is_register_enabled: bool = False
     organizer_can_edit: list[str] = []
     
     @classmethod

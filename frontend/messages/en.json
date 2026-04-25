@@ -279,6 +279,7 @@
         "deleteTaskDesc": "Are you sure that you want to delete this task?",
         "deleteTaskDesc2": "This will delete all tasks sent to this task!",
         "degree": "Degree",
+        "min_degree": "Degree must be >= than 0",
         "memMessage": "Message To the Member",
         "sign": "Sign",
         "signing": "Signing....",

@@ -32,22 +32,8 @@ uv run manage.py createsuperuser
 run the server by using this command
 
 ```bash
-uv run gunicorn \
-        --workers 4 \
-        --worker-connections 600 \
-        --timeout 30 \
-        --keep-alive 2 \
-        --worker-class uvicorn.workers.UvicornWorker \
-        --forwarded-allow-ips="*" \
-        --bind unix:/run/gunicorn.sock \
-        BdayaTeam.asgi:application
+uv run manage.py runbolt --processes 4 --keep-alive 10
 ```
-
-**`--worker`** how many wokrers would you need
-
-**`--worker-connections`** how many coonections to accept for each worker
-
-to open `openApi` open this url `http://localhost:8000/api/docs`
 
 ## Redis
 
@@ -106,7 +92,7 @@ sudo -u www-data head -n 5 /home/kali/BdayaTeam/nginx_teamBdaya.conf
 
 ### Gunicorn
 
-`workers = (2 x CPU Cores) + 1`
+`process = CPU Cores Count`
 
 first we need to get the how many avilable cores, in the terminal run
 
@@ -114,17 +100,11 @@ first we need to get the how many avilable cores, in the terminal run
 nproc
 ```
 
-for example we get `2`, then we should have `(2 x 2) + 1 = 5 workers`
-
-in the end the gunicorn configs should be like this
-
-```bash
-uv run gunicorn BdayaTeam.wsgi:application --workers 5 --max-requests 1000 --max-requests-jitter 50
-```
+for example we get `4`, then we should set it to 4 process
 
 ### Database
 
-`total connections = workers x max_size`
+`total connections = process x max_size`
 
 let's say we have a pool with `max_size=20`, in your database run
 
@@ -133,9 +113,7 @@ sudo -u postgres psql
 SHOW max_connections;
 ```
 
-you may get `100` connections, so we should get `5 x 20 = 100 total connections` and this is equal to `max_connections` witch is bad, we need like from 20% => 30% avilable space
-
-if we set the `max_size=10` then we get `5 x 10 = 50` witch we get like 50% avilable space for migratios or external database operations, usually a connections takes like 2 or 3 connection
+you may get `100` connections, so we should get `4 x 20 = 80 total connections` and this is less than `max_connections` witch is good, we need like from 20% => 30% avilable space for migratios or external database operations, usually a connections takes like 2 or 3 connection
 
 if you need more connections note that each connection depends on your `RAM`, each connection takes from `10MB -> 15MB`
 

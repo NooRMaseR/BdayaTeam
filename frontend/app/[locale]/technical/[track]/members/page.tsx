@@ -37,7 +37,7 @@ async function getTechMemberGrid(track: string): Promise<GetMemberGridType> {
       email: member.email,
     };
 
-    member.tasks.forEach(recived_task => {
+    member.tasks?.forEach(recived_task => {
       row[`task_deg_${recived_task.task.id}`] = recived_task.degree;
       row[`task_notes_${recived_task.task.id}`] = recived_task.technical_notes;
       row[`task_signed_by_${recived_task.task.id}`] = recived_task.signed_by?.username;
