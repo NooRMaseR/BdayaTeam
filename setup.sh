@@ -107,6 +107,25 @@ ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/daphne \
 WantedBy=multi-user.target
 EOF
 
+# setup systemd for daphne
+
+cat <<EOF | sudo tee /etc/systemd/system/daphne.service 
+[Unit]
+Description=daphne daemon
+After=network.target
+
+[Service]
+User=kali
+Group=www-data
+WorkingDirectory=/home/kali/BdayaTeam/backend/
+ExecStart=/home/kali/BdayaTeam/backend/.venv/bin/daphne \
+        -u /tmp/daphne.sock \
+        BdayaTeam.asgi:application
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 sudo systemctl daemon-reload
 sudo systemctl start bolt daphne
 sudo systemctl enable bolt daphne
