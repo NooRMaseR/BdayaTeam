@@ -60,12 +60,6 @@ class RegisterRequestMSG(Serializer):
 class RefreshTokenRequestMSG(msgspec.Struct):
     refresh: str | None = None
 
-class TrackCreateMSG(msgspec.Struct):
-    name: str
-    prefix: str
-    en_description: str
-    ar_description: str
-
 class RegisterResponseMSG(msgspec.Struct):
     code: str
     track: TrackNameOnlyMSGSerializer

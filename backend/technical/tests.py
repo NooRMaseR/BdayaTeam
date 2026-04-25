@@ -4,7 +4,6 @@ from django.test import TestCase
 from django.utils import timezone
 from django.core.cache import cache
 from django.test.client import AsyncClient
-from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from core.models import BdayaUser, Track, UserRole
@@ -116,20 +115,6 @@ class TestTechnical(TestCase):
         
     def setUp(self) -> None:
         cache.clear()
-        
-        refresh = RefreshToken.for_user(self.member_user)
-        refresh['role'] = self.member_user.role
-        refresh['code'] = self.member_user.member.code # type: ignore
-        
-        self.member_client.cookies["access_token"] = str(refresh.access_token)
-        self.member_client.cookies["refresh_token"] = str(refresh)
-        
-        
-        refresh = RefreshToken.for_user(self.tech_user)
-        refresh['role'] = self.tech_user.role
-        
-        self.tech_client.cookies["access_token"] = str(refresh.access_token)
-        self.tech_client.cookies["refresh_token"] = str(refresh)
         
     async def test_get_all_tasks(self) -> None:
         response = await self.tech_client.get("/api/technical/tasks/")

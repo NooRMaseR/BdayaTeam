@@ -46,8 +46,10 @@ bolt = BoltAPI(
         version="1.2.0",
         path="/api/docs"
     ),
-    validate_response=False
+    validate_response=False,
+    django_middleware=settings.BOLT_MIDDLEWARE
 )
+
 bolt.mount_django("/")
 register_health_checks(bolt)
 
@@ -127,205 +129,6 @@ def create_member_transaction(payload: api_schemas.RegisterRequestMSG) -> Member
     except IntegrityError:
         raise ValueError("something went wrong, Please try again.")
 
-@bolt.post("/login/", tags=['Auth'], response_model=api_schemas.LoginResponseMSG)
-async def login(request: Request, body: api_schemas.LoginRequestMSG):
-    """Login
-    
-    a login endpoint with the cookies
-    """
-    user: BdayaUser | None = await auth.aauthenticate(request, email=body.email, password=body.password) # type: ignore
-
-    if not user:
-        raise BadRequest(detail="invalid email or password")
-
-    user = await BdayaUser.objects.select_related('track', 'member').aget(id=user.id) # type: ignore
-    
-    track_data = None
-    if not user.is_organizer and user.track:
-        track_data = TrackNameOnlyMSGSerializer.from_model(user.track)
-    
-    tokens = generate_jwts_for_user(user)
-    print(tokens.access)
-    print(tokens.refresh)
-
-    data = api_schemas.LoginResponseMSG(
-        username= user.username,
-        is_admin= user.is_superuser,
-        role= UserRole(user.role),
-        track= track_data,
-    )
-    
-    response = JSON(data) \
-    .set_cookie(
-        name="access_token",
-        value=tokens.access,
-        max_age=tokens.access_exp,
-        secure=True,
-        httponly=True,
-    ) \
-    .set_cookie(
-        name='refresh_token',
-        value=tokens.refresh,
-        max_age=tokens.refresh_exp,
-        secure=True,
-        httponly=True,
-    )
-    
-    return response
-
-@bolt.get("/logout/", status_code=204, tags=["Auth"])
-async def logout(request: Request):
-    """Logout
-    A Logout endpoint that removes the cookies from the user `cookies`
-    
-    this endpoint is also stores the token in the `revokation store`
-    """
-    
-    token = request.cookies.get('access_token')
-    if not token:
-        token = request.headers.get("authorization")
-        if token:
-            token = token.split(' ')[1]
-    
-    if token:
-        try:
-            payload = jwt.decode(token, options={"verify_signature": False})
-            
-            jti = payload.get("jti")
-            exp = payload.get("exp")
-            
-            if jti and exp:
-                await STORE.revoke(jti=jti, ttl=exp)
-                
-        except jwt.DecodeError:
-            pass
-    
-    response = Response(status_code=204) \
-    .delete_cookie("csrftoken") \
-    .delete_cookie("sessionid") \
-    .delete_cookie("access_token") \
-    .delete_cookie("refresh_token")
-    return response
-
-@bolt.post("/register/", status_code=201, tags=['Auth'], response_model=api_schemas.RegisterResponseMSG)
-async def register(payload: api_schemas.RegisterRequestMSG):
-    "Register"
-    
-    errors: dict[str, str] = {}
-    email_exists, phone_exists, collage_code_exists = await asyncio.gather(
-        BdayaUser.objects.filter(email=payload.email).aexists(),
-        BdayaUser.objects.filter(phone_number=payload.phone_number).aexists(),
-        Member.objects.filter(collage_code=payload.collage_code).aexists()
-    )
-    
-    if email_exists:
-        errors["email"] = str(_("email_exists"))
-    
-    if phone_exists:
-        errors["phone"] = str(_("phone_exists"))
-    
-    if collage_code_exists:
-        errors["collage_code"] = str(_("collage_code_exists"))
-        
-    if errors:
-        return Response(errors, status.HTTP_400_BAD_REQUEST)
-
-    try:
-        member = await sync_to_async(create_member_transaction)(payload)
-    except ValueError as e:
-        raise BadRequest(detail=str(e))
-
-    user = await BdayaUser.objects.aget(id=member.bdaya_user_id) # type: ignore
-
-    tokens = generate_jwts_for_user(user)
-    
-    cache.delete_pattern("*member*") # type: ignore
-    
-    data = api_schemas.RegisterResponseMSG(
-        code = member.code,
-        name = user.username,
-        email = user.email,
-        track = TrackNameOnlyMSGSerializer.from_model(member.bdaya_user.track) # type: ignore
-    )
-    response = JSON(data, status_code=status.HTTP_201_CREATED) \
-    .set_cookie(
-        name='access_token',
-        value=tokens.access,
-        httponly=True,
-        secure=True,
-        samesite='Lax',
-        max_age=tokens.access_exp,
-    ).set_cookie(
-        name='refresh_token',
-        value=tokens.refresh,
-        httponly=True,
-        secure=True,
-        samesite='Lax',
-        max_age=tokens.refresh_exp
-    )
-
-    return response
-
-@bolt.post("/token/refresh/", tags=['Auth'], auth=None, status_code=204)
-async def refresh_tokens(request: Request, payload: api_schemas.RefreshTokenRequestMSG):
-    """Refresh Tokens
-    
-    refreshes the tokens from the cookies
-    
-    it looks for the the refresh token in the `cookies`, if not found then search for it in the `payload`
-    """
-    
-    raw_refresh = request.cookies.get("refresh_token") or payload.refresh
-    
-    if not raw_refresh:
-        raise Unauthorized(detail="Refresh token missing")
-
-    try:
-        decoded = jwt.decode(raw_refresh, settings.SECRET_KEY, ['HS256'])
-    except jwt.ExpiredSignatureError:
-        raise Unauthorized(detail="Refresh token expired. Please log in again.")
-    except jwt.InvalidTokenError:
-        raise Unauthorized(detail="Invalid refresh token")
-    
-    if decoded.get("token_type") != "refresh":
-        raise Unauthorized(detail="Invalid token type")
-    
-    jti = decoded.get("jti")
-    exp = decoded.get("exp")
-    user_id = decoded.get("sub")
-    
-    if jti and await STORE.is_revoked(jti):
-        raise Unauthorized(detail="Refresh token has been revoked or already used.")
-    
-    try:
-        user = await BdayaUser.objects.select_related("member").aget(id=user_id)
-    except BdayaUser.DoesNotExist:
-        raise NotFound(detail="User Does not exists")
-    
-    if jti and exp:
-        await STORE.revoke(jti=jti, ttl=exp)
-    
-    tokens = generate_jwts_for_user(user)
-    
-    response = Response(status_code=status.HTTP_204_NO_CONTENT) \
-    .set_cookie(
-        name="access_token",
-        value=tokens.access,
-        max_age=tokens.access_exp,
-        secure=True,
-        httponly=True,
-        samesite='Lax'
-    ).set_cookie(
-        name='refresh_token',
-        value=tokens.refresh,
-        max_age=tokens.refresh_exp,
-        secure=True,
-        httponly=True,
-        samesite='Lax'
-    )
-    
-    return response
-
 @bolt.get("/test-auth/", tags=['Auth'], response_model=api_schemas.TestAuthResponseMSG)
 async def test_auth(user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
     """test authentication
@@ -391,7 +194,7 @@ async def create(name: FormStr, prefix: FormStr, en_description: FormStr, ar_des
         errors['prefix'] = str(_("this prefix already exists"))
         
     if errors:
-        return Response(errors, status.HTTP_400_BAD_REQUEST)
+        return JSON(errors, status.HTTP_400_BAD_REQUEST)
     
     try:
         await Track.objects.acreate(
@@ -408,7 +211,7 @@ async def create(name: FormStr, prefix: FormStr, en_description: FormStr, ar_des
     return Response(status_code=status.HTTP_201_CREATED)
 
 @bolt.get('/tracks/{track_name}/', tags=['Track'], status_code=200, response_model=TrackMSGSerializer)
-async def get_one(track_name: str):
+async def get_one_track(track_name: str):
     "get one track"
     
     CACHE_KEY = track_cache_key(track_name)
@@ -459,3 +262,210 @@ async def reset_all(user: BdayaUser = Depends(get_any_authenticated_user)): # ty
         return Response(status_code=status.HTTP_202_ACCEPTED)
     except Exception as e:
         raise InternalServerError(detail=repr(e))
+
+
+bolt_auth = BoltAPI(
+    trailing_slash='append',
+    validate_response=False
+)
+
+@bolt_auth.post("/login/", tags=['Auth'], response_model=api_schemas.LoginResponseMSG)
+async def login(request: Request, body: api_schemas.LoginRequestMSG):
+    """Login
+    
+    a login endpoint with the cookies
+    """
+    user: BdayaUser | None = await auth.aauthenticate(request, email=body.email, password=body.password) # type: ignore
+
+    if not user:
+        raise BadRequest(detail="invalid email or password")
+
+    user = await BdayaUser.objects.select_related('track', 'member').aget(id=user.id) # type: ignore
+    
+    track_data = None
+    if not user.is_organizer and user.track:
+        track_data = TrackNameOnlyMSGSerializer.from_model(user.track)
+    
+    tokens = generate_jwts_for_user(user)
+    print(tokens.access)
+    print(tokens.refresh)
+
+    data = api_schemas.LoginResponseMSG(
+        username= user.username,
+        is_admin= user.is_superuser,
+        role= UserRole(user.role),
+        track= track_data,
+    )
+    
+    response = JSON(data) \
+    .set_cookie(
+        name="access_token",
+        value=tokens.access,
+        max_age=tokens.access_exp,
+        secure=True,
+        httponly=True,
+    ) \
+    .set_cookie(
+        name='refresh_token',
+        value=tokens.refresh,
+        max_age=tokens.refresh_exp,
+        secure=True,
+        httponly=True,
+    )
+    
+    return response
+
+@bolt_auth.get("/logout/", status_code=204, tags=["Auth"])
+async def logout(request: Request):
+    """Logout
+    A Logout endpoint that removes the cookies from the user `cookies`
+    
+    this endpoint is also stores the token in the `revokation store`
+    """
+    
+    token = request.cookies.get('access_token')
+    if not token:
+        token = request.headers.get("authorization")
+        if token:
+            token = token.split(' ')[1]
+    
+    if token:
+        try:
+            payload = jwt.decode(token, options={"verify_signature": False})
+            
+            jti = payload.get("jti")
+            exp = payload.get("exp")
+            
+            if jti and exp:
+                await STORE.revoke(jti=jti, ttl=exp)
+                
+        except jwt.DecodeError:
+            pass
+    
+    response = Response(status_code=204) \
+    .delete_cookie("csrftoken") \
+    .delete_cookie("sessionid") \
+    .delete_cookie("access_token") \
+    .delete_cookie("refresh_token")
+    return response
+
+@bolt_auth.post("/register/", status_code=201, tags=['Auth'], response_model=api_schemas.RegisterResponseMSG)
+async def register(payload: api_schemas.RegisterRequestMSG):
+    "Register"
+    
+    errors: dict[str, str] = {}
+    email_exists, phone_exists, collage_code_exists = await asyncio.gather(
+        BdayaUser.objects.filter(email=payload.email).aexists(),
+        BdayaUser.objects.filter(phone_number=payload.phone_number).aexists(),
+        Member.objects.filter(collage_code=payload.collage_code).aexists()
+    )
+    
+    if email_exists:
+        errors["email"] = str(_("email_exists"))
+    
+    if phone_exists:
+        errors["phone"] = str(_("phone_exists"))
+    
+    if collage_code_exists:
+        errors["collage_code"] = str(_("collage_code_exists"))
+        
+    if errors:
+        return JSON(errors, status.HTTP_400_BAD_REQUEST)
+
+    try:
+        member = await sync_to_async(create_member_transaction)(payload)
+    except ValueError as e:
+        raise BadRequest(detail=str(e))
+
+    user = await BdayaUser.objects.aget(id=member.bdaya_user_id) # type: ignore
+
+    tokens = generate_jwts_for_user(user)
+    
+    cache.delete_pattern("*member*") # type: ignore
+    
+    data = api_schemas.RegisterResponseMSG(
+        code = member.code,
+        name = user.username,
+        email = user.email,
+        track = TrackNameOnlyMSGSerializer.from_model(member.bdaya_user.track) # type: ignore
+    )
+    response = JSON(data, status_code=status.HTTP_201_CREATED) \
+    .set_cookie(
+        name='access_token',
+        value=tokens.access,
+        httponly=True,
+        secure=True,
+        samesite='Lax',
+        max_age=tokens.access_exp,
+    ).set_cookie(
+        name='refresh_token',
+        value=tokens.refresh,
+        httponly=True,
+        secure=True,
+        samesite='Lax',
+        max_age=tokens.refresh_exp
+    )
+
+    return response
+
+@bolt_auth.post("/token/refresh/", tags=['Auth'], auth=None, status_code=204)
+async def refresh_tokens(request: Request, payload: api_schemas.RefreshTokenRequestMSG):
+    """Refresh Tokens
+    
+    refreshes the tokens from the cookies
+    
+    it looks for the the refresh token in the `cookies`, if not found then search for it in the `payload`
+    """
+    
+    raw_refresh = request.cookies.get("refresh_token") or payload.refresh
+    
+    if not raw_refresh:
+        raise Unauthorized(detail="Refresh token missing")
+
+    try:
+        decoded = jwt.decode(raw_refresh, settings.SECRET_KEY, ['HS256'])
+    except jwt.ExpiredSignatureError:
+        raise Unauthorized(detail="Refresh token expired. Please log in again.")
+    except jwt.InvalidTokenError:
+        raise Unauthorized(detail="Invalid refresh token")
+    
+    if decoded.get("token_type") != "refresh":
+        raise Unauthorized(detail="Invalid token type")
+    
+    jti = decoded.get("jti")
+    exp = decoded.get("exp")
+    user_id = decoded.get("sub")
+    
+    if jti and await STORE.is_revoked(jti):
+        raise Unauthorized(detail="Refresh token has been revoked or already used.")
+    
+    try:
+        user = await BdayaUser.objects.select_related("member").aget(id=user_id)
+    except BdayaUser.DoesNotExist:
+        raise NotFound(detail="User Does not exists")
+    
+    if jti and exp:
+        await STORE.revoke(jti=jti, ttl=exp)
+    
+    tokens = generate_jwts_for_user(user)
+    
+    response = Response(status_code=status.HTTP_204_NO_CONTENT) \
+    .set_cookie(
+        name="access_token",
+        value=tokens.access,
+        max_age=tokens.access_exp,
+        secure=True,
+        httponly=True,
+        samesite='Lax'
+    ).set_cookie(
+        name='refresh_token',
+        value=tokens.refresh,
+        max_age=tokens.refresh_exp,
+        secure=True,
+        httponly=True,
+        samesite='Lax'
+    )
+    
+    return response
+
+bolt.mount("/api", bolt_auth)

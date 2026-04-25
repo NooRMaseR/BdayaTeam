@@ -1,7 +1,7 @@
 'use client';
 
 import LocaledTextField from '@/app/components/localed_textField';
-import type { components } from '@/app/generated/api_types';
+import type { TrackCreate } from '@/app/utils/api_types_helper';
 import { revalidateTracks } from '@/app/utils/api_utils';
 import GroupTitled from '@/app/components/group_titled';
 import FilePicker from '@/app/components/file_picker';
@@ -13,10 +13,8 @@ import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-type CreateTrack = components['schemas']['TrackCreateSchema'];
-
 export default function AddTrackPage() {
-    const { register, handleSubmit, setError, setValue, formState: { errors } } = useForm<CreateTrack>();
+    const { register, handleSubmit, setError, setValue, formState: { errors } } = useForm<TrackCreate>();
     const [trackPreviewImage, setTrackPreviewImage] = useState<string | null>(null);
     const [trackFormImage, setTrackFormImage] = useState<File | null>(null);
     const [isLoading, setIsloading] = useState<boolean>(false);
@@ -33,7 +31,7 @@ export default function AddTrackPage() {
         }
     }
 
-    const onSubmit = (data: CreateTrack) => {
+    const onSubmit = (data: TrackCreate) => {
         setIsloading(true);
         toast.promise(async () => {
             const { response, error } = await API.POST("/api/tracks/", {
@@ -46,7 +44,7 @@ export default function AddTrackPage() {
                 },
                 bodySerializer(body) {
                     const formData = new FormData();
-                    formData.set("image", body.image);
+                    if (body.image) formData.set("image", body.image);
                     formData.set("name", body.name);
                     formData.set("en_description", body.en_description);
                     formData.set("ar_description", body.ar_description);
@@ -64,16 +62,18 @@ export default function AddTrackPage() {
                 setTrackPreviewImage(null);
                 return await Promise.resolve(data.name);
             } else {
-                Object.entries(error || {}).forEach(e => {
-                    const key = e[0] as keyof CreateTrack;
-                    const value = e[1];
-
-                    if (validFields.includes(key)) {
-                        setError(key, { message: value });
-                    } else {
-                        toast.error(key, { description: value, descriptionClassName: "text-gray-600!" });
-                    }
-                });
+                if (response.status === 400) {
+                    Object.entries(error || {}).forEach(e => {
+                        const key = e[0] as keyof TrackCreate;
+                        const value = e[1] as unknown as string;
+                        
+                        if (validFields.includes(key)) {
+                            setError(key, { message: value });
+                        } else {
+                            toast.error(key, { description: value, descriptionClassName: "text-gray-600!" });
+                        }
+                    });
+                }
                 return await Promise.reject(error);
             }
         },

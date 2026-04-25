@@ -44,8 +44,8 @@ class AttendanceMSGSerializer(BaseMSGSerializer[Attendance], frozen=True):
         )
     
 class SiteSettingsImagesMSGSerializer(BaseMSGSerializer[SiteSetting], frozen=True):
-    site_image: str | None
-    hero_image: str | None
+    site_image: str | None = None
+    hero_image: str | None = None
 
     @classmethod
     def from_model(cls, model: SiteSetting) -> Self:
@@ -56,7 +56,7 @@ class SiteSettingsImagesMSGSerializer(BaseMSGSerializer[SiteSetting], frozen=Tru
 
     
 class SiteSettingsMSGSerializer(SiteSettingsImagesMSGSerializer, frozen=True):
-    is_register_enabled: bool
+    is_register_enabled: bool = False
     organizer_can_edit: list[str] = []
     
     @classmethod

@@ -25,11 +25,11 @@ import { toast } from 'sonner';
 import Image from 'next/image';
 
 type RegisterFormProps = {
-  tracks: components['schemas']['SimpleTrackSchema'][];
+  tracks: components['schemas']['TrackNameOnlyMSGSerializer'][];
   canRegister?: boolean | null
 }
 
-type SendRegister = components['schemas']['RegisterRequest'];
+type SendRegister = components['schemas']['RegisterRequestMSG'];
 
 export default function RegisterForm({ tracks, canRegister = false }: RegisterFormProps) {
   const { handleSubmit, register, setError, formState: { errors } } = useForm<SendRegister>({ defaultValues: { phone_number: "+20" } });
@@ -71,7 +71,7 @@ export default function RegisterForm({ tracks, canRegister = false }: RegisterFo
           }
         } else if (response.status === 400 && error) {
           Object.entries(error).forEach(er => {
-            setError(er[0] as keyof SendRegister, { message: er[1] });
+            setError(er[0] as keyof SendRegister, { message: er[1] as unknown as string });
           });
         } else if (response.status === 429) {
           const time = formatTime(parseInt(response.headers.get("Retry-After") ?? '0'));

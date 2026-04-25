@@ -118,7 +118,7 @@ async def add_task(payload: TaskCreateRequestMSG, user: BdayaUser = Depends(get_
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE, status=status.HTTP_201_CREATED)
 
 @bolt.get("/tasks/{task_id}/", response_model=TaskMSGSerializer)
-async def get_one(task_id: IntId, user = Depends(get_tech_or_member_user)):
+async def get_one_task(task_id: IntId, user = Depends(get_tech_or_member_user)):
     "get one task"
     
     CACHE_KEY = task_view_cache_key(task_id)

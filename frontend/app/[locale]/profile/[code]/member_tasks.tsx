@@ -3,7 +3,7 @@
 import { MembersRecivedTaskItem } from '../../technical/[track]/tasks/[taskId]/member_task';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import type { components } from '@/app/generated/api_types';
-import TaskShowCase from '@/app/components/task_show_case';
+import TaskShowCase, { MemberTaskItemProps } from '@/app/components/task_show_case';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { useAuthStore } from '@/app/utils/store';
@@ -12,11 +12,11 @@ import { Link } from '@/i18n/navigation';
 import { useState } from 'react';
 
 type MemberTasksProps = {
-    memberProfile: components['schemas']['MemberProfileResponse'];
+    memberProfile: components['schemas']['MemberProfileMSGSerializer'];
     track: string;
 }
 
-type Task = MemberTasksProps['memberProfile']['tasks'][0] | null;
+type Task = MemberTaskItemProps['tasksRecived'][0] | null;
 
 export default function MemberTasks({ memberProfile, track }: MemberTasksProps) {
     const tr = useTranslations('memebersTasksPage');

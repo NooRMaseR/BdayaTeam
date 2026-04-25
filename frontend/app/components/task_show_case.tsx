@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 import React from 'react';
 
 export type MemberTaskItemProps = {
-    tasksRecived: components['schemas']['RecivedTaskMember'][];
+    tasksRecived: components['schemas']['RecivedTaskMSGSerializer'][];
     track?: string;
 }
 
@@ -35,7 +35,7 @@ export type TaskShowCaseProps = {
     onClose: () => void;
 }
 
-type SignTask = components['schemas']['TaskSignRequest'];
+type SignTask = components['schemas']['TaskSignRequestMSG'];
 
 const Transition = React.forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement<unknown> },

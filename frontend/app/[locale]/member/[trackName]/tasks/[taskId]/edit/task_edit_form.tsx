@@ -18,11 +18,11 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 type TaskActionsProps = {
-    task: components['schemas']['RecivedTaskMember'];
+    task: components['schemas']['RecivedTaskMSGSerializer'];
     track_name: string;
 }
 
-type TaskMemberSend = components['schemas']['MemberTaskUpdateRequest'] & {files?: string};
+type TaskMemberSend = components['schemas']['RecivedTaskMSGSerializer'] & {files?: string};
 
 export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
     const [isLoading, setIsloading] = useState<boolean>(false);
@@ -44,14 +44,14 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
             params: {path: {sent_task_id: task.id}},
             body: {
                 notes: data.notes,
-                files: data.files ? Array.from(data.files) : []
+                files: (data.files ? Array.from(data.files) : []) as unknown as string
             },
             bodySerializer(body) {
                 const fd = new FormData();
                 if (body.notes) fd.append('notes',body.notes);
 
                 if (body.files && body.files.length > 0) {
-                    body.files.forEach(f => fd.append('files', f));
+                    (body.files as unknown as string[]).forEach(f => fd.append('files', f));
                 }
                 return fd;
             }

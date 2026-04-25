@@ -10,7 +10,7 @@ export default async function SettingsPage() {
     if (res.success) {
         const settings = {
             is_register_enabled: res.data.allSettings?.isRegisterEnabled ?? false,
-            organizer_can_edit: (res.data.allSettings?.organizerCanEdit ?? []) as components['schemas']['SettingsResponse']['organizer_can_edit'],
+            organizer_can_edit: (res.data.allSettings?.organizerCanEdit ?? []) as components['schemas']['SiteSettingsMSGSerializer']['organizer_can_edit'],
             site_image: res.data.allSettings?.siteImage ?? "",
             hero_image: res.data.allSettings?.heroImage ?? "",
         };

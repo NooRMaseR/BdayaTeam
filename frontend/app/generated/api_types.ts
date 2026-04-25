@@ -4,6 +4,130 @@
  */
 
 export interface paths {
+    "/api/health/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Simple liveness check.
+         * @description Returns:
+         *         Dictionary with status
+         */
+        get: operations["get_health_handler"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ready/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Readiness check with dependency checks.
+         * @description Returns:
+         *         Dictionary with readiness status and checks
+         */
+        get: operations["get_ready_handler"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/test-auth/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * test authentication
+         * @description test if the user is authenticated and return the user `credentials`
+         */
+        get: operations["get_test_auth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tracks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** get all tracks */
+        get: operations["get_get_all"];
+        put?: never;
+        /**
+         * create a track
+         * @description the `name` and `prefix` must be `unique`
+         */
+        post: operations["post_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tracks/{track_name}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** get one track */
+        get: operations["get_get_one_track"];
+        put?: never;
+        post?: never;
+        /**
+         * delete a track (Very Dangerios)
+         * @description this endpoint deletes a track along with `all related fields`
+         */
+        delete: operations["delete_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reset-all/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Reset All
+         * @description `Very Dangerios`, Deletes all tracks and members and tasks and technicals, every thing related to the `tracks`
+         */
+        delete: operations["delete_reset_all"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/login/": {
         parameters: {
             query?: never;
@@ -13,8 +137,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Login */
-        post: operations["auth_login_14fa1113"];
+        /**
+         * Login
+         * @description a login endpoint with the cookies
+         */
+        post: operations["post_login"];
         delete?: never;
         options?: never;
         head?: never;
@@ -28,8 +155,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Logout */
-        get: operations["auth_logout_93b2f096"];
+        /**
+         * Logout
+         * @description A Logout endpoint that removes the cookies from the user `cookies`
+         *
+         *     this endpoint is also stores the token in the `revokation store`
+         */
+        get: operations["get_logout"];
         put?: never;
         post?: never;
         delete?: never;
@@ -48,7 +180,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Register */
-        post: operations["auth_register_b45e892d"];
+        post: operations["post_register"];
         delete?: never;
         options?: never;
         head?: never;
@@ -64,82 +196,90 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Refresh Tokens */
-        post: operations["auth_refresh_tokens_a821405b"];
+        /**
+         * Refresh Tokens
+         * @description refreshes the tokens from the cookies
+         *
+         *     it looks for the the refresh token in the `cookies`, if not found then search for it in the `payload`
+         */
+        post: operations["post_refresh_tokens"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/test-auth/": {
+    "/api/technical/tasks/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Test Auth */
-        get: operations["auth_test_auth_c19b3e91"];
+        /** get all created tasks */
+        get: operations["get_tech_get_all"];
         put?: never;
-        post?: never;
+        /** create a task */
+        post: operations["post_add_task"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/tracks/": {
+    "/api/technical/tasks/{task_id}/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get All */
-        get: operations["tracks_get_all_ac7cad41"];
-        put?: never;
-        /** Create */
-        post: operations["tracks_create_c03104c6"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/tracks/{track_name}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get One */
-        get: operations["tracks_get_one_75afa6fd"];
-        put?: never;
-        post?: never;
-        /** Delete */
-        delete: operations["tracks_delete_205224e0"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/reset-all/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
+        /** get one task */
+        get: operations["get_get_one_task"];
+        /** update task info */
+        put: operations["put_update_task"];
         post?: never;
         /**
-         * Reset All
-         * @description Very Dangores, Deletes all tracks and members and tasks and technicals.
+         * delete task
+         * @description delete a task and all sent tasks to this task
          */
-        delete: operations["resetall_reset_all_436e596d"];
+        delete: operations["delete_delete_task"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/technical/tasks/{task_id}/recived/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** get recived tasks from members */
+        get: operations["get_get_recived_tasks_from_members"];
+        put?: never;
+        /** sign a task with a `degree` and `message` */
+        post: operations["post_sign_task"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/technical/members/{track_name}/with-tasks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** get all track members with their sent tasks */
+        get: operations["get_get_members"];
+        /** update a reviewed task */
+        put: operations["put_update_member_task"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -152,11 +292,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Track Members */
-        get: operations["members_get_track_members_ef6a175c"];
+        /** get track members with attendances */
+        get: operations["get_get_track_members"];
         put?: never;
-        /** Edit Member Grid */
-        post: operations["members_edit_member_grid_d9240522"];
+        /**
+         * edit a member from DataGrid
+         * @description if the `field=track` then it deletes the user and creates a new user with the new `track`
+         */
+        post: operations["post_edit_member_grid"];
         delete?: never;
         options?: never;
         head?: never;
@@ -170,14 +313,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Attendance Days */
-        get: operations["attendancedaysconrtoller_get_attendance_days_a483a749"];
-        /** Update Day */
-        put: operations["attendancedaysconrtoller_update_day_6cb40a36"];
-        /** Create Day */
-        post: operations["attendancedaysconrtoller_create_day_2c67fe4e"];
-        /** Delete Day */
-        delete: operations["attendancedaysconrtoller_delete_day_ac987550"];
+        /** get track days for the attendace */
+        get: operations["get_get_attendance_days"];
+        /** update day */
+        put: operations["put_update_day"];
+        /** create day */
+        post: operations["post_create_day"];
+        /** delete day */
+        delete: operations["delete_delete_day"];
         options?: never;
         head?: never;
         patch?: never;
@@ -190,10 +333,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Settings */
-        get: operations["settings_get_settings_c21ed58e"];
-        /** Update Settings */
-        put: operations["settings_update_settings_8f22a856"];
+        /** get the site settings */
+        get: operations["get_get_settings"];
+        /** update the site settings */
+        put: operations["put_update_settings"];
         post?: never;
         delete?: never;
         options?: never;
@@ -208,28 +351,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get All */
-        get: operations["tasks_get_all_0cd59212"];
+        /**
+         * get all unsigned tasks
+         * @description fetches all the tasks that hasen't reviewed yet by a technical `signed=False`
+         */
+        get: operations["get_get_all_tasks"];
         put?: never;
-        /** Submit Task */
-        post: operations["tasks_submit_task_512b85f4"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/member/protected_media/tasks/{sent_task_id}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Protected File */
-        get: operations["protectedtask_get_protected_file_a6761fe3"];
-        put?: never;
-        post?: never;
+        /** submit task solution */
+        post: operations["post_submit_task"];
         delete?: never;
         options?: never;
         head?: never;
@@ -243,8 +372,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Profile */
-        get: operations["memberprofile_get_profile_21f9f275"];
+        /**
+         * get member profile
+         * @description if the requested user is a `member` the `member_code` parameter is ignored
+         *
+         *     else then it uses the `member_code` parameter
+         */
+        get: operations["get_get_profile"];
         put?: never;
         post?: never;
         delete?: never;
@@ -260,10 +394,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Editable Task */
-        get: operations["memberedittask_get_editable_task_f241ebb2"];
-        /** Update My Task */
-        put: operations["memberedittask_update_my_task_89782fc9"];
+        /**
+         * get the signed task to edit
+         * @description it allows the `member` to get the task that he sent to edit it
+         */
+        get: operations["get_get_editable_task"];
+        /**
+         * send task edits
+         * @description once the `member` finish editing and sends it here it marks the task to be `signed=False`
+         */
+        put: operations["put_update_my_task"];
         post?: never;
         delete?: never;
         options?: never;
@@ -271,72 +411,21 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/technical/tasks/": {
+    "/api/member/protected_media/tasks/{sent_task_id}/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get All */
-        get: operations["technicaltasks_get_all_5311a8b3"];
+        /**
+         * access a protected file
+         * @description it check if the requested user is an `organizer` or `technical` to get the file
+         *
+         *     or check if the user is a `member` and it's the same `member` that uplouded this task to get open the file
+         */
+        get: operations["get_get_protected_file"];
         put?: never;
-        /** Add Task */
-        post: operations["technicaltasks_add_task_1cdf81a2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/technical/tasks/{task_id}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get One */
-        get: operations["technicaltasks_get_one_dcc667e1"];
-        /** Update Task */
-        put: operations["technicaltasks_update_task_16d2104d"];
-        post?: never;
-        /** Delete Task */
-        delete: operations["technicaltasks_delete_task_63b44143"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/technical/tasks/{task_id}/recived/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Recived Tasks From Members */
-        get: operations["technicaltasks_get_recived_tasks_from_members_ee8c4411"];
-        put?: never;
-        /** Sign Task */
-        post: operations["technicaltasks_sign_task_04c910e9"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/technical/members/{track_name}/with-tasks/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Members */
-        get: operations["technicalmembers_get_members_ca7e334b"];
-        /** Update Member Task */
-        put: operations["technicalmembers_update_member_task_5ee73b45"];
         post?: never;
         delete?: never;
         options?: never;
@@ -353,8 +442,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Save Subscription */
-        post: operations["notification_save_subscription_70fb998e"];
+        /** notification subscribtion */
+        post: operations["post_save_subscription"];
         delete?: never;
         options?: never;
         head?: never;
@@ -370,8 +459,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Unsubscribe Device */
-        post: operations["notification_unsubscribe_device_7ed39b3c"];
+        /** notification unsubscribtion */
+        post: operations["post_unsubscribe_device"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/static/{path:path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Serve static files for Django admin and other apps. */
+        get: operations["get_static_handler"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -382,459 +488,224 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** LoginResponse */
-        LoginResponse: {
-            /** Username */
+        TestAuthResponseMSG: {
             username: string;
-            /** Is Admin */
+            /** @enum {string} */
+            role: "member" | "technical" | "organizer";
             is_admin: boolean;
-            role: components["schemas"]["UserRole"];
-            track?: components["schemas"]["SimpleTrackSchema"] | null;
+            settings: components["schemas"]["SiteSettingsImagesMSGSerializer"];
+            /** @default null */
+            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
         };
-        /** SimpleTrackSchema */
-        SimpleTrackSchema: {
-            /** Id */
+        SiteSettingsImagesMSGSerializer: {
+            /** @default null */
+            site_image: string;
+            /** @default null */
+            hero_image: string;
+        };
+        TrackNameOnlyMSGSerializer: {
             id: number;
-            /** Name */
             name: string;
         };
-        /**
-         * UserRole
-         * @enum {string}
-         */
-        UserRole: "member" | "technical" | "organizer";
-        /** ErrorResponse */
-        ErrorResponse: {
-            /** Details */
-            details: string;
-        };
-        /** SingleErrorResponse */
-        SingleErrorResponse: {
-            /** Detail */
-            detail: string;
-        };
-        /** LoginRequest */
-        LoginRequest: {
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Password */
-            password: string;
-        };
-        /** RegisterResponse */
-        RegisterResponse: {
-            /** Code */
-            code: string;
-            track: components["schemas"]["SimpleTrackSchema"];
-            /** Email */
-            email: string;
-            /** Name */
-            name: string;
-        };
-        /** DetailError */
-        DetailError: {
-            /** Error */
-            error: string;
-        };
-        /** PydanticErrorItem */
-        PydanticErrorItem: {
-            /** Type */
-            type: string;
-            /** Loc */
-            loc: (string | number)[];
-            /** Msg */
-            msg: string;
-            ctx: components["schemas"]["DetailError"];
-        };
-        /** PydanticErrorResponse */
-        PydanticErrorResponse: {
-            /** Detail */
-            detail: components["schemas"]["PydanticErrorItem"][];
-        };
-        /** RegisterRequest */
-        RegisterRequest: {
-            /** Request Track Id */
-            request_track_id: number;
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Name */
-            name: string;
-            /** Phone Number */
-            phone_number: string;
-            /** Collage Code */
-            collage_code: string;
-        };
-        /** RefreshTokenRequest */
-        RefreshTokenRequest: {
-            /** Refresh */
-            refresh?: string | null;
-        };
-        /** SettingsImagesResponse */
-        SettingsImagesResponse: {
-            /** Site Image */
-            site_image: string | null;
-            /** Hero Image */
-            hero_image: string | null;
-        };
-        /** TestAuthResponse */
-        TestAuthResponse: {
-            /** Username */
-            username: string;
-            role: components["schemas"]["UserRole"];
-            /** Is Admin */
-            is_admin: boolean;
-            track: components["schemas"]["SimpleTrackSchema"] | null;
-            settings: components["schemas"]["SettingsImagesResponse"];
-        };
-        /** TrackSchema */
-        TrackSchema: {
-            /** Id */
+        TrackMSGSerializer: {
             id: number;
-            /** Name */
             name: string;
-            /** En Description */
             en_description: string;
-            /** Ar Description */
             ar_description: string;
-            /** Image */
             image: string;
         };
-        /** TrackCreateSchema */
-        TrackCreateSchema: {
-            /** Name */
-            name: string;
-            /** Prefix */
-            prefix: string;
-            /** En Description */
-            en_description: string;
-            /** Ar Description */
-            ar_description: string;
-        };
-        /** AttendanceBy */
-        AttendanceBy: {
-            /** Id */
-            id: number;
-            /** Username */
-            username: string;
-        };
-        /** AttendanceDayResponse */
-        AttendanceDayResponse: {
-            /** Id */
-            id: number;
-            /**
-             * Day
-             * Format: date
-             */
-            day: string;
-        };
-        /** AttendanceSmallResponse */
-        AttendanceSmallResponse: {
-            date: components["schemas"]["AttendanceDayResponse"];
-            status: components["schemas"]["AttendanceStatus"];
-            by: components["schemas"]["AttendanceBy"];
-            /** Excuse Reason */
-            excuse_reason?: string | null;
-        };
-        /**
-         * AttendanceStatus
-         * @enum {string}
-         */
-        AttendanceStatus: "present" | "absent" | "excused";
-        /**
-         * MemberStatus
-         * @enum {string}
-         */
-        MemberStatus: "normal" | "warning 1" | "warning 2" | "fired";
-        /** MemebrResponse */
-        MemebrResponse: {
-            track: components["schemas"]["SimpleTrackSchema"];
-            /** Attendances */
-            attendances: components["schemas"]["AttendanceSmallResponse"][];
-            /** Name */
-            name: string;
-            /**
-             * Email
-             * Format: email
-             */
+        LoginRequestMSG: {
             email: string;
-            /** Phone Number */
+            password: string;
+        };
+        LoginResponseMSG: {
+            username: string;
+            is_admin: boolean;
+            /** @enum {string} */
+            role: "member" | "technical" | "organizer";
+            /** @default null */
+            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+        };
+        RegisterRequestMSG: {
+            request_track_id: number;
+            email: string;
+            name: string;
             phone_number: string;
-            /** Code */
-            code: string;
-            /** Collage Code */
             collage_code: string;
-            /** Bonus */
-            bonus: number;
-            status: components["schemas"]["MemberStatus"];
         };
-        /** MemberEditGridRequest */
-        MemberEditGridRequest: {
-            type: components["schemas"]["MemberEditType"];
-            /** Field */
-            field: string;
-            /** Value */
-            value: string | number | components["schemas"]["AttendanceStatus"];
-            /** Excuse */
-            excuse?: string | null;
-            /** Code */
+        RegisterResponseMSG: {
             code: string;
+            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+            email: string;
+            name: string;
         };
-        /**
-         * MemberEditType
-         * @enum {string}
-         */
-        MemberEditType: "attendance" | "data";
-        /** DayRequest */
-        DayRequest: {
-            /**
-             * Day
-             * Format: date
-             */
-            day: string;
+        RefreshTokenRequestMSG: {
+            /** @default null */
+            refresh: string;
         };
-        /** DayUpdateRequest */
-        DayUpdateRequest: {
-            /**
-             * Oldday
-             * Format: date
-             */
-            oldDay: string;
-            /**
-             * Newday
-             * Format: date
-             */
-            newDay: string;
-        };
-        /**
-         * OrganizerEditableFields
-         * @enum {string}
-         */
-        OrganizerEditableFields: "name" | "status" | "track" | "bonus" | "email" | "phone";
-        /** SettingsResponse */
-        SettingsResponse: {
-            /** Site Image */
-            site_image: string | null;
-            /** Hero Image */
-            hero_image: string | null;
-            /** Is Register Enabled */
-            is_register_enabled: boolean;
-            /** Organizer Can Edit */
-            organizer_can_edit: components["schemas"]["OrganizerEditableFields"][];
-        };
-        /** SettingsRequest */
-        SettingsRequest: {
-            /**
-             * Is Register Enabled
-             * @default false
-             */
-            is_register_enabled: boolean;
-            /**
-             * Organizer Can Edit
-             * @default []
-             */
-            organizer_can_edit: ("name" | "status" | "track" | "bonus" | "email" | "phone")[];
-        };
-        /** TaskResponse */
-        TaskResponse: {
-            /** Id */
+        TaskMSGSerializer: {
             id: number;
-            /** Task Number */
             task_number: number;
-            /**
-             * Created At
-             * Format: date-time
-             */
+            /** Format: date-time */
             created_at: string;
-            /**
-             * Expires At
-             * Format: date-time
-             */
+            /** Format: date-time */
             expires_at: string;
-            /** Description */
             description: string;
-            /** Expired */
             expired: boolean;
-            /** Unsigned Tasks Count */
+            /** @default 0 */
             unsigned_tasks_count: number;
         };
-        /** TaskRequest */
-        TaskRequest: {
-            /** Task Id */
-            task_id: number;
-            /** Notes */
-            notes?: string | null;
-        };
-        /** MemberProfileName */
-        MemberProfileName: {
-            /** Code */
-            code: string;
-            /** Name */
-            name: string;
-        };
-        /** MemberProfileResponse */
-        MemberProfileResponse: {
-            /** Absents */
-            absents: number;
-            track: components["schemas"]["SimpleTrackSchema"];
-            /** Total Tasks Sent */
-            total_tasks_sent: number;
-            /** Missing Tasks */
-            missing_tasks: number;
-            /** Name */
-            name: string;
-            /** Code */
-            code: string;
-            status: components["schemas"]["MemberStatus"];
-            /** Tasks */
-            tasks: components["schemas"]["RecivedTaskMember"][];
-        };
-        /** RecivedFileResponse */
-        RecivedFileResponse: {
-            /** Id */
-            id: number;
-            /** File */
-            file: string;
-            /** File Name */
-            file_name: string;
-        };
-        /** RecivedTaskMember */
-        RecivedTaskMember: {
-            /** Id */
-            id: number;
-            task: components["schemas"]["TaskResponse"];
-            member: components["schemas"]["MemberProfileName"];
-            track: components["schemas"]["SimpleTrackSchema"];
-            /** Files Url */
-            files_url: components["schemas"]["RecivedFileResponse"][];
-            /** Notes */
-            notes?: string | null;
-            /** Degree */
-            degree: number;
-            /** Signed */
-            signed: boolean;
-            /**
-             * Recived At
-             * Format: date-time
-             */
-            recived_at: string;
-            /** Technical Notes */
-            technical_notes?: string | null;
-        };
-        /** MemberTaskUpdateRequest */
-        MemberTaskUpdateRequest: {
-            /** Notes */
-            notes: string;
-        };
-        /** TaskAlreadyExistsError */
-        TaskAlreadyExistsError: {
-            /**
-             * Task Number
-             * @default This task number already exists
-             */
-            task_number: string;
-        };
-        /** TaskCreateRequest */
-        TaskCreateRequest: {
-            /** Task Number */
+        TaskCreateRequestMSG: {
             task_number: number;
-            /**
-             * Expires At
-             * Format: date-time
-             */
+            /** Format: date-time */
             expires_at: string;
-            /** Description */
             description: string;
         };
-        /** TaskSignRequest */
-        TaskSignRequest: {
-            /** Degree */
+        RecivedTaskMSGSerializer: {
+            id: number;
+            task: components["schemas"]["TaskMSGSerializer"];
+            member: components["schemas"]["MemberMSGSerializerForTask"];
+            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+            files_url: components["schemas"]["RecivedFile"][];
+            notes: string;
             degree: number;
-            /** Technical Notes */
+            signed: boolean;
+            /** Format: date-time */
+            recived_at: string;
+            /** @default null */
             technical_notes: string;
         };
-        /** SignedBy */
-        SignedBy: {
-            /** Id */
-            id: number;
-            /** Username */
-            username: string;
+        MemberMSGSerializerForTask: {
+            code: string;
+            name: string;
         };
-        /** SimpleRecivedTaskResponse */
-        SimpleRecivedTaskResponse: {
-            /** Id */
+        RecivedFile: {
             id: number;
-            task: components["schemas"]["SimpleTaskResponse"];
-            /** Member Code */
+            file_url: string;
+            file_name: string;
+        };
+        TaskSignRequestMSG: {
+            degree: number;
+            technical_notes: string;
+        };
+        MemberTechnicalMSGSerializer: {
+            code: string;
+            name: string;
+            email: string;
+            collage_code: string;
+            phone_number: string;
+            bonus: number;
+            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+            /** @enum {string} */
+            status: "normal" | "warning 1" | "warning 2" | "fired";
+            tasks?: components["schemas"]["RecivedTaskSmallMSGSerializer"][];
+        };
+        RecivedTaskSmallMSGSerializer: {
+            id: number;
+            task: components["schemas"]["TaskSmallMSGSerializer"];
             member_code: string;
-            /** Notes */
-            notes?: string | null;
-            /** Technical Notes */
-            technical_notes?: string | null;
-            signed_by?: components["schemas"]["SignedBy"] | null;
-            /** Degree */
-            degree?: number | null;
+            /** @default null */
+            signed_by: components["schemas"]["SignedMSGBy"];
+            /** @default null */
+            notes: string;
+            /** @default null */
+            technical_notes: string;
+            /** @default null */
+            degree: number;
         };
-        /** SimpleTaskResponse */
-        SimpleTaskResponse: {
-            /** Id */
+        TaskSmallMSGSerializer: {
             id: number;
-            /** Task Number */
             task_number: number;
         };
-        /** TechnicalMembersResponse */
-        TechnicalMembersResponse: {
-            /** Code */
-            code: string;
-            /** Name */
-            name: string;
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Collage Code */
-            collage_code: string;
-            /** Phone Number */
-            phone_number: string;
-            /** Bonus */
-            bonus: number;
-            track: components["schemas"]["SimpleTrackSchema"];
-            status: components["schemas"]["MemberStatus"];
-            /** Tasks */
-            tasks: components["schemas"]["SimpleRecivedTaskResponse"][];
+        SignedMSGBy: {
+            id: number;
+            username: string;
         };
-        /**
-         * MemberTechEditType
-         * @enum {string}
-         */
-        MemberTechEditType: "notes" | "degree";
-        /** TechnicalMembersTasksUpdateRequest */
-        TechnicalMembersTasksUpdateRequest: {
-            /** Task Id */
+        TechnicalMembersTasksUpdateRequestMSG: {
             task_id: number;
-            /** Code */
             code: string;
-            /** Value */
             value: number | string;
-            field: components["schemas"]["MemberTechEditType"];
+            /** @enum {string} */
+            field: "notes" | "degree";
         };
-        /** SubscriptionRequest */
-        SubscriptionRequest: {
-            /** Endpoint */
+        MemberORGMSGSerializer: {
+            code: string;
+            name: string;
+            email: string;
+            collage_code: string;
+            phone_number: string;
+            bonus: number;
+            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+            /** @enum {string} */
+            status: "normal" | "warning 1" | "warning 2" | "fired";
+            attendances?: components["schemas"]["AttendanceMSGSerializer"][];
+        };
+        AttendanceMSGSerializer: {
+            date: components["schemas"]["AttendanceDayMSGSerializer"];
+            /** @enum {string} */
+            status: "present" | "absent" | "excused";
+            by: components["schemas"]["AttendanceMSGBy"];
+            /** @default null */
+            excuse_reason: string;
+        };
+        AttendanceDayMSGSerializer: {
+            id: number;
+            /** Format: date */
+            day: string;
+        };
+        AttendanceMSGBy: {
+            id: number;
+            username: string;
+        };
+        MemberEditGridRequestMSG: {
+            /** @enum {string} */
+            type: "attendance" | "data";
+            code: string;
+            field: string;
+            value: string | number;
+            /** @default null */
+            excuse: string;
+        };
+        AttendanceDayResponseMSG: {
+            id: number;
+            /** Format: date */
+            day: string;
+        };
+        DayRequestMSG: {
+            /** Format: date */
+            day: string;
+        };
+        DayUpdateRequestMSG: {
+            /** Format: date */
+            oldDay: string;
+            /** Format: date */
+            newDay: string;
+        };
+        SiteSettingsMSGSerializer: {
+            /** @default null */
+            site_image: string;
+            /** @default null */
+            hero_image: string;
+            /** @default false */
+            is_register_enabled: boolean;
+            organizer_can_edit?: string[];
+        };
+        MemberProfileMSGSerializer: {
+            absents: number;
+            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+            total_tasks_sent: number;
+            missing_tasks: number;
+            name: string;
+            code: string;
+            status: string;
+            tasks?: components["schemas"]["RecivedTaskMSGSerializer"][];
+        };
+        SubscriptionRequestMSG: {
             endpoint: string;
-            /** Auth */
             auth: string;
-            /** P256Dh */
             p256dh: string;
         };
-        /** UnsubscribeRequest */
-        UnsubscribeRequest: {
-            /** Endpoint */
+        UnsubscribeRequestMSG: {
             endpoint: string;
         };
     };
@@ -846,49 +717,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    auth_login_14fa1113: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LoginResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SingleErrorResponse"];
-                };
-            };
-        };
-    };
-    auth_logout_93b2f096: {
+    get_health_handler: {
         parameters: {
             query?: never;
             header?: never;
@@ -897,247 +726,201 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
+            /** @description Successful response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
     };
-    auth_register_b45e892d: {
+    get_ready_handler: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RegisterResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
+            /** @description Successful response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        [key: string]: string;
+                        [key: string]: unknown;
                     };
                 };
             };
-            /** @description Unprocessable Content */
+        };
+    };
+    get_test_auth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestAuthResponseMSG"];
+                };
+            };
+        };
+    };
+    get_get_all: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackMSGSerializer"][];
+                };
+            };
+        };
+    };
+    post_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Form data */
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    name: string;
+                    prefix: string;
+                    en_description: string;
+                    ar_description: string;
+                    /** Format: binary */
+                    image?: string;
+                };
+                "application/x-www-form-urlencoded": {
+                    name: string;
+                    prefix: string;
+                    en_description: string;
+                    ar_description: string;
+                    /** Format: binary */
+                    image?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PydanticErrorResponse"];
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SingleErrorResponse"];
-                };
-            };
-        };
-    };
-    auth_refresh_tokens_a821405b: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RefreshTokenRequest"];
-            };
-        };
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    auth_test_auth_c19b3e91: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TestAuthResponse"];
-                };
-            };
-        };
-    };
-    tracks_get_all_ac7cad41: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TrackSchema"][];
-                };
-            };
-        };
-    };
-    tracks_create_c03104c6: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": {
-                    /** Name */
-                    name: string;
-                    /** Prefix */
-                    prefix: string;
-                    /** En Description */
-                    en_description: string;
-                    /** Ar Description */
-                    ar_description: string;
-                    /**
-                     * Image
-                     * Format: binary
-                     */
-                    image: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
                     "application/json": {
-                        [key: string]: string;
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
                     };
                 };
             };
         };
     };
-    tracks_get_one_75afa6fd: {
+    get_get_one_track: {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                /** @description Parameter track_name */
                 track_name: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Successful response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TrackSchema"];
+                    "application/json": components["schemas"]["TrackMSGSerializer"];
                 };
             };
         };
     };
-    tracks_delete_205224e0: {
+    delete_delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                /** @description Parameter track_name */
                 track_name: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not Found */
-            404: {
+            /** @description Successful response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": Record<string, never>;
                 };
             };
         };
     };
-    resetall_reset_all_436e596d: {
+    delete_reset_all: {
         parameters: {
             query?: never;
             header?: never;
@@ -1146,210 +929,820 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Accepted */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden */
-            403: {
+            /** @description Successful response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": Record<string, never>;
                 };
             };
         };
     };
-    members_get_track_members_ef6a175c: {
+    post_login: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                track_name: string;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Request body for body */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequestMSG"];
             };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponseMSG"];
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    get_logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Successful response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MemebrResponse"][];
+                    "application/json": Record<string, never>;
                 };
             };
         };
     };
-    members_edit_member_grid_d9240522: {
+    post_register: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                track_name: string;
-            };
+            path?: never;
             cookie?: never;
         };
+        /** @description Request body for payload */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MemberEditGridRequest"];
+                "application/json": components["schemas"]["RegisterRequestMSG"];
             };
         };
         responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    attendancedaysconrtoller_get_attendance_days_a483a749: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AttendanceDayResponse"][];
-                };
-            };
-        };
-    };
-    attendancedaysconrtoller_update_day_6cb40a36: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DayUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    attendancedaysconrtoller_create_day_2c67fe4e: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DayRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
+            /** @description Successful response */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AttendanceDayResponse"];
+                    "application/json": components["schemas"]["RegisterResponseMSG"];
                 };
             };
-            /** @description Bad Request */
-            400: {
+            /** @description Validation Error - Request data failed validation */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DetailError"];
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
                 };
             };
         };
     };
-    attendancedaysconrtoller_delete_day_ac987550: {
+    post_refresh_tokens: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Request body for payload */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshTokenRequestMSG"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    get_tech_get_all: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskMSGSerializer"][];
+                };
+            };
+        };
+    };
+    post_add_task: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Request body for payload */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskCreateRequestMSG"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskMSGSerializer"];
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    get_get_one_task: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter task_id */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskMSGSerializer"];
+                };
+            };
+        };
+    };
+    put_update_task: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter task_id */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Request body for payload */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskCreateRequestMSG"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    delete_delete_task: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter task_id */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    get_get_recived_tasks_from_members: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter task_id */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecivedTaskMSGSerializer"][];
+                };
+            };
+        };
+    };
+    post_sign_task: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter task_id */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        /** @description Request body for payload */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskSignRequestMSG"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    get_get_members: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter track_name */
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberTechnicalMSGSerializer"][];
+                };
+            };
+        };
+    };
+    put_update_member_task: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter track_name */
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        /** @description Request body for payload */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TechnicalMembersTasksUpdateRequestMSG"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    get_get_track_members: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter track_name */
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberORGMSGSerializer"];
+                };
+            };
+        };
+    };
+    post_edit_member_grid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter track_name */
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        /** @description Request body for payload */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemberEditGridRequestMSG"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    get_get_attendance_days: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter track_name */
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendanceDayResponseMSG"][];
+                };
+            };
+        };
+    };
+    put_update_day: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter track_name */
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        /** @description Request body for payload */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DayUpdateRequestMSG"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    post_create_day: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter track_name */
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        /** @description Request body for payload */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DayRequestMSG"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttendanceDayResponseMSG"];
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    delete_delete_day: {
         parameters: {
             query: {
+                /** @description Parameter day */
                 day: string;
             };
             header?: never;
             path: {
+                /** @description Parameter track_name */
                 track_name: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description No Content */
-            204: {
+            /** @description Successful response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": Record<string, never>;
+                };
             };
         };
     };
-    settings_get_settings_c21ed58e: {
+    get_get_settings: {
         parameters: {
             query?: never;
             header?: never;
@@ -1358,55 +1751,91 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Successful response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SettingsResponse"];
+                    "application/json": components["schemas"]["SiteSettingsMSGSerializer"];
                 };
             };
         };
     };
-    settings_update_settings_8f22a856: {
+    put_update_settings: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        /** @description Form data */
+        requestBody?: {
             content: {
                 "multipart/form-data": {
-                    /**
-                     * Is Register Enabled
-                     * @default false
-                     */
                     is_register_enabled?: boolean;
-                    /**
-                     * Organizer Can Edit
-                     * @default []
-                     */
-                    organizer_can_edit?: ("name" | "status" | "track" | "bonus" | "email" | "phone")[];
-                    /** Site Image */
-                    site_image?: string | null;
-                    /** Hero Image */
-                    hero_image?: string | null;
+                    organizer_can_edit?: string[];
+                    /** Format: binary */
+                    site_image?: string;
+                    /** Format: binary */
+                    hero_image?: string;
+                };
+                "application/x-www-form-urlencoded": {
+                    is_register_enabled?: boolean;
+                    organizer_can_edit?: string[];
+                    /** Format: binary */
+                    site_image?: string;
+                    /** Format: binary */
+                    hero_image?: string;
                 };
             };
         };
         responses: {
-            /** @description No Content */
-            204: {
+            /** @description Successful response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
             };
         };
     };
-    tasks_get_all_0cd59212: {
+    get_get_all_tasks: {
         parameters: {
             query?: never;
             header?: never;
@@ -1415,467 +1844,361 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Successful response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaskResponse"][];
+                    "application/json": components["schemas"]["TaskMSGSerializer"][];
                 };
             };
         };
     };
-    tasks_submit_task_512b85f4: {
+    post_submit_task: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
+        /** @description Form data */
         requestBody: {
             content: {
                 "multipart/form-data": {
-                    /** Task Id */
                     task_id: number;
-                    /** Notes */
-                    notes?: string | null;
-                    /**
-                     * Files
-                     * @default []
-                     */
-                    files?: string[];
+                    notes?: string;
+                    /** Format: binary */
+                    files?: string;
+                };
+                "application/x-www-form-urlencoded": {
+                    task_id: number;
+                    notes?: string;
+                    /** Format: binary */
+                    files?: string;
                 };
             };
         };
         responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    protectedtask_get_protected_file_a6761fe3: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sent_task_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
+            /** @description Successful response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": Record<string, never>;
+                };
             };
-            /** @description Not Found */
-            404: {
+            /** @description Validation Error - Request data failed validation */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
             };
         };
     };
-    memberprofile_get_profile_21f9f275: {
+    get_get_profile: {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                /** @description Parameter member_code */
                 member_code: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Successful response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MemberProfileResponse"];
+                    "application/json": components["schemas"]["MemberProfileMSGSerializer"];
                 };
             };
         };
     };
-    memberedittask_get_editable_task_f241ebb2: {
+    get_get_editable_task: {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                /** @description Parameter sent_task_id */
                 sent_task_id: number;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Successful response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RecivedTaskMember"];
+                    "application/json": components["schemas"]["RecivedTaskMSGSerializer"];
                 };
             };
         };
     };
-    memberedittask_update_my_task_89782fc9: {
+    put_update_my_task: {
         parameters: {
             query?: never;
             header?: never;
             path: {
+                /** @description Parameter sent_task_id */
                 sent_task_id: number;
             };
             cookie?: never;
         };
+        /** @description Form data */
         requestBody: {
             content: {
                 "multipart/form-data": {
-                    /** Notes */
                     notes: string;
-                    /**
-                     * Files
-                     * @default []
-                     */
-                    files?: string[];
+                    /** Format: binary */
+                    files?: string;
+                };
+                "application/x-www-form-urlencoded": {
+                    notes: string;
+                    /** Format: binary */
+                    files?: string;
                 };
             };
         };
         responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not Found */
-            404: {
+            /** @description Successful response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
                 };
             };
         };
     };
-    technicaltasks_get_all_5311a8b3: {
+    get_get_protected_file: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter sent_task_id */
+                sent_task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    post_save_subscription: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        /** @description Request body for payload */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubscriptionRequestMSG"];
+            };
+        };
         responses: {
-            /** @description OK */
+            /** @description Successful response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaskResponse"][];
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
                 };
             };
         };
     };
-    technicaltasks_add_task_1cdf81a2: {
+    post_unsubscribe_device: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
+        /** @description Request body for payload */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TaskCreateRequest"];
+                "application/json": components["schemas"]["UnsubscribeRequestMSG"];
             };
         };
         responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TaskResponse"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TaskAlreadyExistsError"];
-                };
-            };
-        };
-    };
-    technicaltasks_get_one_dcc667e1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                task_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
+            /** @description Successful response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaskResponse"];
+                    "application/json": Record<string, never>;
                 };
             };
-        };
-    };
-    technicaltasks_update_task_16d2104d: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                task_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TaskCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Bad Request */
-            400: {
+            /** @description Validation Error - Request data failed validation */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
                 };
             };
         };
     };
-    technicaltasks_delete_task_63b44143: {
+    get_static_handler: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                task_id: number;
+                /** @description Parameter path */
+                path: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    technicaltasks_get_recived_tasks_from_members_ee8c4411: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                task_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
+            /** @description Successful response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RecivedTaskMember"][];
+                    "application/json": Record<string, never>;
                 };
-            };
-        };
-    };
-    technicaltasks_sign_task_04c910e9: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                task_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TaskSignRequest"];
-            };
-        };
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    technicalmembers_get_members_ca7e334b: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TechnicalMembersResponse"][];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    technicalmembers_update_member_task_5ee73b45: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TechnicalMembersTasksUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    notification_save_subscription_70fb998e: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SubscriptionRequest"];
-            };
-        };
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    notification_unsubscribe_device_7ed39b3c: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UnsubscribeRequest"];
-            };
-        };
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };

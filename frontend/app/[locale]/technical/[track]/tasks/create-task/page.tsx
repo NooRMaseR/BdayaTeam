@@ -14,7 +14,7 @@ import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-type FormCreateTask = components['schemas']['TaskCreateRequest'];
+type FormCreateTask = components['schemas']['TaskCreateRequestMSG'];
 
 export default function AddTaskPage() {
     const { register, control, handleSubmit, setError, formState: { errors } } = useForm<FormCreateTask>();
