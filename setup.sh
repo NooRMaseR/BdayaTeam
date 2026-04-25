@@ -108,8 +108,8 @@ WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
-sudo systemctl start bolt daphne
 sudo systemctl enable bolt daphne
+sudo systemctl start bolt daphne
 
 # setup nginx
 sudo apt install nginx
