@@ -6,7 +6,7 @@ const withSerwist = withSerwistInit({
   swSrc: "app/sw.ts",
   swDest: "public/sw.js",
   disable: process.env.NODE_ENV === "development",
-  exclude: ['!api/**/*']
+  exclude: [/api\/*/, /\.map$/, /^manifest.*\.js$/]
 });
 const withNextIntl = createNextIntlPlugin();
 

@@ -19,6 +19,21 @@ VAPID_PRIVATE_KEY=VAPID_PRIVATE_KEY
 VAPID_ADMIN_EMAIL=VAPID_ADMIN_EMAIL
 ```
 
+## Postgres
+
+run these commands
+
+```bash
+sudo -u postgres psql -c "CREATE DATABASE teambdayadb;"
+sudo -u postgres psql -c "CREATE USER team WITH PASSWORD 'team111213';"
+sudo -u postgres psql -c "ALTER ROLE team SET client_encoding TO 'utf8';"
+sudo -u postgres psql -c "ALTER ROLE team SET default_transaction_isolation TO 'read committed';"
+sudo -u postgres psql -c "ALTER ROLE team SET timezone TO 'Africa/Cairo';"
+sudo -u postgres psql -c "ALTER USER team CREATEDB;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE teambdayadb TO team;"
+sudo -u postgres psql -d teambdayadb -c "GRANT ALL PRIVILEGES ON SCHEMA public TO team;"
+```
+
 ## creating an admin user
 
 to create an admin user run this command
@@ -90,7 +105,7 @@ sudo -u www-data head -n 5 /home/kali/BdayaTeam/nginx_teamBdaya.conf
 
 ## Formulas
 
-### Gunicorn
+### Bolt
 
 `process = CPU Cores Count`
 
@@ -142,5 +157,15 @@ add these line at the bottom
 * soft nofile 5000
 * hard nofile 5000
 ```
+
+## Docs
+
+you can find the backend `docs` using one of the following, make sure to enable it first in `core.api`
+
+`https://localhost/api/docs/stoplight/`
+
+`https://localhost/api/docs/scalar/`
+
+`https://localhost/api/docs/`
 
 ## **Enjoy**

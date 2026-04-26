@@ -21,6 +21,7 @@ from django.db.models import (
 
 
 from core.permissions import get_member_user, get_any_authenticated_user
+from core.validators import validate_track_task_files
 from core.models import BdayaUser, Track
 
 from .serializers import MemberProfileMSGSerializer, RecivedTaskMSGSerializer
@@ -52,8 +53,8 @@ import mimetypes, asyncio, logging, os
 from urllib.parse import quote
 from typing import Annotated
 
-from django_bolt import BoltAPI, Depends, Response, UploadFile, status
-from django_bolt.exceptions import NotFound, BadRequest
+from django_bolt import BoltAPI, Depends, Response, UploadFile, status, Request
+from django_bolt.exceptions import NotFound, BadRequest, HTTPException
 from django_bolt.param_functions import Form, File
 
 logger = logging.getLogger("member")
@@ -104,22 +105,23 @@ async def get_all_tasks(user: BdayaUser = Depends(get_member_user)):  # type: ig
     await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
-
 @bolt.post("/tasks/", status_code=201)
 async def submit_task(task_id: Annotated[IntId, Form()], notes: Annotated[str | None, Form()] = None, files: Annotated[list[UploadFile], File(alias="files")] = [], user: BdayaUser = Depends(get_member_user)):  # type: ignore
     "submit task solution"
     
     member: Member = user.member  # type: ignore
     TRACK: Track = user.track  # type: ignore
+    
+    try:
+        new_validated_files = await validate_track_task_files(files, TRACK)
+    except ValueError as e:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(e))
 
     try:
-        task = await aget_object_or_404(
-            Task.objects.only("id", "task_number", "created_at", "expires_at"),
-            id=task_id,
-        )
+        task = await Task.objects.only("id", "task_number", "created_at", "expires_at").aget(id=task_id)
     except Task.DoesNotExist:
         raise NotFound(detail=f"Task with id={task_id} does not exists")
-
+    
     @sync_to_async
     def safe_transaction():
         with transaction.atomic():
@@ -133,13 +135,13 @@ async def submit_task(task_id: Annotated[IntId, Form()], notes: Annotated[str | 
                         file=file.file,
                         file_name=os.path.basename(file.filename),
                     )
-                    for file in files
+                    for file in new_validated_files
                 )
                 ReciviedTaskFile.objects.bulk_create(oc_files)
 
                 return Response(status_code=status.HTTP_201_CREATED)
             except IntegrityError:
-                raise BadRequest(detail="this task already exists")
+                raise BadRequest(detail="this task already submited")
 
             except Exception:
                 raise BadRequest(detail="somthing went wrong, please try again")
@@ -286,11 +288,16 @@ async def get_editable_task(sent_task_id: IntId, user: BdayaUser = Depends(get_m
     return HttpResponse(task_serialized_encoded, content_type=JSON_CONTENT_TYPE)
 
 @bolt.put("/edit-task/{sent_task_id}/", status_code=204)
-async def update_my_task(sent_task_id: IntId, notes: FormStr, files: Annotated[list[UploadFile], File(alias='files')] = [], user: BdayaUser = Depends(get_member_user)): # type: ignore
+async def update_my_task(request: Request, sent_task_id: IntId, notes: FormStr, files: Annotated[list[UploadFile], File(alias='files')] = [], user: BdayaUser = Depends(get_member_user)): # type: ignore
     """send task edits
     
     once the `member` finish editing and sends it here it marks the task to be `signed=False`
     """
+    
+    try:
+        new_validated_files = await validate_track_task_files(files, request.user.track)
+    except ValueError as e:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(e))
     
     try:
         task = await (
@@ -317,7 +324,7 @@ async def update_my_task(sent_task_id: IntId, notes: FormStr, files: Annotated[l
                 ReciviedTaskFile.objects.filter(recivied_task=task).delete()
                 task_files = (
                     ReciviedTaskFile(recivied_task=task, file=file.file)
-                    for file in files
+                    for file in new_validated_files
                 )
                 ReciviedTaskFile.objects.bulk_create(task_files)
                 needs_save = True

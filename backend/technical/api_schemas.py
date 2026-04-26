@@ -1,5 +1,6 @@
 from django.utils import timezone
 from datetime import datetime
+from core.serializers import TrackNameOnlyMSGSerializer
 from utils import IntId
 from . import models
 import msgspec
@@ -22,3 +23,6 @@ class TechnicalMembersTasksUpdateRequestMSG(msgspec.Struct):
     code: str
     value: int | str
     field: models.MemberTechEditType
+
+class TrackExtensionsRequestMSG(msgspec.Struct):
+    extensions: list[str] = []

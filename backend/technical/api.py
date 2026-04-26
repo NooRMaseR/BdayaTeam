@@ -3,18 +3,20 @@ from core.serializers import TrackNameOnlyMSGSerializer
 from core.permissions import get_tech_user, get_tech_or_member_user
 from notifications.tasks import send_notification_to_track_members, send_notification_to_user
 
-from member.models import Member, ReciviedTask
+from member.models import AllowedTrackFileExtention, Member, ReciviedTask
 from member.caches import member_profile_cache_key
 from member.serializers import MemberTechnicalMSGSerializer, RecivedTaskMSGSerializer
 
 from .models import MemberTechEditType, Task
-from .serializers import TaskMSGSerializer
+from .serializers import TaskMSGSerializer, TrackExtenstionsSerializer
 from .api_schemas import (
     TaskCreateRequestMSG,
     TaskSignRequestMSG,
     TechnicalMembersTasksUpdateRequestMSG,
+    TrackExtensionsRequestMSG,
 )
 from .caches import (
+    extenstions_cache_key,
     members_by_technicals_cache_key,
     tasks_from_memebrs_cache_key,
     technical_tasks_cache_key,
@@ -347,3 +349,44 @@ async def update_member_task(track_name: str, payload: TechnicalMembersTasksUpda
     await recivied_task.asave()
     cache.delete(members_by_technicals_cache_key(track_name))
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@bolt.get("/extension/", response_model=TrackExtenstionsSerializer)
+async def get_extensions(user: BdayaUser = Depends(get_tech_or_member_user)): # type: ignore
+    TRACK: Track = user.track # type: ignore
+    CACHE_KEY = extenstions_cache_key(TRACK.name)
+    
+    if cached_data:=await cache.aget(CACHE_KEY):
+        return HttpResponse(cached_data, content_type=JSON_CONTENT_TYPE)
+    
+    try:
+        exts = await AllowedTrackFileExtention.objects.only("extensions").aget(track=TRACK)
+    except AllowedTrackFileExtention.DoesNotExist:
+        raise BadRequest(detail=f"no extensions found for track {TRACK.name}")
+    
+    encoded_data = TrackExtenstionsSerializer(track=TrackNameOnlyMSGSerializer.from_model(TRACK), extensions=exts.extensions).encode()
+    await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
+    return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
+
+
+@bolt.put("/extension/", status_code=204)
+async def get_extensions(payload: TrackExtensionsRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+    TRACK: Track = user.track # type: ignore
+    CACHE_KEY = extenstions_cache_key(TRACK.name)
+    
+    extensions_lowerd = [x.lower() for x in payload.extensions]
+    
+    for i, ext in enumerate(extensions_lowerd):
+        if ext == 'jpeg':
+            extensions_lowerd[i] = "jpg"
+    
+    extensions_lowerd = list(set(extensions_lowerd))
+    
+    try:
+        await AllowedTrackFileExtention.objects.filter(track=TRACK).aupdate_or_create(track=TRACK, defaults={"extensions":extensions_lowerd})
+    except:
+        raise BadRequest(detail=f"error when updating the extensions")
+    
+    cache.delete(CACHE_KEY)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+

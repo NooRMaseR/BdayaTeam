@@ -10,15 +10,6 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install postgresql -y
 sudo service postgresql start
 
-sudo -u postgres psql -c "CREATE DATABASE teambdayadb;"
-sudo -u postgres psql -c "CREATE USER team WITH PASSWORD 'team111213';"
-sudo -u postgres psql -c "ALTER ROLE team SET client_encoding TO 'utf8';"
-sudo -u postgres psql -c "ALTER ROLE team SET default_transaction_isolation TO 'read committed';"
-sudo -u postgres psql -c "ALTER ROLE team SET timezone TO 'Africa/Cairo';"
-sudo -u postgres psql -c "ALTER USER team CREATEDB;"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE teambdayadb TO team;"
-sudo -u postgres psql -d teambdayadb -c "GRANT ALL PRIVILEGES ON SCHEMA public TO team;"
-
 sudo systemctl enable postgresql
 sudo systemctl start postgresql
 

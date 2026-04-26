@@ -208,6 +208,8 @@
         "membersDesc": "See members of the track",
         "membersAtt": "Members Attendances",
         "membersAttDesc": "See members Attendances of the track",
+        "trSettings": "Settings",
+        "trSettingsDesc": "Edit Track Settings",
         "tasks": "Tasks",
         "tasksDesc": "See tasks of this track and manage them",
         "enterMemberCode": "Enter the Member Code",
@@ -219,6 +221,19 @@
         "metaTitle": "Technical",
         "metaDesc": "Technical Team Bdaya, Come and manage your members tasks and create some tasks for them",
         "metaKeys": "Technical,technical,Tasks,Members,Profile"
+    },
+    "technicalSettingsPage": {
+        "title": "Track Settings",
+        "desc": "Manage your technical track configurations",
+        "extUsed": "'.{newExt}' is already in the list",
+        "saving": "Saving....",
+        "success": "Extensions Saved",
+        "error": "Error when saving the new extensions",
+        "allowedExts": "Allowed File Extensions",
+        "allowedExtsDesc": "Specify which file formats members are allowed to upload for this track",
+        "noExts": "No extensions added yet",
+        "add": "Add",
+        "save": "Save Changes"
     },
     "profilePage": {
         "profile": "Profile",
@@ -293,7 +308,9 @@
         "taskSub": "Task submitted successfully!",
         "taskSubError": "Something went wrong while submitting",
         "submiting": "Submitting....",
-        "submitTask": "Submit Task"
+        "submitTask": "Submit Task",
+        "fileNotAllowed": "File Not Allowed",
+        "bigFile": "Files are larger than {size}!!"
     },
     "membersPage": {
         "profile": "Profile",

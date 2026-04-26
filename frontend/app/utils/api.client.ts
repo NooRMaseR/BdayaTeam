@@ -2,6 +2,7 @@ import createClient, { type MiddlewareCallbackParams, type Middleware } from "op
 import type { paths } from "@/app/generated/api_types";
 import { getAuthCookies } from "./api_utils";
 import type { UserAuth } from "./store";
+import { toast } from "sonner";
 
 const API = createClient<paths>({
     baseUrl: process.env.NEXT_PUBLIC_API_URL,
@@ -99,5 +100,34 @@ export function formatTime(totalSeconds: number) {
     else if (minutes >= 1) return { duration: minutes, unit: "minutes" };
     return { duration: Math.floor(totalSeconds % 60), unit: "seconds" };
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function validateTaskFiles(e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>, extensions: string[] | undefined, onChange: (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => void, tr: any) {
+    let totalSize = 0;
+    const filesList = e.target.files;
+    if (!filesList || filesList.length === 0) return onChange(e);
+    for (let i = 0; i < filesList.length; i++) {
+        const file = filesList[i];
+        const parts = file.name.split('.');
+
+        let ext = parts[parts.length - 1].toLowerCase();
+        if (ext === "jpeg") ext = "jpg";
+
+        if (extensions && !extensions.includes(ext)) {
+            toast.error(tr("fileNotAllowed"));
+            e.target.value = '';
+            return;
+        };
+        totalSize += file.size;
+    };
+
+    totalSize = totalSize / 1024 / 1024;
+    if (totalSize > 300) {
+        toast.error(tr("bigFile", {size: "300MB"}));
+        e.target.value = '';
+        return;
+    }
+    return onChange(e);
+}
 
 export default API;

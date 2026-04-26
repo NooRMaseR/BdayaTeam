@@ -21,9 +21,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function TaskViewEditPage({ params }: TaskViewProps) {
     const { locale, trackName, taskId } = await params;
-    const [tr, { data: task }] = await Promise.all([
+    const [tr, { data: task }, { data: extensions }] = await Promise.all([
         getTranslations("taskPage"),
-        API.GET('/api/member/edit-task/{sent_task_id}/', { params: { path: { sent_task_id: taskId } } })
+        API.GET('/api/member/edit-task/{sent_task_id}/', { params: { path: { sent_task_id: taskId } } }),
+        API.GET('/api/technical/extension/')
     ]);
 
     if (!task) {
@@ -83,7 +84,7 @@ export default async function TaskViewEditPage({ params }: TaskViewProps) {
                             </Typography>
                         </Paper>
                     )}
-                    <TaskEditForm task={task} track_name={trackName} />
+                    <TaskEditForm task={task} track_name={trackName} extensions={extensions?.extensions} />
                 </div>
             </div>
         </BodyM>

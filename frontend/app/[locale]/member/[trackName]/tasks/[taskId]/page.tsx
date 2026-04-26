@@ -21,7 +21,7 @@ export type TaskViewProps = {
 
 export async function generateMetadata(): Promise<Metadata> {
     const tr = await getTranslations("taskPage");
-    
+
     return {
         title: tr("taskView")
     }
@@ -29,9 +29,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function TaskViewPage({ params }: TaskViewProps) {
     const { locale, trackName, taskId } = await params;
-    const [tr, { data: task }] = await Promise.all([
+    const [tr, { data: task }, { data: extensions }] = await Promise.all([
         getTranslations("taskPage"),
-        API.GET('/api/technical/tasks/{task_id}/', { params: { path: { task_id: taskId } } })
+        API.GET('/api/technical/tasks/{task_id}/', { params: { path: { task_id: taskId } } }),
+        API.GET("/api/technical/extension/")
     ]);
 
     if (!task) {
@@ -46,7 +47,7 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
 
     const lateStatus = checkLateStatus(task.expires_at, locale);
     const lateString = tr(lateStatus.status, { time: lateStatus.from })
-    
+
     return (
         <BodyM>
             <div className="max-w-3xl mx-auto py-8 px-4 flex flex-col gap-6 mt-8">
@@ -91,7 +92,7 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
                             </Typography>
                         </Paper>
                     )}
-                    <TaskForm task={task} track_name={trackName} />
+                    <TaskForm task={task} track_name={trackName} extensions={extensions?.extensions} />
                 </div>
             </div>
         </BodyM>
