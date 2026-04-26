@@ -41,7 +41,8 @@ sudo sysctl -p
 cat <<EOF | sudo tee /etc/systemd/system/huey-worker.service
 [Unit]
 Description=huey Worker
-After=network.target redis-server.service bolt.service
+Requires=postgresql.service redis-server.service nginx.service
+After=network.target postgresql.service redis-server.service nginx.service
 
 [Service]
 User=$USER
@@ -63,7 +64,8 @@ sudo systemctl start huey-worker
 cat <<EOF | sudo tee /etc/systemd/system/bolt.service 
 [Unit]
 Description=bolt daemon
-After=network.target
+Requires=postgresql.service redis-server.service nginx.service
+After=network.target postgresql.service redis-server.service nginx.service
 
 [Service]
 User=$USER
@@ -84,7 +86,8 @@ EOF
 cat <<EOF | sudo tee /etc/systemd/system/daphne.service 
 [Unit]
 Description=daphne daemon
-After=network.target
+Requires=postgresql.service redis-server.service nginx.service
+After=network.target postgresql.service redis-server.service nginx.service
 
 [Service]
 User=kali
@@ -135,7 +138,7 @@ curl -fsSL https://bun.com/install | bash
 cat <<EOF | sudo tee /etc/systemd/system/nextjs-3000.service
 [Unit]
 Description=Next.js App on Port 3000
-After=network.target
+After=network.target nginx.service
 
 [Service]
 User=$USER
@@ -155,7 +158,7 @@ EOF
 cat <<EOF | sudo tee /etc/systemd/system/nextjs-3001.service
 [Unit]
 Description=Next.js App on Port 3001
-After=network.target
+After=network.target nginx.service
 
 [Service]
 User=$USER
@@ -175,7 +178,7 @@ EOF
 cat <<EOF | sudo tee /etc/systemd/system/nextjs-3002.service
 [Unit]
 Description=Next.js App on Port 3002
-After=network.target
+After=network.target nginx.service
 
 [Service]
 User=$USER

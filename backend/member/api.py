@@ -53,7 +53,7 @@ import mimetypes, asyncio, logging, os
 from urllib.parse import quote
 from typing import Annotated
 
-from django_bolt import BoltAPI, Depends, Response, UploadFile, status, Request
+from django_bolt import BoltAPI, Depends, Response, UploadFile, status
 from django_bolt.exceptions import NotFound, BadRequest, HTTPException
 from django_bolt.param_functions import Form, File
 
@@ -112,6 +112,8 @@ async def submit_task(task_id: Annotated[IntId, Form()], notes: Annotated[str | 
     member: Member = user.member  # type: ignore
     TRACK: Track = user.track  # type: ignore
     
+    org_files_names = [file.filename for file in files]
+    
     try:
         new_validated_files = await validate_track_task_files(files, TRACK)
     except ValueError as e:
@@ -132,10 +134,10 @@ async def submit_task(task_id: Annotated[IntId, Form()], notes: Annotated[str | 
                 oc_files = (
                     ReciviedTaskFile(
                         recivied_task=rec_task,
-                        file=file.file,
-                        file_name=os.path.basename(file.filename),
+                        file=valid_file.file,
+                        file_name=os.path.basename(org_file_name),
                     )
-                    for file in new_validated_files
+                    for valid_file, org_file_name in zip(new_validated_files, org_files_names, strict=True)
                 )
                 ReciviedTaskFile.objects.bulk_create(oc_files)
 
@@ -288,14 +290,17 @@ async def get_editable_task(sent_task_id: IntId, user: BdayaUser = Depends(get_m
     return HttpResponse(task_serialized_encoded, content_type=JSON_CONTENT_TYPE)
 
 @bolt.put("/edit-task/{sent_task_id}/", status_code=204)
-async def update_my_task(request: Request, sent_task_id: IntId, notes: FormStr, files: Annotated[list[UploadFile], File(alias='files')] = [], user: BdayaUser = Depends(get_member_user)): # type: ignore
+async def update_my_task(sent_task_id: IntId, notes: FormStr, files: Annotated[list[UploadFile], File(alias='files')] = [], user: BdayaUser = Depends(get_member_user)): # type: ignore
     """send task edits
     
     once the `member` finish editing and sends it here it marks the task to be `signed=False`
     """
     
+    TRACK: Track = user.track # type: ignore
+    org_files_names = [file.filename for file in files]
+    
     try:
-        new_validated_files = await validate_track_task_files(files, request.user.track)
+        new_validated_files = await validate_track_task_files(files, TRACK)
     except ValueError as e:
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(e))
     
@@ -323,8 +328,12 @@ async def update_my_task(request: Request, sent_task_id: IntId, notes: FormStr, 
             if files:
                 ReciviedTaskFile.objects.filter(recivied_task=task).delete()
                 task_files = (
-                    ReciviedTaskFile(recivied_task=task, file=file.file)
-                    for file in new_validated_files
+                    ReciviedTaskFile(
+                        recivied_task=task, 
+                        file=valid_file.file,
+                        file_name=org_file_name
+                    )
+                    for valid_file, org_file_name in zip(new_validated_files, org_files_names, strict=True)
                 )
                 ReciviedTaskFile.objects.bulk_create(task_files)
                 needs_save = True
@@ -337,7 +346,7 @@ async def update_my_task(request: Request, sent_task_id: IntId, notes: FormStr, 
     await cache.adelete_many(
         [
             member_profile_cache_key(task.member.code),
-            tasks_from_memebrs_cache_key(request.user.track, task.task.pk) # type: ignore
+            tasks_from_memebrs_cache_key(TRACK, task.task.pk) # type: ignore
         ]
     )
 
