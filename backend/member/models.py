@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from core.models import BdayaUser, Track
 from technical.models import Task
 from django.db import models
@@ -62,7 +63,15 @@ class ReciviedTask(models.Model):
     
     def __str__(self) -> str:
         return f"Recived Task {self.task.task_number} from {self.member}"
+
+
+class AllowedTrackFileExtention(models.Model):
+    track = models.OneToOneField(Track, on_delete=models.CASCADE, related_name="allowed_ext")
+    extensions = ArrayField(models.CharField(max_length=10), help_text="Allowed Extension (eg., png, py, cs, ....)", blank=True, default=list)
     
+    def __str__(self) -> str:
+        return f"{self.track.name} allowed extension"
+
 class ReciviedTaskFile(models.Model):
     recivied_task = models.ForeignKey(ReciviedTask, on_delete=models.CASCADE, related_name="files")
     file = models.FileField(upload_to=task_upload_path)

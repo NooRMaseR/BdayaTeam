@@ -10,3 +10,6 @@ def task_view_cache_key(task_id: int) -> str:
 
 def members_by_technicals_cache_key(track_name: str) -> str:
     return f"members_tech_{track_name}"
+
+def extenstions_cache_key(track_name: str) -> str:
+    return f"{track_name}:ext"

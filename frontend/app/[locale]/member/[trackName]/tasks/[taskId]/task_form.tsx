@@ -8,22 +8,23 @@ import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 
+import type { MemberTaskSend } from '@/app/utils/api_types_helper';
 import LocaledTextField from '@/app/components/localed_textField';
+import API, { validateTaskFiles } from '@/app/utils/api.client';
 import type { components } from '@/app/generated/api_types';
 import { useForm, useWatch } from 'react-hook-form';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { MemberTaskSend } from '@/app/utils/api_types_helper';
 
 type TaskActionsProps = {
     task: components['schemas']['TaskMSGSerializer'];
     track_name: string;
+    extensions: components['schemas']['TrackExtenstionsSerializer']['extensions'];
 }
 
-export default function TaskForm({ task, track_name }: TaskActionsProps) {
+export default function TaskForm({ task, track_name, extensions }: TaskActionsProps) {
     const [isLoading, setIsloading] = useState<boolean>(false);
     const tr = useTranslations('taskPage');
     const router = useRouter();
@@ -34,13 +35,15 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
         }
     });
 
+    const { onChange: onRHFChange, ...resetFilesRegister } = register('files');
+
     const selectedFiles = useWatch({ control, name: 'files' });
 
     const sendTaskRequest = (data: MemberTaskSend) => {
         setIsloading(true);
         
         const promise = async () => {
-            const { response, error } = await API.POST('/api/member/tasks/', {
+            const res = await API.POST('/api/member/tasks/', {
                 body: {
                     task_id: data.task_id,
                     notes: data.notes,
@@ -60,10 +63,10 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                 }
             });
 
-            if (response.ok) {
+            if (res.response.ok) {
                 return await Promise.resolve();
             }
-            return await Promise.reject(error);
+            return await Promise.reject(res);
         };
 
         toast.promise(promise, {
@@ -72,7 +75,12 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                 router.replace(`/member/${track_name}/tasks`);
                 return tr('taskSub');
             },
-            error: tr("taskSubError"),
+            error(error) {
+                if (error.response.status === 415) {
+                    return error.error.detail;
+                }
+                return tr("taskSubError")
+            },
             finally: () => setIsloading(false)
         });
     };
@@ -99,8 +107,10 @@ export default function TaskForm({ task, track_name }: TaskActionsProps) {
                             <input 
                                 type="file" 
                                 className="hidden" 
+                                accept={extensions?.map(ext => `.${ext}`)?.join(',') ?? ''}
                                 multiple 
-                                {...register('files')} 
+                                {...resetFilesRegister}
+                                onChange={(e) => validateTaskFiles(e, extensions, onRHFChange, tr)}
                             />
                         </label>
                     ) : (

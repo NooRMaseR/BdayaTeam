@@ -57,6 +57,11 @@ export default async function TechnicalPage({ params }: TechnicalParams) {
           title={tr('membersAtt')}
           desc={tr('membersAttDesc')}
         />
+        <NavigationCard
+          url={`${track}/settings`}
+          title={tr('trSettings')}
+          desc={tr('trSettingsDesc')}
+        />
         <SeeProfileCard />
       </div>
     </BodyM>

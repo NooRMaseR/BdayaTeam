@@ -285,6 +285,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/technical/extension/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_get_extensions"];
+        put: operations["put_get_extensions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/organizer/members/{track_name}/": {
         parameters: {
             query?: never;
@@ -627,6 +643,13 @@ export interface components {
             value: number | string;
             /** @enum {string} */
             field: "notes" | "degree";
+        };
+        TrackExtenstionsSerializer: {
+            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+            extensions?: string[];
+        };
+        TrackExtensionsRequestMSG: {
+            extensions?: string[];
         };
         MemberORGMSGSerializer: {
             code: string;
@@ -1440,6 +1463,84 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["TechnicalMembersTasksUpdateRequestMSG"];
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    get_get_extensions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackExtenstionsSerializer"];
+                };
+            };
+        };
+    };
+    put_get_extensions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Request body for payload */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrackExtensionsRequestMSG"];
             };
         };
         responses: {

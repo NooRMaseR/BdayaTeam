@@ -9,46 +9,49 @@ import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 
 import LocaledTextField from '@/app/components/localed_textField';
+import API, { validateTaskFiles } from '@/app/utils/api.client';
 import type { components } from '@/app/generated/api_types';
 import { useForm, useWatch } from 'react-hook-form';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 type TaskActionsProps = {
     task: components['schemas']['RecivedTaskMSGSerializer'];
     track_name: string;
+    extensions: components['schemas']['TrackExtenstionsSerializer']['extensions']
 }
 
-type TaskMemberSend = components['schemas']['RecivedTaskMSGSerializer'] & {files?: string};
+type TaskMemberSend = components['schemas']['RecivedTaskMSGSerializer'] & { files?: string };
 
-export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
+export default function TaskEditForm({ task, track_name, extensions }: TaskActionsProps) {
     const [isLoading, setIsloading] = useState<boolean>(false);
     const tr = useTranslations('taskPage');
     const router = useRouter();
-    
+
     const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<TaskMemberSend>({
         defaultValues: {
             notes: task.notes || undefined
         }
     });
 
+    const { onChange: onRHFChange, ...resetFilesRegister } = register('files');
+
     const selectedFiles = useWatch({ control, name: 'files' });
 
     const sendTaskRequest = (data: TaskMemberSend) => {
         setIsloading(true);
-        
+
         const promise = API.PUT('/api/member/edit-task/{sent_task_id}/', {
-            params: {path: {sent_task_id: task.id}},
+            params: { path: { sent_task_id: task.id } },
             body: {
                 notes: data.notes,
                 files: (data.files ? Array.from(data.files) : []) as unknown as string
             },
             bodySerializer(body) {
                 const fd = new FormData();
-                if (body.notes) fd.append('notes',body.notes);
+                if (body.notes) fd.append('notes', body.notes);
 
                 if (body.files && body.files.length > 0) {
                     (body.files as unknown as string[]).forEach(f => fd.append('files', f));
@@ -63,7 +66,12 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
                 router.replace(`/member/${track_name}/tasks`);
                 return tr('taskSub');
             },
-            error: tr("taskSubError"),
+            error(error) {
+                if (error.response.status === 415) {
+                    return error.error.detail;
+                }
+                return tr("taskSubError");
+            },
             finally: () => setIsloading(false)
         });
     };
@@ -73,12 +81,12 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
     return (
         <Paper elevation={0} className="border border-slate-200 rounded-2xl overflow-hidden bg-white p-6 md:p-8">
             <form onSubmit={handleSubmit(sendTaskRequest)} className='flex flex-col gap-6'>
-                
+
                 <div className="w-full">
                     <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
                         {tr('attach')}
                     </Typography>
-                    
+
                     {!selectedFiles || selectedFiles.length === 0 ? (
                         <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl dark:hover:bg-(--dark-color) hover:bg-slate-50 hover:border-blue-500 transition-colors cursor-pointer group">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -87,11 +95,13 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
                                     <span className="font-semibold text-blue-600">Click to upload</span>
                                 </Typography>
                             </div>
-                            <input 
-                                type="file" 
-                                className="hidden" 
-                                multiple 
-                                {...register('files')} 
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept={extensions?.map(ext => `.${ext}`)?.join(',')}
+                                multiple
+                                {...resetFilesRegister}
+                                onChange={(e) => validateTaskFiles(e, extensions, onRHFChange, tr)}
                             />
                         </label>
                     ) : (
@@ -125,9 +135,9 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
                     <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
                         {tr('notes')}
                     </Typography>
-                    <LocaledTextField 
+                    <LocaledTextField
                         placeholder={tr('notes')}
-                        {...register("notes")} 
+                        {...register("notes")}
                         minRows={4}
                         multiline
                         fullWidth
@@ -136,9 +146,9 @@ export default function TaskEditForm({ task, track_name }: TaskActionsProps) {
                     />
                 </div>
 
-                <Button 
-                    variant='contained' 
-                    type='submit' 
+                <Button
+                    variant='contained'
+                    type='submit'
                     size="large"
                     disabled={isLoading}
                     sx={{ py: 1.5, borderRadius: 2, fontWeight: 'bold', mt: 2 }}

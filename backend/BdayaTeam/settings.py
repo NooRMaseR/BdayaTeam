@@ -113,7 +113,7 @@ GRAPHENE = {
 ROOT_URLCONF = "BdayaTeam.urls"
 AUTH_USER_MODEL = "core.BdayaUser"
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USE_TLS = True
@@ -338,7 +338,7 @@ UNFOLD = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # security settings
-
+BOLT_MAX_UPLOAD_SIZE = 300 * 1024 * 1024 # 300MB
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = (
     "https://localhost",

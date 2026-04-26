@@ -1,5 +1,7 @@
-from core.serializers import BaseMSGSerializer
+from core.serializers import BaseMSGSerializer, TrackNameOnlyMSGSerializer
 from datetime import datetime
+
+from member.models import AllowedTrackFileExtention
 
 from .models import Task
 from utils import IntId
@@ -35,3 +37,14 @@ class TaskMSGSerializer(TaskSmallMSGSerializer, frozen=True):
             expired=model.is_expired,
         )
 
+
+class TrackExtenstionsSerializer(BaseMSGSerializer[AllowedTrackFileExtention], frozen=True):
+    track: TrackNameOnlyMSGSerializer
+    extensions: list[str] = []
+
+    @classmethod
+    def from_model(cls, model: AllowedTrackFileExtention) -> Self:
+        return cls(
+            track=TrackNameOnlyMSGSerializer.from_model(model.track),
+            extensions=model.extensions
+        )
