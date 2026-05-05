@@ -10,6 +10,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { serverGraphQL } from "../utils/api_utils";
 import { GET_IMAGES_SETTINGS } from "../utils/graphql_helpers";
 import type { SettingsImagesQuery } from "../generated/graphql";
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { LoadingProvider, RegisterNextThemeProvider, RegisterThemeProvider } from "./clientProviders";
 
 export const metadata: Metadata = {
@@ -77,19 +78,21 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
         <link rel="manifest" href={`/manifest.json?role=${authData?.role}&track=${authData?.track?.name}`} />
       </head>
       <body className="color-trans dark:bg-(--dark-color)">
-        <LoadingProvider>
-          <RegisterNextThemeProvider attribute='class' defaultTheme="system" enableSystem>
-            <NextIntlClientProvider messages={messages}>
-              <RegisterThemeProvider>
-                <AuthLoader authData={authData} imagesData={imagesData}>
-                  <Header />
-                  <Toaster />
-                  {children}
-                </AuthLoader>
-              </RegisterThemeProvider>
-            </NextIntlClientProvider>
-          </RegisterNextThemeProvider>
-        </LoadingProvider>
+        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+          <LoadingProvider>
+            <RegisterNextThemeProvider attribute='class' defaultTheme="system" enableSystem>
+              <NextIntlClientProvider messages={messages}>
+                <RegisterThemeProvider>
+                  <AuthLoader authData={authData} imagesData={imagesData}>
+                    <Header />
+                    <Toaster />
+                    {children}
+                  </AuthLoader>
+                </RegisterThemeProvider>
+              </NextIntlClientProvider>
+            </RegisterNextThemeProvider>
+          </LoadingProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );

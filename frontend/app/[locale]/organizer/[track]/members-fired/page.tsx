@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     return {
         title: `${readableTrack} Track Members`,
-        description: `Manage members, attendance, and days for the ${readableTrack} track.`,
+        description: `see ${readableTrack} fired members`,
 
         openGraph: {
             title: `${readableTrack} Track Members`,
@@ -37,12 +37,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
 }
 
-export async function getOrgMemberGrid(track: string, safe: boolean = false): Promise<GetMemberGridType> {
+async function getOrgFiredMembersGrid(track: string, safe: boolean = false): Promise<GetMemberGridType> {
     const [tr, dtr, membersRes, daysRes, tracksRes, editableFields] = await Promise.all(
         [
             getTranslations('showMembersPage'),
             getTranslations('weekDays'),
-            API.GET(`/api/organizer/members/{track_name}/`, { params: { path: { track_name: track } } }),
+            API.GET(`/api/organizer/members/{track_name}/fired/`, { params: { path: { track_name: track } } }),
             API.GET(`/api/organizer/attendance/{track_name}/days/`, { params: { path: { track_name: track } } }),
             fetchTracks(),
             !safe ? serverGraphQL<SeeOrganizerCanEditQuery>(EDITABLE_FIELDS) : { data: { allSettings: { organizerCanEdit: [] as string[] } } }
@@ -98,7 +98,7 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
                     filterable: false,
                     editable: !safe,
                     type: "singleSelect",
-                    valueOptions: Object.values(AttendanceStatus).map(status => ({label: tr(status), value: status})),
+                    valueOptions: Object.values(AttendanceStatus),
                 },
                 {
                     field: `${day.day}_excuse`,
@@ -139,7 +139,7 @@ export default async function OrganizerMembersPage({ params }: Props) {
     const { track } = await params;
     let rows, columns, groupModel;
     try {
-        ({ rows, columns, groupModel } = await getOrgMemberGrid(track));
+        ({ rows, columns, groupModel } = await getOrgFiredMembersGrid(track));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
         console.error("error", e);

@@ -35,7 +35,7 @@ DEBUG = False
 ALLOWED_HOSTS = (
     "localhost",
     "127.0.0.1",
-    "align-opposed-hydraulic-insured.trycloudflare.com"
+    "terrorist-cafe-triangle-selections.trycloudflare.com"
 )
 
 # Application definition
@@ -274,7 +274,7 @@ HUEY = {
     "immediate": False,
     "consumer": {
         "workers": 4,
-        "worker_type": "thread",
+        "worker_type": "greenlet",
     },
     "connection": {"host": "127.0.0.1", "port": 6379, "db": 0},
 }
@@ -345,7 +345,7 @@ CORS_ALLOWED_ORIGINS = (
     "https://localhost:3000",
     "https://localhost:8000",
     "http://localhost:8000",
-    "https://twins-jill-requirements-citizenship.trycloudflare.com",
+    "https://terrorist-cafe-triangle-selections.trycloudflare.com",
 )
 
 CSRF_TRUSTED_ORIGINS = (
@@ -353,7 +353,7 @@ CSRF_TRUSTED_ORIGINS = (
     "https://localhost:3000",
     "https://localhost:8000",
     "http://localhost:8000",
-    "https://twins-jill-requirements-citizenship.trycloudflare.com",
+    "https://terrorist-cafe-triangle-selections.trycloudflare.com",
 )
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"

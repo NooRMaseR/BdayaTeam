@@ -3,11 +3,11 @@ from core.serializers import TrackNameOnlyMSGSerializer
 from core.permissions import get_tech_user, get_tech_or_member_user
 from notifications.tasks import send_notification_to_track_members, send_notification_to_user
 
+from member.serializers import MemberTechnicalMSGSerializer, RecivedTaskMSGSerializer
 from member.models import AllowedTrackFileExtention, Member, ReciviedTask
 from member.caches import member_profile_cache_key
-from member.serializers import MemberTechnicalMSGSerializer, RecivedTaskMSGSerializer
 
-from .models import MemberTechEditType, Task
+from .models import MemberTechEditType, Task, TaskImage
 from .serializers import TaskMSGSerializer, TrackExtenstionsSerializer
 from .api_schemas import (
     TaskCreateRequestMSG,
@@ -24,6 +24,7 @@ from .caches import (
 )
 
 from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, IntId, serializer_encoder
+from typing import Annotated
 
 from django.db.models.functions import Coalesce
 from asgiref.sync import sync_to_async
@@ -42,8 +43,9 @@ from django.db.models import (
     Count,
     Q,
 )
-from django_bolt import BoltAPI, Depends, Response, status
+from django_bolt import BoltAPI, Depends, Response, UploadFile, status
 from django_bolt.exceptions import NotFound, BadRequest, Forbidden
+from django_bolt.param_functions import Form, File
 
 bolt = BoltAPI(
     prefix="/api/technical/",
@@ -77,6 +79,7 @@ async def tech_get_all(user: BdayaUser = Depends(get_tech_user)): # type: ignore
     data = (
         Task.objects
         .filter(track=TRACK)
+        .prefetch_related('images')
         .annotate(
             expired=ExpressionWrapper(
                 Q(expires_at__lte=timezone.now()), 
@@ -84,29 +87,38 @@ async def tech_get_all(user: BdayaUser = Depends(get_tech_user)): # type: ignore
             ),
             unsigned_tasks_count=Coalesce(sub, 0)
         )
-        .values("id", "task_number", "created_at", "expires_at", "description", "expired", "unsigned_tasks_count")
     )
     
-    encoded_data = serializer_encoder.encode(await TaskMSGSerializer.afrom_queryset_values(data))
+    encoded_data = serializer_encoder.encode(await TaskMSGSerializer.afrom_queryset(data))
     await cache.aset(technical_tasks_cache_key(TRACK.name), encoded_data, DEFAULT_CACHE_DURATION)
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.post("/tasks/", status_code=201, response_model=TaskMSGSerializer)
-async def add_task(payload: TaskCreateRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+async def add_task(payload: Annotated[TaskCreateRequestMSG, Form()], images: Annotated[list[UploadFile], File()] = [], user: BdayaUser = Depends(get_tech_user)): # type: ignore
     "create a task"
     
     TRACK: Track = user.track # type: ignore
     
     if await Task.objects.filter(track=TRACK, task_number=payload.task_number).aexists():
         return Response({"task_number": "This task number already exists"}, status.HTTP_400_BAD_REQUEST)
-        
-    created_task = await Task.objects.acreate(
-        task_number = payload.task_number,
-        expires_at = payload.expires_at,
-        description = payload.description,
-        track=TRACK
-    )
-    encoded_data = TaskMSGSerializer.from_model(created_task).encode()
+    
+    @sync_to_async
+    def perform_safe_create() -> Task:
+        created_task = Task.objects.create(
+            task_number = payload.task_number,
+            expires_at = payload.expires_at,
+            description = payload.description,
+            track=TRACK,
+            links=payload.links,
+        )
+        task_images = (TaskImage(task=created_task, image=image.file) for image in images)
+        TaskImage.objects.bulk_create(task_images)
+        return created_task
+    
+    try:
+        created_task = await perform_safe_create()
+    except:
+        raise BadRequest(detail="error while saving")
     
     send_notification_to_track_members(
         track_id=TRACK.pk,
@@ -117,7 +129,7 @@ async def add_task(payload: TaskCreateRequestMSG, user: BdayaUser = Depends(get_
     
     cache.delete(technical_tasks_cache_key(TRACK.name))
     cache.delete_pattern(f"member_tasks:t{TRACK.name}*") # type: ignore
-    return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE, status=status.HTTP_201_CREATED)
+    return Response(status_code=status.HTTP_201_CREATED)
 
 @bolt.get("/tasks/{task_id}/", response_model=TaskMSGSerializer)
 async def get_one_task(task_id: IntId, user = Depends(get_tech_or_member_user)):
@@ -134,21 +146,21 @@ async def get_one_task(task_id: IntId, user = Depends(get_tech_or_member_user)):
                     Q(expires_at__lte=timezone.now()), output_field=BooleanField()
                 )
             )
-            .values("id", "task_number", "description", "created_at", "expires_at", "expired") # type: ignore
+            .prefetch_related('images')
             .aget(id=task_id)
         )
     except Task.DoesNotExist:
         raise NotFound(detail=f"Task with id {task_id} does not exists")
     
     encoded_data = serializer_encoder.encode(
-        TaskMSGSerializer.from_model_values(data)
+        TaskMSGSerializer.from_model(data)
     )
     await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 
 @bolt.put('/tasks/{task_id}/', status_code=204)
-async def update_task(task_id: IntId, payload: TaskCreateRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+async def update_task(task_id: IntId, payload: Annotated[TaskCreateRequestMSG, Form()], images: Annotated[list[UploadFile], File()] = [], user: BdayaUser = Depends(get_tech_user)): # type: ignore
     "update task info"
     
     TRACK: Track = user.track # type: ignore
@@ -160,16 +172,25 @@ async def update_task(task_id: IntId, payload: TaskCreateRequestMSG, user: Bdaya
         raise NotFound(detail=f"Task with id {task_id} does not exists")
     
     if payload.task_number:
-        data_to_update.add("task_number")
         TASK.task_number = payload.task_number
+        data_to_update.add("task_number")
 
     if payload.expires_at:
-        data_to_update.add("expires_at")
         TASK.expires_at = payload.expires_at
+        data_to_update.add("expires_at")
 
     if payload.description:
-        data_to_update.add("description")
         TASK.description = payload.description
+        data_to_update.add("description")
+
+    if images:
+        task_images = (TaskImage(task=TASK, image=image.file) for image in images)
+        await TaskImage.objects.filter(task=TASK).adelete()
+        await TaskImage.objects.abulk_create(task_images)
+
+    if payload.links:
+        TASK.links = payload.links # type: ignore
+        data_to_update.add("links")
 
     if not data_to_update:
         raise BadRequest(detail="nothing to update")
@@ -228,7 +249,7 @@ async def get_recived_tasks_from_members(task_id: IntId, user: BdayaUser = Depen
     tasks = (
         ReciviedTask.objects
         .select_related("track", "task", "member", "member__bdaya_user", 'signed_by')
-        .prefetch_related("files")
+        .prefetch_related("files", 'task__images')
         .defer(
             "task__track",
             "member__collage_code",

@@ -1,18 +1,27 @@
+from django_bolt.serializers import Serializer, field_validator
 from django.utils import timezone
 from datetime import datetime
-from core.serializers import TrackNameOnlyMSGSerializer
 from utils import IntId
 from . import models
 import msgspec
+import json
 
-class TaskCreateRequestMSG(msgspec.Struct):
+class TaskCreateRequestMSG(Serializer):
     task_number: IntId
     expires_at: datetime
     description: str
+    links: str | None = None
     
-    def __post_init__(self) -> None:
-        if self.expires_at <= timezone.now():
-            raise msgspec.ValidationError("expires_at cannot be in the past")
+    @field_validator("links", "before")
+    def transform_links(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+    
+    @field_validator("expires_at", 'before')
+    def validate_expires(cls, v) -> None:
+        if v <= timezone.now():
+            raise ValueError("expires_at cannot be in the past")
 
 class TaskSignRequestMSG(msgspec.Struct):
     degree: int

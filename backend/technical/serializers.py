@@ -1,12 +1,11 @@
 from core.serializers import BaseMSGSerializer, TrackNameOnlyMSGSerializer
-from datetime import datetime
-
 from member.models import AllowedTrackFileExtention
-
+from django_bolt.serializers import HttpsURL
+from datetime import datetime
 from .models import Task
 from utils import IntId
 from typing import Self
-    
+
 class TaskSmallMSGSerializer(BaseMSGSerializer[Task], frozen=True):
     id: IntId
     task_number: int
@@ -24,6 +23,9 @@ class TaskMSGSerializer(TaskSmallMSGSerializer, frozen=True):
     expires_at: datetime
     description: str
     expired: bool
+    images: list[str] = []
+    links: list[HttpsURL] = []
+    # links: list[str] = []
     unsigned_tasks_count: int = 0
     
     @classmethod
@@ -35,6 +37,8 @@ class TaskMSGSerializer(TaskSmallMSGSerializer, frozen=True):
             expires_at=model.expires_at,
             description=model.description,
             expired=model.is_expired,
+            links=model.links if model.links else [],
+            images=[image.image.url for image in model.images.all()], # type: ignore
         )
 
 

@@ -1,15 +1,18 @@
-import { getTranslations } from 'next-intl/server';
 import Typography from '@mui/material/Typography';
+import LinkIcon from '@mui/icons-material/Link';
 import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 
+import TaskImageGallery from '@/app/components/task_image_gallery';
 import dayjs, { checkLateStatus } from "@/app/utils/dayjs.client";
 import type { LocaleOptions } from '@/app/utils/api_types_helper';
+import { getTranslations } from 'next-intl/server';
 import BodyM from '@/app/components/bodyM';
+import { Link } from '@/i18n/navigation';
 import API from '@/app/utils/api.server';
-import TaskForm from './task_form';
 import type { Metadata } from 'next';
+import TaskForm from './task_form';
 
 export type TaskViewProps = {
     params: Promise<{
@@ -79,6 +82,34 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
                             {task.description}
                         </Typography>
                     </div>
+
+                    {task.links && task.links.length > 0 && (
+                        <div className="p-6 md:p-8 dark:bg-(--dark-color) bg-slate-50/50 border-t border-slate-200">
+                            <Typography variant="overline" color="primary" fontWeight="bold">
+                                {tr('urls') || "Reference Links"}
+                            </Typography>
+                            <div className="flex flex-col gap-3 mt-3">
+                                {task.links.map((url, idx: number) => {
+                                    return (
+                                        <Link
+                                            key={idx} 
+                                            href={url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline transition-colors w-fit bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg"
+                                        >
+                                            <LinkIcon fontSize="small" />
+                                            <Typography variant="body2" fontWeight="medium" className="truncate max-w-md">
+                                                {url}
+                                            </Typography>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    <TaskImageGallery images={task.images} title="Reference Images" />
                 </Paper>
 
                 <div className="mt-4">

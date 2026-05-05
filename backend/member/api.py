@@ -87,6 +87,7 @@ async def get_all_tasks(user: BdayaUser = Depends(get_member_user)):  # type: ig
                 Q(expires_at__lte=timezone.now()), output_field=BooleanField()
             )
         )
+	.prefetch_related('images')
         .exclude(
             id__in=Subquery(
                 ReciviedTask.objects.only("id", "task_id")
@@ -94,13 +95,10 @@ async def get_all_tasks(user: BdayaUser = Depends(get_member_user)):  # type: ig
                 .values("task_id")
             )
         )
-        .values(
-            "id", "task_number", "created_at", "expires_at", "description", "expired"
-        )
     )
 
     encoded_data = serializer_encoder.encode(
-        await TaskMSGSerializer.afrom_queryset_values(tasks)
+        await TaskMSGSerializer.afrom_queryset(tasks)
     )
     await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
@@ -209,7 +207,7 @@ def get_sub_queries():
         queryset=ReciviedTask.objects.select_related(
             "task",
             "track",
-        ).prefetch_related("files"),
+        ).prefetch_related("files", "task__images"),
         to_attr="tasks_prefetched",
     )
 
@@ -256,9 +254,7 @@ async def get_profile(member_code: str, user: BdayaUser = Depends(get_any_authen
 
     data = MemberProfileMSGSerializer.from_model(member)
     encoded_data = data.encode()
-    await cache.aset(
-        member_profile_cache_key(data.code), encoded_data, 1800
-    )  # 30 minutes
+    await cache.aset(member_profile_cache_key(data.code), encoded_data, 1800)  # 30 minutes
 
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
@@ -281,6 +277,7 @@ async def get_editable_task(sent_task_id: IntId, user: BdayaUser = Depends(get_m
                 "member__joined_at",
                 "member__status",
             )
+	        .prefetch_related("task__images")
             .aget(id=sent_task_id, member__code=user.member.code)  # type: ignore
         )
     except ReciviedTask.DoesNotExist:
@@ -290,7 +287,7 @@ async def get_editable_task(sent_task_id: IntId, user: BdayaUser = Depends(get_m
     return HttpResponse(task_serialized_encoded, content_type=JSON_CONTENT_TYPE)
 
 @bolt.put("/edit-task/{sent_task_id}/", status_code=204)
-async def update_my_task(sent_task_id: IntId, notes: FormStr, files: Annotated[list[UploadFile], File(alias='files')] = [], user: BdayaUser = Depends(get_member_user)): # type: ignore
+async def update_my_task(sent_task_id: IntId, notes: Annotated[str | None, Form()] = None, files: Annotated[list[UploadFile], File(alias='files')] = [], user: BdayaUser = Depends(get_member_user)): # type: ignore
     """send task edits
     
     once the `member` finish editing and sends it here it marks the task to be `signed=False`
@@ -350,7 +347,7 @@ async def update_my_task(sent_task_id: IntId, notes: FormStr, files: Annotated[l
         ]
     )
 
-    return Response(status.HTTP_204_NO_CONTENT)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @bolt.get("/protected_media/tasks/{sent_task_id}/")
 async def get_protected_file(sent_task_id: IntId, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore

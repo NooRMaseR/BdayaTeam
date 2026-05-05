@@ -23,7 +23,7 @@ import { revalidateTagName } from '../utils/api_utils';
 import DeleteIcon from "@mui/icons-material/Delete";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from '@/app/utils/dayjs.client';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import API from '@/app/utils/api.client';
 import { toast } from 'sonner';
 import React from 'react';
@@ -99,6 +99,7 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
     const [confDlgDate, setConfDlgDate] = React.useState<string>("");
     const [dlgDate, setDlgDate] = React.useState<{ open: boolean, date: string }>({ open: false, date: "" });
     const tr = useTranslations('trackDayAddPage');
+    const locale = useLocale();
 
     const saveDay = () => {
         toast.promise<string | undefined>(async () => {
@@ -160,8 +161,8 @@ export default function Days({ data, track }: { data?: AttendanceDay[], track: s
             <Dialog open={dlgDate.open}>
                 <DialogTitle>{ tr('addAtten') }</DialogTitle>
                 <DialogContent>
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DatePicker onChange={(e) => setDlgDate(pre => ({ open: true, date: (e?.format("YYYY-MM-DD") || pre.date) }))} />
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale={locale}>
+                        <DatePicker minDate={dayjs()} onChange={(e) => setDlgDate(pre => ({ open: true, date: (e?.format("YYYY-MM-DD") || pre.date) }))} />
                     </LocalizationProvider>
                 </DialogContent>
                 <DialogActions>

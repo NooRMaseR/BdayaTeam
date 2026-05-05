@@ -3,7 +3,10 @@
 import os
 import sys
 
-
+if 'run_huey' in sys.argv:
+    from gevent import monkey
+    monkey.patch_all()
+    
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BdayaTeam.settings')

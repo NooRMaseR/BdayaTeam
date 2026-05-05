@@ -308,14 +308,31 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** get track members with attendances */
-        get: operations["get_get_track_members"];
+        /** get track members who's not fired with attendances */
+        get: operations["get_get_unfireed_track_members"];
         put?: never;
         /**
          * edit a member from DataGrid
          * @description if the `field=track` then it deletes the user and creates a new user with the new `track`
          */
         post: operations["post_edit_member_grid"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizer/members/{track_name}/fired/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** get track fired members with attendances */
+        get: operations["get_get_fireed_track_members"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -568,6 +585,8 @@ export interface components {
             expires_at: string;
             description: string;
             expired: boolean;
+            images?: string[];
+            links?: string[];
             /** @default 0 */
             unsigned_tasks_count: number;
         };
@@ -576,6 +595,8 @@ export interface components {
             /** Format: date-time */
             expires_at: string;
             description: string;
+            images?: string[];
+            links?: string[];
         };
         RecivedTaskMSGSerializer: {
             id: number;
@@ -1588,7 +1609,7 @@ export interface operations {
             };
         };
     };
-    get_get_track_members: {
+    get_get_unfireed_track_members: {
         parameters: {
             query?: never;
             header?: never;
@@ -1668,6 +1689,29 @@ export interface operations {
                             input?: unknown;
                         }[];
                     };
+                };
+            };
+        };
+    };
+    get_get_fireed_track_members: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter track_name */
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberORGMSGSerializer"];
                 };
             };
         };

@@ -52,6 +52,11 @@ export default async function OrganizerTrackPage({params}: Props) {
             desc={tr('membersDesc')}
         />
         <NavigationCard
+            url={`${track}/members-fired`}
+            title={tr('membersF')}
+            desc={tr('membersFDesc')}
+        />
+        <NavigationCard
             url={`${track}/days`}
             title={tr('days')}
             desc={tr('daysDesc')}

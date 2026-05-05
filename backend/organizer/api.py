@@ -7,7 +7,7 @@ from core.api_schemas import RegisterRequestMSG
 from core.models import BdayaUser, Track
 
 from member.serializers import MemberORGMSGSerializer
-from member.models import Member
+from member.models import Member, MemberStatus
 
 from .api_schemas import (
     AttendanceDayResponseMSG,
@@ -18,6 +18,7 @@ from .api_schemas import (
 from .caches import (
     SETTINGS_CACHE_KEY,
     attendance_cache_key,
+    fired_members_by_organizer_cache_key,
     members_by_organizer_cache_key,
 )
 from .models import (
@@ -82,8 +83,8 @@ def move_member_to_another_track(code: str, current_track: str, move_to_track: s
 
 
 @bolt.get("/members/{track_name}/", tags=["Organizer"], response_model=MemberORGMSGSerializer)
-async def get_track_members(track_name: str, user: BdayaUser = Depends(get_tech_or_org_user)):  # type: ignore
-    "get track members with attendances"
+async def get_unfireed_track_members(track_name: str, user: BdayaUser = Depends(get_tech_or_org_user)):  # type: ignore
+    "get track members who's not fired with attendances"
     
     TRACK = track_name.replace("%20", " ")
     track: Track = user.track  # type: ignore
@@ -112,6 +113,7 @@ async def get_track_members(track_name: str, user: BdayaUser = Depends(get_tech_
         .select_related("bdaya_user")
         .defer("joined_at")
         .filter(track=target_track)
+        .exclude(status=MemberStatus.FIRED)
         .order_by("joined_at")
     )
     data = await MemberORGMSGSerializer.afrom_queryset_with_track(
@@ -121,6 +123,49 @@ async def get_track_members(track_name: str, user: BdayaUser = Depends(get_tech_
 
     await cache.aset(CACHE_KEY, data, DEFAULT_CACHE_DURATION)
     return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
+
+
+@bolt.get("/members/{track_name}/fired/", tags=["Organizer"], response_model=MemberORGMSGSerializer)
+async def get_fireed_track_members(track_name: str, user: BdayaUser = Depends(get_tech_or_org_user)):  # type: ignore
+    "get track fired members with attendances"
+    
+    TRACK = track_name.replace("%20", " ")
+    track: Track = user.track  # type: ignore
+
+    if user.is_technical and track.name != TRACK:
+        raise Forbidden(detail=f"Not Your Track {user.username}")
+
+    CACHE_KEY = fired_members_by_organizer_cache_key(track_name)
+    if cached_data := await cache.aget(CACHE_KEY):
+        return HttpResponse(cached_data, content_type=JSON_CONTENT_TYPE)
+
+    try:
+        target_track = await Track.objects.only("id", "name").aget(name=TRACK)
+    except Track.DoesNotExist:
+        raise NotFound(detail=f"Track {track_name} does not exists")
+    
+    track_serialized = TrackNameOnlyMSGSerializer.from_model(target_track)
+
+    members = (
+        Member.objects.prefetch_related(
+            Prefetch(
+                "attendances",
+                Attendance.objects.select_related("date", "by"),
+            )
+        )
+        .select_related("bdaya_user")
+        .defer("joined_at")
+        .filter(track=target_track, status=MemberStatus.FIRED)
+        .order_by("joined_at")
+    )
+    data = await MemberORGMSGSerializer.afrom_queryset_with_track(
+        members, track_serialized
+    )
+    data = serializer_encoder.encode(data)
+
+    await cache.aset(CACHE_KEY, data, DEFAULT_CACHE_DURATION)
+    return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
+
 
 @bolt.post("/members/{track_name}/", status_code=204, tags=["Organizer"])
 async def edit_member_grid(track_name: str, payload: MemberEditGridRequestMSG, user=Depends(get_org_user)):
@@ -191,7 +236,12 @@ async def edit_member_grid(track_name: str, payload: MemberEditGridRequestMSG, u
                         Member.objects.filter(code=payload.code).update(
                             **{payload.field: payload.value}
                         )
-                        cache.delete(CACHE_KEY)
+                        cache.delete_many(
+                            [
+                                CACHE_KEY,
+                                fired_members_by_organizer_cache_key(TRACK)
+                            ]
+                        )
                 case _:
                     raise BadRequest(detail="unknow type")
 

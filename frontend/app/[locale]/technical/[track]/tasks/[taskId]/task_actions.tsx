@@ -1,13 +1,19 @@
 'use client';
 
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import TextField from '@mui/material/TextField';
+import AddIcon from '@mui/icons-material/Add';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 
-import { type FieldErrors, useForm, UseFormHandleSubmit, UseFormRegister, Controller, type Control } from 'react-hook-form';
+import { type FieldErrors, useForm, UseFormHandleSubmit, UseFormRegister, Controller, type Control, useFieldArray } from 'react-hook-form';
+import ImageUploadWithPreviews from '@/app/components/imageUploadWithPreview';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import LocaledTextField from '@/app/components/localed_textField';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -17,7 +23,7 @@ import { useRouter } from '@/i18n/navigation';
 import dayjs from '@/app/utils/dayjs.client';
 import API from '@/app/utils/api.client';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from 'sonner'; 
 
 type TaskActionsProps = {
     task: components['schemas']['TaskMSGSerializer'];
@@ -32,14 +38,20 @@ type DeleteDialogProps = {
     isLoading: boolean;
 }
 
-type UpdateTaskProps = TaskActionsProps['task'];
+type TaskFormValues = {
+    task_number: number;
+    description: string;
+    expires_at: string;
+    links: { url: string }[];
+    images: File[];
+};
 
 type EditDialogProps = Omit<DeleteDialogProps, 'onAccept'> & {
-    onAccept: (data: UpdateTaskProps) => void;
-    register: UseFormRegister<UpdateTaskProps>;
-    handleSubmit: UseFormHandleSubmit<UpdateTaskProps>;
-    control: Control<UpdateTaskProps>;
-    errors: FieldErrors<UpdateTaskProps>;
+    onAccept: (data: TaskFormValues) => void;
+    register: UseFormRegister<TaskFormValues>;
+    handleSubmit: UseFormHandleSubmit<TaskFormValues>;
+    control: Control<TaskFormValues>;
+    errors: FieldErrors<TaskFormValues>;
 }
 
 function DeleteDialog({ open, onAccept, onCancel, taskNumber, isLoading }: DeleteDialogProps) {
@@ -64,6 +76,11 @@ function DeleteDialog({ open, onAccept, onCancel, taskNumber, isLoading }: Delet
 function EditDialog({ open, onAccept, onCancel, taskNumber, isLoading, register, handleSubmit, control, errors }: EditDialogProps) {
     const tr = useTranslations('taskPage');
     const locale = useLocale();
+
+    const { fields: linkFields, append: appendLink, remove: removeLink } = useFieldArray({
+        control,
+        name: "links"
+    });
 
     return (
         <Dialog open={open} scroll='paper' fullWidth maxWidth="sm" slotProps={{paper: { sx: { borderRadius: 2 } }}}>
@@ -115,6 +132,57 @@ function EditDialog({ open, onAccept, onCancel, taskNumber, isLoading, register,
                         error={!!errors.description} 
                         helperText={errors.description?.message} 
                     />
+
+                    {/* 🚨 Links Section */}
+                    <div className="border border-slate-200 p-4 rounded-xl">
+                        <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>
+                            {tr('urls') || "Reference Links"}
+                        </Typography>
+                        
+                        <div className="flex flex-col gap-3">
+                            {linkFields.map((field, index) => (
+                                <div key={field.id} className="flex items-center gap-2">
+                                    <TextField 
+                                        {...register(`links.${index}.url`)}
+                                        type="url"
+                                        placeholder="https://..."
+                                        size="small"
+                                        fullWidth
+                                    />
+                                    <IconButton onClick={() => removeLink(index)} color="error">
+                                        <DeleteOutlinedIcon />
+                                    </IconButton>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <Button 
+                            startIcon={<AddIcon />} 
+                            onClick={() => appendLink({ url: '' })}
+                            sx={{ mt: 2 }}
+                            size="small"
+                        >
+                            Add Link
+                        </Button>
+                    </div>
+
+                    {/* 🚨 Images Section */}
+                    <div className="border border-slate-200 p-4 rounded-xl">
+                        <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>
+                            Add New Reference Images
+                        </Typography>
+                        <Controller
+                            control={control}
+                            name="images"
+                            render={({ field }) => (
+                                <ImageUploadWithPreviews
+                                    images={field.value} 
+                                    onChange={field.onChange} 
+                                />
+                            )}
+                        />
+                    </div>
+
                 </form>
             </DialogContent>
             <DialogActions sx={{ p: 2 }}>
@@ -136,11 +204,14 @@ export default function TaskActions({ task, track_name }: TaskActionsProps) {
     const tr = useTranslations('taskPage');
     const router = useRouter();
     
-    const { register, control, handleSubmit, formState: { errors } } = useForm<UpdateTaskProps>({
+    // 🚨 Map the default values safely
+    const { register, control, handleSubmit, formState: { errors } } = useForm<TaskFormValues>({
         defaultValues: {
             task_number: task.task_number,
             description: task.description,
-            expires_at: task.expires_at
+            expires_at: task.expires_at,
+            links: task.links?.map(link => ({ url: link })) || [],
+            images: [] 
         }
     });
 
@@ -165,12 +236,32 @@ export default function TaskActions({ task, track_name }: TaskActionsProps) {
         });
     };
 
-    const sendEditRequest = (data: UpdateTaskProps) => {
+    const sendEditRequest = (data: TaskFormValues) => {
         setEditIsloading(true);
         
         const promise = API.PUT('/api/technical/tasks/{task_id}/', {
             params: { path: { task_id: task.id } },
-            body: data
+            body: data as unknown as TaskActionsProps['task'], 
+            bodySerializer: () => {
+                const fd = new FormData();
+                fd.append('task_number', data.task_number.toString());
+                fd.append('description', data.description);
+                fd.append('expires_at', data.expires_at);
+                
+                if (data.links && data.links.length > 0) {
+                    const rowLinks = `[${data.links.map(link => `"${link.url}"`).join(",")}]`;
+                    // data.links.forEach(link => {
+                    //     if (link.url.trim() !== '') link.url;
+                    // });
+                    fd.append('links', rowLinks);
+                }
+
+                if (data.images && data.images.length > 0) {
+                    data.images.forEach(file => fd.append('images', file));
+                }
+
+                return fd;
+            }
         }).then(({ response, error }) => {
             if (!response.ok) throw error;
             return response;

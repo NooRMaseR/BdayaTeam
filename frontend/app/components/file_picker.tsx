@@ -10,7 +10,7 @@ interface FileProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'a
 }
 
 const FilePicker = React.forwardRef<HTMLInputElement, FileProps>(({ accept, preview, ...props }, ref) => {
-    const [isDragging, setIsDragging] = React.useState(false);
+    const [isDragging, setIsDragging] = React.useState<boolean>(false);
     const localRef = React.useRef<HTMLInputElement | null>(null);
     const tr = useTranslations("filePicker");
 

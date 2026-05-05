@@ -33,9 +33,41 @@ export default function TaskEditForm({ task, track_name, extensions }: TaskActio
         }
     });
 
-    const { onChange: onRHFChange, ...resetFilesRegister } = register('files');
+    const { ...resetFilesRegister } = register('files');
 
     const selectedFiles = useWatch({ control, name: 'files' });
+
+    const appendFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newFiles = e.target.files;
+        if (!newFiles || newFiles.length === 0) return;
+
+        const dt = new DataTransfer();
+
+        if (selectedFiles) {
+            Array.from(selectedFiles).forEach(f => dt.items.add(f as unknown as File));
+        }
+
+        Array.from(newFiles).forEach(f => dt.items.add(f));
+
+        setValue('files', dt.files as unknown as string[], { shouldValidate: true });
+
+        e.target.value = '';
+    };
+
+    const removeFile = (indexToRemove: number) => {
+        if (!selectedFiles) return;
+        
+        const dt = new DataTransfer();
+        Array.from(selectedFiles).forEach((f, i) => {
+            if (i !== indexToRemove) dt.items.add(f as unknown as File);
+        });
+
+        if (dt.files.length === 0) {
+            setValue('files', undefined, { shouldValidate: true });
+        } else {
+            setValue('files', dt.files as unknown as string[], { shouldValidate: true });
+        }
+    };
 
     const sendTaskRequest = (data: TaskMemberSend) => {
         setIsloading(true);
@@ -88,7 +120,8 @@ export default function TaskEditForm({ task, track_name, extensions }: TaskActio
                         selectedFiles={selectedFiles}
                         extensions={extensions}
                         onClear={clearFiles}
-                        onFileChange={onRHFChange}
+                        onRemoveFile={removeFile}
+                        onFileChange={appendFiles}
                         {...resetFilesRegister}
                     />
                 </div>

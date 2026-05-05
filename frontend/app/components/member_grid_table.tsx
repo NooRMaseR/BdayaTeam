@@ -224,6 +224,12 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel, t
                 getCellClassName={colorizeCellsFunction}
                 processRowUpdate={handelProcess}
                 columnGroupingModel={columnGroupingModel}
+                slotProps={{
+                toolbar: {
+                    csvOptions: {
+                        utf8WithBom: true,
+                    }
+                }}}
                 localeText={{
                     filterOperatorContains: tr('contains'),
                     filterOperatorDoesNotContain: tr('notContains'),

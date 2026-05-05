@@ -1,14 +1,14 @@
+import Card, { type CardProps } from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import CardMedia from "@mui/material/CardMedia";
 import Badge from "@mui/material/Badge";
-import Card from "@mui/material/Card";
 
 import { Link } from "@/i18n/navigation";
 import { ReactNode } from "react";
 import Image from "next/image";
 
-type NavigationCardProps = {
+type NavigationCardProps = CardProps & {
   url?: string;
   imageUrl?: string | null;
   title: string;
@@ -23,21 +23,22 @@ const RenderLinkOrDiv = ({ url, children }: { url?: string, children: ReactNode 
 
   if (url.startsWith('http')) {
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className="h-full block">
+      <Link href={url} target="_blank" rel="noopener noreferrer" className="h-full block">
         {children}
-      </a>
+      </Link>
     );
   }
   return <Link href={url} className="h-full block">{children}</Link>;
 };
 
-export default function NavigationCard({ title, desc, imageUrl, url, badgeContent = 0 }: NavigationCardProps) {
+export default function NavigationCard({ title, desc, imageUrl, url, badgeContent = 0, ...props }: NavigationCardProps) {
   return (
     <RenderLinkOrDiv url={url}>
       <Card
         id={title}
-        className="hover:shadow-xl dark:hover:shadow-2xl dark:hover:shadow-black/50 border-t-4 border-transparent hover:border-blue-500 dark:hover:border-blue-400 hover:-translate-y-2 cursor-pointer flex flex-col"
-        sx={{ transition: "translate ease-out 250ms, border-color ease-out 250ms, box-shadow ease-out 250ms", width: "20rem", height: "19rem" }}
+        className="hover:shadow-xl! shadow-[0px_3px_8px_1px_#adadad]! dark:shadow-[0px_3px_8px_1px_#000000]! border-t-4 border-transparent hover:border-blue-500 dark:hover:border-blue-400 hover:-translate-y-2 cursor-pointer flex flex-col"
+        sx={{ transition: "translate ease-out 250ms, border-color ease-out 250ms, box-shadow ease-out 250ms", width: "20rem", height: "19rem", borderRadius: '1rem' }}
+        {...props}
       >
         <Badge className="flex flex-col" badgeContent={badgeContent} color="error" anchorOrigin={{ vertical: "top", horizontal: "left" }} sx={{ mt: "1rem", ml: "1rem"}}>
 
