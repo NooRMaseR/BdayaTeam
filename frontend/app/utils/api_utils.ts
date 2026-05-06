@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use server';
 
+import type { SeeOrganizerCanEditQuery, SettingsSiteImageQuery } from "../generated/graphql";
+import { AttendanceStatus, MemberStatus, type GetMemberGridType } from "./api_types_helper";
+import type { GridColDef, GridColumnGroupingModel, GridRowsProp } from "@mui/x-data-grid";
+import { EDITABLE_FIELDS, GET_SITE_IMAGE_SETTINGS } from "./graphql_helpers";
 import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
-import type { SettingsSiteImageQuery } from "../generated/graphql";
-import { GET_SITE_IMAGE_SETTINGS } from "./graphql_helpers";
+import { getTranslations } from "next-intl/server";
+import API, { fetchTracks } from "./api.server";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { gql } from "graphql-tag";
@@ -165,4 +169,101 @@ export async function revalidateTagName(tag: string) {
 
 export async function revalidateTracks() {
     await revalidateTagName("tracks");
+}
+
+export async function getOrgMemberGrid(track: string, safe: boolean = false): Promise<GetMemberGridType> {
+    const [tr, dtr, membersRes, daysRes, tracksRes, editableFields] = await Promise.all(
+        [
+            getTranslations('showMembersPage'),
+            getTranslations('weekDays'),
+            API.GET(`/api/organizer/members/{track_name}/`, { params: { path: { track_name: track } } }),
+            API.GET(`/api/organizer/attendance/{track_name}/days/`, { params: { path: { track_name: track } } }),
+            fetchTracks(),
+            !safe ? serverGraphQL<SeeOrganizerCanEditQuery>(EDITABLE_FIELDS) : { data: { allSettings: { organizerCanEdit: [] as string[] } } }
+        ]
+    );
+
+    if (!membersRes.response.ok) {
+        return Promise.reject(membersRes.error);
+    };
+    
+
+    const rows: GridRowsProp = (membersRes.data as unknown as (typeof membersRes.data)[])?.map((member) => {
+        const row: any = {
+            id: member?.code,
+            code: member?.code,
+            status: member?.status,
+            name: member?.name,
+            bonus: member?.bonus,
+            track: member?.track.name,
+            phone: member?.phone_number,
+            email: member?.email,
+        };
+
+        member?.attendances?.forEach(att => {
+            row[`${att.date.day}_date`] = att.status;
+            row[`${att.date.day}_excuse`] = att.excuse_reason;
+            row[`${att.date.day}_by`] = att.by.username;
+        });
+
+        return row;
+    }) || [];
+
+    const tracksNameArray: string[] = tracksRes.data?.map((track) => track.name) || [];
+
+    const columns: GridColDef[] = [
+        { align: "center", headerAlign: "center", field: "code", headerName: tr("code"), editable: false, pinnable: true, cellClassName: 'sticky left-0 z-3 dark:bg-(--dark-color) bg-white' },
+        { field: "name", headerName: tr("name"), width: 200, editable: editableFields.data.allSettings?.organizerCanEdit.includes("name") },
+        { align: "center", headerAlign: "center", field: "status", headerName: tr("status"), width: 100, editable: editableFields.data.allSettings?.organizerCanEdit.includes("status"), type: 'singleSelect', valueOptions: Object.values(MemberStatus).map((status) => ({ label: tr(status), value: status })) },
+        { align: "center", headerAlign: "center", field: "bonus", headerName: tr("bonus"), editable: editableFields.data.allSettings?.organizerCanEdit.includes("bonus"), type: "number" },
+        { align: "center", headerAlign: "center", field: "track", headerName: tr("trackName"), editable: editableFields.data.allSettings?.organizerCanEdit.includes("track"), type: "singleSelect", valueOptions: tracksNameArray },
+        { field: "phone", headerName: tr("phone"), width: 200, editable: editableFields.data.allSettings?.organizerCanEdit.includes("phone") },
+        { field: "email", headerName: tr("email"), width: 200, editable: editableFields.data.allSettings?.organizerCanEdit.includes("email") },
+        ...(daysRes.data?.flatMap<GridColDef>((day) => {
+            const dayName = new Date(day.day).toLocaleDateString();
+            return [
+                {
+                    field: `${day.day}_date`,
+                    headerName: dayName,
+                    width: 170,
+                    align: "center",
+                    headerAlign: "center",
+                    filterable: false,
+                    editable: !safe,
+                    type: "singleSelect",
+                    valueOptions: Object.values(AttendanceStatus).map(status => ({label: tr(status), value: status})),
+                },
+                {
+                    field: `${day.day}_excuse`,
+                    headerName: tr("notes"),
+                    width: 170,
+                    headerAlign: "center",
+                    filterable: false,
+                    editable: !safe
+                },
+                {
+                    field: `${day.day}_by`,
+                    headerName: tr("by"),
+                    width: 170,
+                    align: "center",
+                    headerAlign: "center",
+                    filterable: false,
+                    editable: false
+                }
+            ];
+        }) || [])
+    ];
+
+    const columnGroupingModel: GridColumnGroupingModel = daysRes.data?.map((day) => ({
+        groupId: day.day,
+        headerName: dtr(new Date(day.day).toLocaleDateString('en-US', { weekday: 'long' })),
+        children: [{ field: `${day.day}_date` }, { field: `${day.day}_excuse` }, { field: `${day.day}_by` }],
+        headerAlign: "center",
+    })) || [];
+
+    return {
+        rows: rows,
+        columns: columns,
+        groupModel: columnGroupingModel
+    }
 }

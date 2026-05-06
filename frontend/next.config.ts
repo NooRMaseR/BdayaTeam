@@ -13,7 +13,7 @@ const withNextIntl = createNextIntlPlugin();
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
-  allowedDevOrigins: ['terrorist-cafe-triangle-selections.trycloudflare.com'],
+  allowedDevOrigins: ['robust-minus-depending-pending.trycloudflare.com'],
   output: "standalone",
   images: {
     remotePatterns: [

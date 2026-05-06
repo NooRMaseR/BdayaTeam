@@ -5,8 +5,8 @@ import MembersGridTable from '@/app/components/member_grid_table';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
+import { getOrgMemberGrid } from '@/app/utils/api_utils';
 import DialogContentText from '@mui/material/DialogContentText';
-import { getOrgMemberGrid } from "@/app/[locale]/organizer/[track]/members/page";
 
 
 export default async function MembersPage({ params }: TechnicalParams) {

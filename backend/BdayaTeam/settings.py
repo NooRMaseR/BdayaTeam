@@ -35,7 +35,7 @@ DEBUG = False
 ALLOWED_HOSTS = (
     "localhost",
     "127.0.0.1",
-    "terrorist-cafe-triangle-selections.trycloudflare.com"
+    "robust-minus-depending-pending.trycloudflare.com"
 )
 
 # Application definition
@@ -345,7 +345,7 @@ CORS_ALLOWED_ORIGINS = (
     "https://localhost:3000",
     "https://localhost:8000",
     "http://localhost:8000",
-    "https://terrorist-cafe-triangle-selections.trycloudflare.com",
+    "https://robust-minus-depending-pending.trycloudflare.com",
 )
 
 CSRF_TRUSTED_ORIGINS = (
@@ -353,7 +353,7 @@ CSRF_TRUSTED_ORIGINS = (
     "https://localhost:3000",
     "https://localhost:8000",
     "http://localhost:8000",
-    "https://terrorist-cafe-triangle-selections.trycloudflare.com",
+    "https://robust-minus-depending-pending.trycloudflare.com",
 )
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"

@@ -1,17 +1,52 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import type { GridRowModel, GridColDef, GridColumnGroupingModel, GridCellParams } from '@mui/x-data-grid';
+import { styled } from '@mui/material/styles';
+import type {
+    GridRowModel,
+    GridColDef,
+    GridColumnGroupingModel,
+    GridCellParams,
+    GridRowsProp
+} from '@mui/x-data-grid';
+import {
+    DataGrid,
+    Toolbar,
+    ToolbarButton,
+    FilterPanelTrigger,
+    useGridApiContext,
+    gridFilteredSortedRowIdsSelector,
+    gridVisibleColumnDefinitionsSelector,
+    ColumnsPanelTrigger,
+    QuickFilterTrigger,
+    QuickFilterControl,
+    QuickFilterClear,
+    QuickFilter,
+    ExportCsv,
+    ExportPrint
+} from '@mui/x-data-grid';
+import InputAdornment from '@mui/material/InputAdornment';
+import MenuItem from '@mui/material/MenuItem';
+import Tooltip from '@mui/material/Tooltip';
+import Button from '@mui/material/Button';
+import Menu from '@mui/material/Menu';
+
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import CancelIcon from '@mui/icons-material/Cancel';
+import SearchIcon from '@mui/icons-material/Search';
+
 import { AttendanceStatus, MemberStatus } from '../utils/api_types_helper';
 import useWebSocket, { ReadyState } from "react-use-websocket";
-import type { GridRowsProp } from '@mui/x-data-grid';
+import LocaledTextField from './localed_textField';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { DataGrid } from '@mui/x-data-grid';
-import { useMemo, useState } from 'react';
 import { Link } from '@/i18n/navigation';
-import { Button } from '@mui/material';
 import API from '../utils/api.client';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
+
 
 type GridProps = {
     rows: GridRowsProp;
@@ -39,6 +74,165 @@ const ACTIONS_COLUMN_BASE: Omit<GridColDef, 'headerName' | 'renderCell'> = {
     filterable: false,
     sortable: false,
 };
+
+type OwnerState = {
+    expanded: boolean;
+};
+
+const StyledQuickFilter = styled(QuickFilter)({
+    display: 'grid',
+    alignItems: 'center',
+    marginLeft: 'auto',
+});
+
+const StyledToolbarButton = styled(ToolbarButton)<{ ownerState: OwnerState }>(
+    ({ theme, ownerState }) => ({
+        gridArea: '1 / 1',
+        width: 'min-content',
+        height: 'min-content',
+        zIndex: 1,
+        opacity: ownerState.expanded ? 0 : 1,
+        pointerEvents: ownerState.expanded ? 'none' : 'auto',
+        transition: theme.transitions.create(['opacity']),
+    }),
+);
+
+const StyledTextField = styled(LocaledTextField)<{
+    ownerState: OwnerState;
+}>(({ theme, ownerState }) => ({
+    gridArea: '1 / 1',
+    overflowX: 'clip',
+    width: ownerState.expanded ? 260 : 'var(--trigger-width)',
+    opacity: ownerState.expanded ? 1 : 0,
+    transition: theme.transitions.create(['width', 'opacity']),
+}));
+
+function ExportExcelMenuItem({ hideMenu }: { hideMenu?: () => void }) {
+    const apiRef = useGridApiContext();
+
+    const handleExport = () => {
+        const visibleColumns = gridVisibleColumnDefinitionsSelector(apiRef);
+        const filteredSortedRowIds = gridFilteredSortedRowIdsSelector(apiRef);
+
+        const exportData = filteredSortedRowIds.map((id) => {
+            const row = apiRef.current.getRow(id);
+            const formattedRow: Record<string, any> = {};
+
+            visibleColumns.forEach((col) => {
+                if (col.field !== '__check__' && col.type !== 'actions') {
+                    formattedRow[col.headerName || col.field] = row[col.field];
+                }
+            });
+            return formattedRow;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+
+        XLSX.writeFile(workbook, 'Grid_Export.xlsx');
+        hideMenu?.();
+    };
+
+    return <MenuItem onClick={handleExport}>Export as Excel</MenuItem>;
+}
+
+function CustomToolbar() {
+    const [open, setOpen] = useState<boolean>(false);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+
+    return (
+        <Toolbar>
+            <ColumnsPanelTrigger render={<ToolbarButton />}>
+                <ViewColumnIcon fontSize="small" />
+            </ColumnsPanelTrigger>
+            <FilterPanelTrigger render={<ToolbarButton />}>
+                <FilterListIcon fontSize="small" />
+            </FilterPanelTrigger>
+
+            <ToolbarButton
+                ref={triggerRef}
+                id="export-menu-trigger"
+                aria-controls="export-menu"
+                aria-haspopup="true"
+                aria-expanded={open ? 'true' : undefined}
+                onClick={() => setOpen(true)}
+            >
+                <FileDownloadIcon fontSize='small' />
+            </ToolbarButton>
+            <Menu
+                id="export-menu"
+                onClose={() => setOpen(false)}
+                // eslint-disable-next-line react-hooks/refs
+                anchorEl={triggerRef.current}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                slotProps={{
+                    list: {
+                        'aria-labelledby': 'export-menu-trigger',
+                    },
+                }}
+                open={open}
+            >
+                <ExportPrint render={<MenuItem />}>Print</ExportPrint>
+                <ExportCsv render={<MenuItem />} options={{ utf8WithBom: true }}>Export as CSV</ExportCsv>
+                <ExportExcelMenuItem />
+            </Menu>
+
+            <StyledQuickFilter>
+                <QuickFilterTrigger
+                    render={(triggerProps, state) => (
+                        <Tooltip title="Search" enterDelay={0}>
+                            <StyledToolbarButton
+                                {...triggerProps}
+                                ownerState={{ expanded: state.expanded }}
+                                color="default"
+                                aria-disabled={state.expanded}
+                            >
+                                <SearchIcon fontSize="small" />
+                            </StyledToolbarButton>
+                        </Tooltip>
+                    )}
+                />
+                <QuickFilterControl
+                    render={({ ref, ...controlProps }, state) => (
+                        <StyledTextField
+                            {...controlProps}
+                            ownerState={{ expanded: state.expanded }}
+                            inputRef={ref}
+                            aria-label="Search"
+                            placeholder="Search..."
+                            size="small"
+                            slotProps={{
+                                input: {
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon fontSize="small" />
+                                        </InputAdornment>
+                                    ),
+                                    endAdornment: state.value ? (
+                                        <InputAdornment position="end">
+                                            <QuickFilterClear
+                                                edge="end"
+                                                size="small"
+                                                aria-label="Clear search"
+                                                material={{ sx: { marginRight: -0.75 } }}
+                                            >
+                                                <CancelIcon fontSize="small" />
+                                            </QuickFilterClear>
+                                        </InputAdornment>
+                                    ) : null,
+                                    ...controlProps.slotProps?.input,
+                                },
+                                ...controlProps.slotProps,
+                            }}
+                        />
+                    )}
+                />
+            </StyledQuickFilter>
+        </Toolbar>
+    );
+}
 
 export default function MembersGridTable({ rows, columns, columnGroupingModel, track, forTech = false, disableWebSocket = false }: GridProps) {
     const tr = useTranslations('showMembersPage');
@@ -224,12 +418,9 @@ export default function MembersGridTable({ rows, columns, columnGroupingModel, t
                 getCellClassName={colorizeCellsFunction}
                 processRowUpdate={handelProcess}
                 columnGroupingModel={columnGroupingModel}
-                slotProps={{
-                toolbar: {
-                    csvOptions: {
-                        utf8WithBom: true,
-                    }
-                }}}
+                slots={{
+                    toolbar: CustomToolbar
+                }}
                 localeText={{
                     filterOperatorContains: tr('contains'),
                     filterOperatorDoesNotContain: tr('notContains'),
