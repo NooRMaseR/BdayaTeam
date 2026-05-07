@@ -35,7 +35,7 @@ DEBUG = False
 ALLOWED_HOSTS = (
     "localhost",
     "127.0.0.1",
-    "robust-minus-depending-pending.trycloudflare.com"
+    "twist-raid-family-responsibility.trycloudflare.com"
 )
 
 # Application definition
@@ -273,7 +273,7 @@ HUEY = {
     "utc": False,
     "immediate": False,
     "consumer": {
-        "workers": 4,
+        "workers": 10,
         "worker_type": "greenlet",
     },
     "connection": {"host": "127.0.0.1", "port": 6379, "db": 0},
@@ -345,7 +345,7 @@ CORS_ALLOWED_ORIGINS = (
     "https://localhost:3000",
     "https://localhost:8000",
     "http://localhost:8000",
-    "https://robust-minus-depending-pending.trycloudflare.com",
+    "https://twist-raid-family-responsibility.trycloudflare.com",
 )
 
 CSRF_TRUSTED_ORIGINS = (
@@ -353,7 +353,7 @@ CSRF_TRUSTED_ORIGINS = (
     "https://localhost:3000",
     "https://localhost:8000",
     "http://localhost:8000",
-    "https://robust-minus-depending-pending.trycloudflare.com",
+    "https://twist-raid-family-responsibility.trycloudflare.com",
 )
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"

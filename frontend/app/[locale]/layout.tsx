@@ -12,6 +12,7 @@ import { GET_IMAGES_SETTINGS } from "../utils/graphql_helpers";
 import type { SettingsImagesQuery } from "../generated/graphql";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { LoadingProvider, RegisterNextThemeProvider, RegisterThemeProvider } from "./clientProviders";
+import ClickSparkWrapper from "../components/click_spark_wrapper";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL || "https://localhost"),
@@ -79,21 +80,23 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
       </head>
       <body className="color-trans dark:bg-(--dark-color)">
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-          <LoadingProvider>
-            <RegisterNextThemeProvider attribute='class' defaultTheme="system" enableSystem>
-              <NextIntlClientProvider messages={messages}>
-                <RegisterThemeProvider>
-                  <AuthLoader authData={authData} imagesData={imagesData}>
-                    <Header />
-                    <Toaster />
-                    {children}
-                  </AuthLoader>
-                </RegisterThemeProvider>
-              </NextIntlClientProvider>
-            </RegisterNextThemeProvider>
-          </LoadingProvider>
+          <RegisterNextThemeProvider attribute='class' defaultTheme="system" enableSystem>
+            <NextIntlClientProvider messages={messages}>
+              <RegisterThemeProvider>
+                <ClickSparkWrapper>
+                  <LoadingProvider>
+                    <AuthLoader authData={authData} imagesData={imagesData}>
+                      <Header />
+                      <Toaster />
+                      {children}
+                    </AuthLoader>
+                  </LoadingProvider>
+                </ClickSparkWrapper>
+              </RegisterThemeProvider>
+            </NextIntlClientProvider>
+          </RegisterNextThemeProvider>
         </AppRouterCacheProvider>
       </body>
-    </html>
+    </html >
   );
 }

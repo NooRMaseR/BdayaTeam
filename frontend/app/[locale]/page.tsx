@@ -1,6 +1,9 @@
+import React from 'react';
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import Chip from '@mui/material/Chip';
+import CountUp from '@/components/CountUp';
+import SplitText from '@/components/SplitText';
 import Container from '@mui/material/Container';
 import { fetchTracks } from '../utils/api.server';
 import NavButtons from '../components/nav_buttons';
@@ -78,10 +81,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <section className="py-10 shadow-sm border-b border-gray-100 dark:border-slate-800 dark:bg-slate-900 transition-colors duration-300">
         <Container maxWidth="lg">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-gray-100 dark:divide-slate-800">
-            <StatItem number={`${years - 1}+`} label={tr('exp')} />
-            <StatItem number="10k+" label={tr('std')} />
-            <StatItem number="100%" label={tr('freeC')} />
-            <StatItem number="24/7" label={tr('support')} />
+            <StatItem number={<span><CountUp duration={0.5} to={years - 1} />+</span>} label={tr('exp')} />
+            <StatItem number={<span><CountUp duration={0.5} to={10} />k+</span>} label={tr('std')} />
+            <StatItem number={<span><CountUp duration={0.5} to={100} />%</span>} label={tr('freeC')} />
+            <StatItem number={<span><CountUp duration={0.5} to={24} />/<CountUp duration={0.5} to={7} /></span>} label={tr('support')} />
           </div>
         </Container>
       </section>
@@ -125,14 +128,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               {tr('who')}
             </p>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              {tr('by')}, <br /> {tr('for')}.
+              <SplitText splitType='words' text={tr('by')} /> <br /> <SplitText splitType='words' text={tr('for')} />
             </h2>
             <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
-              {tr('bdayaStarted', { years })}
+              <SplitText textAlign='start' splitType='words' text={`${tr('bdayaStarted', { years })}\n${tr('weProvide')}`} />
             </p>
-            <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
-              {tr('weProvide')}
-            </p>
+            {/* <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
+              <SplitText textAlign='start' splitType='words' text={tr('weProvide')} />
+            </p> */}
           </div>
         </Container>
       </section>
@@ -148,7 +151,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   );
 }
 
-function StatItem({ number, label }: { number: string, label: string }) {
+function StatItem({ number, label }: { number: React.ReactNode, label: string }) {
   return (
     <div className="p-4">
       <div className="text-3xl md:text-4xl font-bold text-blue-600 dark:text-blue-400 mb-1">{number}</div>
