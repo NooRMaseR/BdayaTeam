@@ -1,0 +1,34 @@
+name: Docker Compose Test
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # 🚨 This line adds the manual 'Run' button in GitHub!
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build and Start the Stack
+        run: docker compose up -d --build --wait
+
+      - name: Check Container Status
+        run: |
+          echo "Running containers:"
+          docker compose ps
+
+      - name: Test Nginx / Next.js Response
+        run: curl -I http://localhost
+
+      - name: Print Docker Logs on Failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear Down
+        run: docker compose down -v

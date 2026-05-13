@@ -1,0 +1,71 @@
+services:
+  # 1. The Database
+  db:
+    image: postgres:18.3
+    restart: always
+    user: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. The Cache
+  redis:
+    image: redis:7-alpine
+    restart: always
+    expose:
+      - "6379"
+
+  # 3. The Backend (Django/Bolt)
+  bolt:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app 
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # 4. The Frontend (Next.js)
+  nextjs:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      bolt:
+        condition: service_started
+
+  # 5. The Reverse Proxy (Nginx)
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx_teamBdaya.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      bolt:
+        condition: service_started
+      nextjs:
+        condition: service_started
+
+volumes:
+  db-data:
