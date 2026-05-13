@@ -5,9 +5,8 @@ import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 
 import UploadMemberTaskFiles from '@/app/components/upload_member_task_files';
-import type { MemberTaskSend } from '@/app/utils/api_types_helper';
+import type { components, operations } from '@/app/generated/api_types';
 import LocaledTextField from '@/app/components/localed_textField';
-import type { components } from '@/app/generated/api_types';
 import { useForm, useWatch } from 'react-hook-form';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
@@ -21,18 +20,20 @@ type TaskActionsProps = {
     extensions: components['schemas']['TrackExtenstionsSerializer']['extensions'];
 }
 
+type MemberTaskSend = operations['post_submit_task']['requestBody']['content']['multipart/form-data'];
+
 export default function TaskForm({ task, track_name, extensions }: TaskActionsProps) {
     const [isLoading, setIsloading] = useState<boolean>(false);
     const tr = useTranslations('taskPage');
     const router = useRouter();
-    
+
     const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<MemberTaskSend>({
         defaultValues: {
             task_id: task.id
         }
     });
 
-    const {...resetFilesRegister } = register('files');
+    const { ...resetFilesRegister } = register('files');
 
     const selectedFiles = useWatch({ control, name: 'files' });
 
@@ -55,7 +56,7 @@ export default function TaskForm({ task, track_name, extensions }: TaskActionsPr
 
     const removeFile = (indexToRemove: number) => {
         if (!selectedFiles) return;
-        
+
         const dt = new DataTransfer();
         Array.from(selectedFiles).forEach((f, i) => {
             if (i !== indexToRemove) dt.items.add(f as unknown as File);
@@ -70,18 +71,18 @@ export default function TaskForm({ task, track_name, extensions }: TaskActionsPr
 
     const sendTaskRequest = (data: MemberTaskSend) => {
         setIsloading(true);
-        
+
         const promise = async () => {
             const res = await API.POST('/api/member/tasks/', {
                 body: {
                     task_id: data.task_id,
                     notes: data.notes,
-                    files: (data.files ? Array.from(data.files) : []) as unknown as string
+                    files: data.files ? Array.from(data.files) : [],
                 },
                 bodySerializer(body) {
                     const fd = new FormData();
                     fd.append('task_id', JSON.stringify(body.task_id));
-                    
+
                     if (body.notes)
                         fd.append('notes', JSON.stringify(body.notes));
 
@@ -119,14 +120,14 @@ export default function TaskForm({ task, track_name, extensions }: TaskActionsPr
     return (
         <Paper elevation={0} className="border border-slate-200 rounded-2xl overflow-hidden bg-white p-6 md:p-8">
             <form onSubmit={handleSubmit(sendTaskRequest)} className='flex flex-col gap-6'>
-                
+
                 <div className="w-full">
                     <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
                         {tr('attach')}
                     </Typography>
 
                     <UploadMemberTaskFiles
-                        selectedFiles={selectedFiles}
+                        selectedFiles={selectedFiles as unknown as string[]}
                         extensions={extensions}
                         onClear={clearFiles}
                         onRemoveFile={removeFile}
@@ -139,9 +140,9 @@ export default function TaskForm({ task, track_name, extensions }: TaskActionsPr
                     <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
                         {tr('notes')}
                     </Typography>
-                    <LocaledTextField 
+                    <LocaledTextField
                         placeholder={tr('notes')}
-                        {...register("notes")} 
+                        {...register("notes")}
                         minRows={4}
                         multiline
                         fullWidth
@@ -150,9 +151,9 @@ export default function TaskForm({ task, track_name, extensions }: TaskActionsPr
                     />
                 </div>
 
-                <Button 
-                    variant='contained' 
-                    type='submit' 
+                <Button
+                    variant='contained'
+                    type='submit'
                     size="large"
                     disabled={isLoading}
                     sx={{ py: 1.5, borderRadius: 2, fontWeight: 'bold', mt: 2 }}

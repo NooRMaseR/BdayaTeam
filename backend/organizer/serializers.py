@@ -1,13 +1,11 @@
-from datetime import date
 from typing import Self
-
-from utils import IntId
+from datetime import date
 from core.models import BdayaUser
 from core.serializers import BaseMSGSerializer
 from .models import Attendance, AttendanceAllowedDay, AttendanceStatus, SiteSetting
 
 class AttendanceDayMSGSerializer(BaseMSGSerializer[AttendanceAllowedDay], frozen=True):
-    id: IntId
+    id: int
     day: date
 
     @classmethod
@@ -18,7 +16,7 @@ class AttendanceDayMSGSerializer(BaseMSGSerializer[AttendanceAllowedDay], frozen
         )
 
 class AttendanceMSGBy(BaseMSGSerializer[BdayaUser], frozen=True):
-    id: IntId
+    id: int
     username: str
 
     @classmethod

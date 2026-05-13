@@ -14,6 +14,7 @@ from .api_schemas import (
     DayRequestMSG,
     DayUpdateRequestMSG,
     MemberEditGridRequestMSG,
+    UpdateSettingsRequestMSG,
 )
 from .caches import (
     SETTINGS_CACHE_KEY,
@@ -43,9 +44,9 @@ from asgiref.sync import sync_to_async
 from typing import Annotated
 from datetime import date
 
-from django_bolt import BoltAPI, Depends, Response, UploadFile, status
 from django_bolt.exceptions import Forbidden, NotFound, BadRequest
-from django_bolt.param_functions import Form, File
+from django_bolt import BoltAPI, Depends, Response, status
+from django_bolt.param_functions import Form
 
 bolt = BoltAPI(
     prefix="/api/organizer/",
@@ -355,39 +356,33 @@ async def get_settings():
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.put("/settings/", status_code=204)
-async def update_settings(
-    is_register_enabled: Annotated[bool, Form()] = False,
-    organizer_can_edit: Annotated[list[str], Form()] = [], 
-    site_image: Annotated[UploadFile, File(alias="site_image")] = None,  # type: ignore
-    hero_image: Annotated[UploadFile, File(alias="hero_image")] = None,  # type: ignore
-    user: BdayaUser = Depends(get_org_user)  # type: ignore
-):
+async def update_settings(payload: Annotated[UpdateSettingsRequestMSG, Form()], user: BdayaUser = Depends(get_org_user)): # type: ignore
     "update the site settings"
 
     @sync_to_async
     def safe_update_settings() -> None:
         obj = SiteSetting.get_solo()
 
-        if user.is_superuser and is_register_enabled != None:
-            obj.is_register_enabled = is_register_enabled
+        if user.is_superuser and payload.is_register_enabled != None:
+            obj.is_register_enabled = payload.is_register_enabled
 
-        if organizer_can_edit != None:
+        if payload.organizer_can_edit != None:
             
-            if isinstance(organizer_can_edit, str):
-                cleaned_list = [x.strip() for x in organizer_can_edit.split(",") if x.strip()]
+            if isinstance(payload.organizer_can_edit, str):
+                cleaned_list = [x.strip() for x in payload.organizer_can_edit.split(",") if x.strip()]
             
-            elif isinstance(organizer_can_edit, list) and len(organizer_can_edit) == 1 and "," in organizer_can_edit[0]:
-                cleaned_list = [x.strip() for x in organizer_can_edit[0].split(",") if x.strip()]
+            elif isinstance(payload.organizer_can_edit, list) and len(payload.organizer_can_edit) == 1 and "," in payload.organizer_can_edit[0]:
+                cleaned_list = [x.strip() for x in payload.organizer_can_edit[0].split(",") if x.strip()]
             else:
-                cleaned_list = organizer_can_edit
+                cleaned_list = payload.organizer_can_edit
                 
             obj.organizer_can_edit = cleaned_list  # type: ignore
 
-        if site_image:
-            obj.site_image = site_image.file  # type: ignore
+        if payload.site_image:
+            obj.site_image = payload.site_image.file  # type: ignore
 
-        if hero_image:
-            obj.hero_image = hero_image.file  # type: ignore
+        if payload.hero_image:
+            obj.hero_image = payload.hero_image.file  # type: ignore
 
         obj.save()
 

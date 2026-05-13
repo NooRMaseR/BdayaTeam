@@ -1,16 +1,18 @@
-from django_bolt.serializers import Serializer, field_validator
+from django_bolt.serializers import HttpsURL, Serializer, field_validator
+from django_bolt import UploadFile
 from django.utils import timezone
 from datetime import datetime
-from utils import IntId
 from . import models
 import msgspec
 import json
 
 class TaskCreateRequestMSG(Serializer):
-    task_number: IntId
+    task_number: int
     expires_at: datetime
     description: str
-    links: str | None = None
+    links: list[HttpsURL] = []
+    # links: list[str] = []
+    images: list[UploadFile] = []
     
     @field_validator("links", "before")
     def transform_links(cls, v):
@@ -28,7 +30,7 @@ class TaskSignRequestMSG(msgspec.Struct):
     technical_notes: str
 
 class TechnicalMembersTasksUpdateRequestMSG(msgspec.Struct):
-    task_id: IntId
+    task_id: int
     code: str
     value: int | str
     field: models.MemberTechEditType

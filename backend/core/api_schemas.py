@@ -3,11 +3,11 @@ from django_bolt.serializers import Serializer, field_validator
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django_bolt import UploadFile
 
 from organizer.serializers import SiteSettingsImagesMSGSerializer
 from .serializers import TrackNameOnlyMSGSerializer
 from . import models, validators
-from utils import IntId
 import msgspec
 
 class LoginRequestMSG(msgspec.Struct):
@@ -21,7 +21,7 @@ class LoginResponseMSG(msgspec.Struct):
     track: TrackNameOnlyMSGSerializer | None = None
 
 class RegisterRequestMSG(Serializer):
-    request_track_id: IntId
+    request_track_id: int
     email: str
     name: str
     phone_number: str
@@ -72,3 +72,10 @@ class TestAuthResponseMSG(msgspec.Struct):
     is_admin: bool
     settings: SiteSettingsImagesMSGSerializer
     track: TrackNameOnlyMSGSerializer | None = None
+
+class TrackCreateRequestMSG(msgspec.Struct):
+    name: str
+    prefix: str
+    en_description: str
+    ar_description: str
+    image: UploadFile

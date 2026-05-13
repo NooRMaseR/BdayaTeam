@@ -1,10 +1,12 @@
+from django_bolt.serializers import Serializer
+from django_bolt import UploadFile
 import msgspec
-from utils import IntId
-    
-class TaskRequestMSG(msgspec.Struct):
-    task_id: IntId
-    notes: str | None = None
 
-class TaskSubmitRequestMSG(msgspec.Struct):
-    task_id: IntId
+class TaskSubmitRequestMSG(Serializer):
+    task_id: int
     notes: str | None = None
+    files: list[UploadFile] = []
+
+class TaskUpdateRequestMSG(msgspec.Struct):
+    notes: str | None = None
+    files: list[UploadFile] = []

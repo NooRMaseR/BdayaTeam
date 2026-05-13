@@ -23,7 +23,7 @@ from .caches import (
     task_view_cache_key,
 )
 
-from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, IntId, serializer_encoder
+from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, serializer_encoder
 from typing import Annotated
 
 from django.db.models.functions import Coalesce
@@ -43,9 +43,9 @@ from django.db.models import (
     Count,
     Q,
 )
-from django_bolt import BoltAPI, Depends, Response, UploadFile, status
 from django_bolt.exceptions import NotFound, BadRequest, Forbidden
-from django_bolt.param_functions import Form, File
+from django_bolt import BoltAPI, Depends, Response, status
+from django_bolt.param_functions import Form
 
 bolt = BoltAPI(
     prefix="/api/technical/",
@@ -94,7 +94,7 @@ async def tech_get_all(user: BdayaUser = Depends(get_tech_user)): # type: ignore
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.post("/tasks/", status_code=201, response_model=TaskMSGSerializer)
-async def add_task(payload: Annotated[TaskCreateRequestMSG, Form()], images: Annotated[list[UploadFile], File()] = [], user: BdayaUser = Depends(get_tech_user)): # type: ignore
+async def add_task(payload: Annotated[TaskCreateRequestMSG, Form()], user: BdayaUser = Depends(get_tech_user)): # type: ignore
     "create a task"
     
     TRACK: Track = user.track # type: ignore
@@ -111,7 +111,7 @@ async def add_task(payload: Annotated[TaskCreateRequestMSG, Form()], images: Ann
             track=TRACK,
             links=payload.links,
         )
-        task_images = (TaskImage(task=created_task, image=image.file) for image in images)
+        task_images = (TaskImage(task=created_task, image=image.file) for image in payload.images)
         TaskImage.objects.bulk_create(task_images)
         return created_task
     
@@ -132,7 +132,7 @@ async def add_task(payload: Annotated[TaskCreateRequestMSG, Form()], images: Ann
     return Response(status_code=status.HTTP_201_CREATED)
 
 @bolt.get("/tasks/{task_id}/", response_model=TaskMSGSerializer)
-async def get_one_task(task_id: IntId, user = Depends(get_tech_or_member_user)):
+async def get_one_task(task_id: int, user = Depends(get_tech_or_member_user)):
     "get one task"
     
     CACHE_KEY = task_view_cache_key(task_id)
@@ -160,7 +160,7 @@ async def get_one_task(task_id: IntId, user = Depends(get_tech_or_member_user)):
 
 
 @bolt.put('/tasks/{task_id}/', status_code=204)
-async def update_task(task_id: IntId, payload: Annotated[TaskCreateRequestMSG, Form()], images: Annotated[list[UploadFile], File()] = [], user: BdayaUser = Depends(get_tech_user)): # type: ignore
+async def update_task(task_id: int, payload: Annotated[TaskCreateRequestMSG, Form()], user: BdayaUser = Depends(get_tech_user)): # type: ignore
     "update task info"
     
     TRACK: Track = user.track # type: ignore
@@ -183,8 +183,8 @@ async def update_task(task_id: IntId, payload: Annotated[TaskCreateRequestMSG, F
         TASK.description = payload.description
         data_to_update.add("description")
 
-    if images:
-        task_images = (TaskImage(task=TASK, image=image.file) for image in images)
+    if payload.images:
+        task_images = (TaskImage(task=TASK, image=image.file) for image in payload.images)
         await TaskImage.objects.filter(task=TASK).adelete()
         await TaskImage.objects.abulk_create(task_images)
 
@@ -214,7 +214,7 @@ async def update_task(task_id: IntId, payload: Annotated[TaskCreateRequestMSG, F
         raise BadRequest(detail=repr(e))
 
 @bolt.delete('/tasks/{task_id}/', status_code=204)
-async def delete_task(task_id: IntId, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+async def delete_task(task_id: int, user: BdayaUser = Depends(get_tech_user)): # type: ignore
     """delete task
     
     delete a task and all sent tasks to this task
@@ -237,7 +237,7 @@ async def delete_task(task_id: IntId, user: BdayaUser = Depends(get_tech_user)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @bolt.get("/tasks/{task_id}/recived/", response_model=list[RecivedTaskMSGSerializer])
-async def get_recived_tasks_from_members(task_id: IntId, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+async def get_recived_tasks_from_members(task_id: int, user: BdayaUser = Depends(get_tech_user)): # type: ignore
     "get recived tasks from members"
     
     track: Track = user.track # type: ignore
@@ -270,7 +270,7 @@ async def get_recived_tasks_from_members(task_id: IntId, user: BdayaUser = Depen
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.post("/tasks/{task_id}/recived/", status_code=204)
-async def sign_task(task_id: IntId, payload: TaskSignRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+async def sign_task(task_id: int, payload: TaskSignRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
     "sign a task with a `degree` and `message`"
     
     track: Track = user.track # type: ignore

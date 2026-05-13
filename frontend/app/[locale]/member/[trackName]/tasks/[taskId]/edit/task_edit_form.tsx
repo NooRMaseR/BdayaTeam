@@ -56,7 +56,7 @@ export default function TaskEditForm({ task, track_name, extensions }: TaskActio
 
     const removeFile = (indexToRemove: number) => {
         if (!selectedFiles) return;
-        
+
         const dt = new DataTransfer();
         Array.from(selectedFiles).forEach((f, i) => {
             if (i !== indexToRemove) dt.items.add(f as unknown as File);
@@ -75,8 +75,8 @@ export default function TaskEditForm({ task, track_name, extensions }: TaskActio
         const promise = API.PUT('/api/member/edit-task/{sent_task_id}/', {
             params: { path: { sent_task_id: task.id } },
             body: {
-                notes: data.notes,
-                files: (data.files ? Array.from(data.files) : []) as unknown as string
+                notes: data.notes ?? '',
+                files: data.files ? Array.from(data.files) : []
             },
             bodySerializer(body) {
                 const fd = new FormData();

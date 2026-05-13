@@ -1,5 +1,5 @@
-from typing import Any, Literal, TypedDict
-from utils import IntId
+from typing import Any, Literal, TypedDict, Annotated
+from django_bolt import UploadFile
 from datetime import date
 from . import models
 import msgspec
@@ -12,7 +12,7 @@ class DayUpdateRequestMSG(msgspec.Struct):
     newDay: date
 
 class AttendanceDayResponseMSG(msgspec.Struct):
-    id: IntId
+    id: int
     day: date
 
 class MemberEditGridRequestMSG(msgspec.Struct):
@@ -26,6 +26,12 @@ class SettingsImagesResponseMSG(msgspec.Struct):
     site_image: str | None = None
     hero_image: str | None = None
 
+class UpdateSettingsRequestMSG(msgspec.Struct):
+    is_register_enabled: bool = False
+    organizer_can_edit: list[str] = []
+    site_image: UploadFile | None = None
+    hero_image: UploadFile | None = None
+    
 class OrganizerBroudCastData(TypedDict):
     by: str
     code: str

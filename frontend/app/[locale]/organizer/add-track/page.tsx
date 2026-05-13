@@ -1,9 +1,9 @@
 'use client';
 
 import LocaledTextField from '@/app/components/localed_textField';
-import type { TrackCreate } from '@/app/utils/api_types_helper';
 import { revalidateTracks } from '@/app/utils/api_utils';
 import GroupTitled from '@/app/components/group_titled';
+import type { paths } from '@/app/generated/api_types';
 import FilePicker from '@/app/components/file_picker';
 import { useTranslations } from 'next-intl';
 import BodyM from '@/app/components/bodyM';
@@ -12,6 +12,8 @@ import Button from '@mui/material/Button';
 import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
+
+type TrackCreate = paths['/api/tracks/']['post']['requestBody']['content']['application/x-www-form-urlencoded'];
 
 export default function AddTrackPage() {
     const { register, handleSubmit, setError, setValue, formState: { errors } } = useForm<TrackCreate>();

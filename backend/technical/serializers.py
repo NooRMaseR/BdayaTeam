@@ -3,11 +3,10 @@ from member.models import AllowedTrackFileExtention
 from django_bolt.serializers import HttpsURL
 from datetime import datetime
 from .models import Task
-from utils import IntId
 from typing import Self
 
 class TaskSmallMSGSerializer(BaseMSGSerializer[Task], frozen=True):
-    id: IntId
+    id: int
     task_number: int
 
     @classmethod

@@ -19,7 +19,6 @@ from django.db.models import (
     F,
 )
 
-
 from core.permissions import get_member_user, get_any_authenticated_user
 from core.validators import validate_track_task_files
 from core.models import BdayaUser, Track
@@ -28,6 +27,7 @@ from .serializers import MemberProfileMSGSerializer, RecivedTaskMSGSerializer
 from notifications.tasks import send_notification_to_track_technicals
 from .models import Member, ReciviedTask, ReciviedTaskFile
 
+from member.api_schemas import TaskSubmitRequestMSG, TaskUpdateRequestMSG
 from organizer.models import Attendance, AttendanceStatus
 
 from technical.serializers import TaskMSGSerializer
@@ -43,9 +43,7 @@ from utils import (
     DEFAULT_CACHE_DURATION,
     serializer_encoder,
     JSON_CONTENT_TYPE,
-    SAFE_MIMETYPES,
-    FormStr,
-    IntId,
+    SAFE_MIMETYPES
 )
 from .caches import member_profile_cache_key, tasks_cache_key
 from channels.layers import get_channel_layer
@@ -53,9 +51,9 @@ import mimetypes, asyncio, logging, os
 from urllib.parse import quote
 from typing import Annotated
 
-from django_bolt import BoltAPI, Depends, Response, UploadFile, status
 from django_bolt.exceptions import NotFound, BadRequest, HTTPException
-from django_bolt.param_functions import Form, File
+from django_bolt import BoltAPI, Depends, Response, status
+from django_bolt.param_functions import Form
 
 logger = logging.getLogger("member")
 
@@ -104,30 +102,30 @@ async def get_all_tasks(user: BdayaUser = Depends(get_member_user)):  # type: ig
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.post("/tasks/", status_code=201)
-async def submit_task(task_id: Annotated[IntId, Form()], notes: Annotated[str | None, Form()] = None, files: Annotated[list[UploadFile], File(alias="files")] = [], user: BdayaUser = Depends(get_member_user)):  # type: ignore
+async def submit_task(form: Annotated[TaskSubmitRequestMSG, Form()], user: BdayaUser = Depends(get_member_user)):  # type: ignore
     "submit task solution"
     
     member: Member = user.member  # type: ignore
     TRACK: Track = user.track  # type: ignore
     
-    org_files_names = [file.filename for file in files]
+    org_files_names = [file.filename for file in form.files]
     
     try:
-        new_validated_files = await validate_track_task_files(files, TRACK)
+        new_validated_files = await validate_track_task_files(form.files, TRACK)
     except ValueError as e:
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(e))
 
     try:
-        task = await Task.objects.only("id", "task_number", "created_at", "expires_at").aget(id=task_id)
+        task = await Task.objects.only("id", "task_number", "created_at", "expires_at").aget(id=form.task_id)
     except Task.DoesNotExist:
-        raise NotFound(detail=f"Task with id={task_id} does not exists")
+        raise NotFound(detail=f"Task with id={form.task_id} does not exists")
     
     @sync_to_async
     def safe_transaction():
         with transaction.atomic():
             try:
                 rec_task = ReciviedTask.objects.create(
-                    task=task, member=member, track=TRACK, notes=notes  # type: ignore
+                    task=task, member=member, track=TRACK, notes=form.notes  # type: ignore
                 )
                 oc_files = (
                     ReciviedTaskFile(
@@ -151,7 +149,7 @@ async def submit_task(task_id: Annotated[IntId, Form()], notes: Annotated[str | 
     await cache.adelete_many(
         [
             tasks_cache_key(TRACK.name, user.id),  # type: ignore
-            task_view_cache_key(task_id),
+            task_view_cache_key(form.task_id),
             member_profile_cache_key(member.code),
             technical_tasks_cache_key(TRACK.name),
             members_by_technicals_cache_key(TRACK.name),
@@ -259,7 +257,7 @@ async def get_profile(member_code: str, user: BdayaUser = Depends(get_any_authen
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.get("/edit-task/{sent_task_id}/", response_model=RecivedTaskMSGSerializer)
-async def get_editable_task(sent_task_id: IntId, user: BdayaUser = Depends(get_member_user)):  # type: ignore
+async def get_editable_task(sent_task_id: int, user: BdayaUser = Depends(get_member_user)):  # type: ignore
     """get the signed task to edit
     
     it allows the `member` to get the task that he sent to edit it
@@ -287,17 +285,17 @@ async def get_editable_task(sent_task_id: IntId, user: BdayaUser = Depends(get_m
     return HttpResponse(task_serialized_encoded, content_type=JSON_CONTENT_TYPE)
 
 @bolt.put("/edit-task/{sent_task_id}/", status_code=204)
-async def update_my_task(sent_task_id: IntId, notes: Annotated[str | None, Form()] = None, files: Annotated[list[UploadFile], File(alias='files')] = [], user: BdayaUser = Depends(get_member_user)): # type: ignore
+async def update_my_task(sent_task_id: int, payload: Annotated[TaskUpdateRequestMSG, Form()], user: BdayaUser = Depends(get_member_user)): # type: ignore
     """send task edits
     
     once the `member` finish editing and sends it here it marks the task to be `signed=False`
     """
     
     TRACK: Track = user.track # type: ignore
-    org_files_names = [file.filename for file in files]
+    org_files_names = [file.filename for file in payload.files]
     
     try:
-        new_validated_files = await validate_track_task_files(files, TRACK)
+        new_validated_files = await validate_track_task_files(payload.files, TRACK)
     except ValueError as e:
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(e))
     
@@ -317,12 +315,12 @@ async def update_my_task(sent_task_id: IntId, notes: Annotated[str | None, Form(
     def safe_transaction() -> None:
         needs_save: bool = False
         with transaction.atomic():
-            if notes is not None:
-                task.notes = notes
+            if payload.notes is not None:
+                task.notes = payload.notes
                 update_fields.add("notes")
                 needs_save = True
 
-            if files:
+            if payload.files:
                 ReciviedTaskFile.objects.filter(recivied_task=task).delete()
                 task_files = (
                     ReciviedTaskFile(
@@ -350,7 +348,7 @@ async def update_my_task(sent_task_id: IntId, notes: Annotated[str | None, Form(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @bolt.get("/protected_media/tasks/{sent_task_id}/")
-async def get_protected_file(sent_task_id: IntId, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+async def get_protected_file(sent_task_id: int, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
     """access a protected file
     
     it check if the requested user is an `organizer` or `technical` to get the file

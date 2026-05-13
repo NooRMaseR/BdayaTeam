@@ -1,7 +1,6 @@
-from abc import abstractmethod, ABCMeta
 from collections.abc import AsyncIterable, Iterable
-
-from utils import IntId, serializer_encoder
+from abc import abstractmethod, ABCMeta
+from utils import serializer_encoder
 from typing import Any, Self
 from .models import Track
 import msgspec
@@ -47,7 +46,7 @@ class BaseMSGSerializer[T](msgspec.Struct, frozen=True, metaclass=CombinedMetaCl
     
         
 class TrackNameOnlyMSGSerializer(BaseMSGSerializer[Track], frozen=True):
-    id: IntId
+    id: int
     name: str
 
     @classmethod
@@ -59,7 +58,7 @@ class TrackNameOnlyMSGSerializer(BaseMSGSerializer[Track], frozen=True):
 
 
 class TrackMSGSerializer(BaseMSGSerializer[Track], frozen=True):
-    id: IntId
+    id: int
     name: str
     en_description: str
     ar_description: str

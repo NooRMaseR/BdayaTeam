@@ -1,10 +1,8 @@
 from phonenumber_field.phonenumber import PhoneNumber
 from django_bolt.auth import DjangoCacheRevocation
-from django_bolt.param_functions import Form
 from django_bolt import create_jwt_for_user
 from core.models import BdayaUser
 from django.conf import settings
-from typing import Annotated
 from enum import Enum
 from PIL import Image
 import msgspec
@@ -81,7 +79,3 @@ DEFAULT_CACHE_DURATION = 3600
 JSON_CONTENT_TYPE = "application/json"
 SAFE_MIMETYPES = ('application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/wav', 'video/wave')
 
-IntId = Annotated[int, msgspec.Meta(gt=0)]
-"Represents an integer > 0"
-
-FormStr = Annotated[str, Form()]

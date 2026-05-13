@@ -46,88 +46,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/test-auth/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * test authentication
-         * @description test if the user is authenticated and return the user `credentials`
-         */
-        get: operations["get_test_auth"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/tracks/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** get all tracks */
-        get: operations["get_get_all"];
-        put?: never;
-        /**
-         * create a track
-         * @description the `name` and `prefix` must be `unique`
-         */
-        post: operations["post_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/tracks/{track_name}/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** get one track */
-        get: operations["get_get_one_track"];
-        put?: never;
-        post?: never;
-        /**
-         * delete a track (Very Dangerios)
-         * @description this endpoint deletes a track along with `all related fields`
-         */
-        delete: operations["delete_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/reset-all/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Reset All
-         * @description `Very Dangerios`, Deletes all tracks and members and tasks and technicals, every thing related to the `tracks`
-         */
-        delete: operations["delete_reset_all"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/login/": {
         parameters: {
             query?: never;
@@ -204,6 +122,88 @@ export interface paths {
          */
         post: operations["post_refresh_tokens"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/test-auth/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * test authentication
+         * @description test if the user is authenticated and return the user `credentials`
+         */
+        get: operations["get_test_auth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tracks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** get all tracks */
+        get: operations["get_get_all"];
+        put?: never;
+        /**
+         * create a track
+         * @description the `name` and `prefix` must be `unique`
+         */
+        post: operations["post_create_track"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tracks/{track_name}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** get one track */
+        get: operations["get_get_one_track"];
+        put?: never;
+        post?: never;
+        /**
+         * delete a track (Very Dangerios)
+         * @description this endpoint deletes a track along with `all related fields`
+         */
+        delete: operations["delete_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reset-all/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Reset All
+         * @description `Very Dangerios`, Deletes all tracks and members and tasks and technicals, every thing related to the `tracks`
+         */
+        delete: operations["delete_reset_all"];
         options?: never;
         head?: never;
         patch?: never;
@@ -521,32 +521,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        TestAuthResponseMSG: {
-            username: string;
-            /** @enum {string} */
-            role: "member" | "technical" | "organizer";
-            is_admin: boolean;
-            settings: components["schemas"]["SiteSettingsImagesMSGSerializer"];
-            /** @default null */
-            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
-        };
-        SiteSettingsImagesMSGSerializer: {
-            /** @default null */
-            site_image: string;
-            /** @default null */
-            hero_image: string;
-        };
-        TrackNameOnlyMSGSerializer: {
-            id: number;
-            name: string;
-        };
-        TrackMSGSerializer: {
-            id: number;
-            name: string;
-            en_description: string;
-            ar_description: string;
-            image: string;
-        };
         LoginRequestMSG: {
             email: string;
             password: string;
@@ -558,6 +532,10 @@ export interface components {
             role: "member" | "technical" | "organizer";
             /** @default null */
             track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+        };
+        TrackNameOnlyMSGSerializer: {
+            id: number;
+            name: string;
         };
         RegisterRequestMSG: {
             request_track_id: number;
@@ -576,6 +554,28 @@ export interface components {
             /** @default null */
             refresh: string;
         };
+        TestAuthResponseMSG: {
+            username: string;
+            /** @enum {string} */
+            role: "member" | "technical" | "organizer";
+            is_admin: boolean;
+            settings: components["schemas"]["SiteSettingsImagesMSGSerializer"];
+            /** @default null */
+            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+        };
+        SiteSettingsImagesMSGSerializer: {
+            /** @default null */
+            site_image: string;
+            /** @default null */
+            hero_image: string;
+        };
+        TrackMSGSerializer: {
+            id: number;
+            name: string;
+            en_description: string;
+            ar_description: string;
+            image: string;
+        };
         TaskMSGSerializer: {
             id: number;
             task_number: number;
@@ -589,14 +589,6 @@ export interface components {
             links?: string[];
             /** @default 0 */
             unsigned_tasks_count: number;
-        };
-        TaskCreateRequestMSG: {
-            task_number: number;
-            /** Format: date-time */
-            expires_at: string;
-            description: string;
-            images?: string[];
-            links?: string[];
         };
         RecivedTaskMSGSerializer: {
             id: number;
@@ -805,185 +797,6 @@ export interface operations {
             };
         };
     };
-    get_test_auth: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TestAuthResponseMSG"];
-                };
-            };
-        };
-    };
-    get_get_all: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TrackMSGSerializer"][];
-                };
-            };
-        };
-    };
-    post_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Form data */
-        requestBody: {
-            content: {
-                "multipart/form-data": {
-                    name: string;
-                    prefix: string;
-                    en_description: string;
-                    ar_description: string;
-                    /** Format: binary */
-                    image?: string;
-                };
-                "application/x-www-form-urlencoded": {
-                    name: string;
-                    prefix: string;
-                    en_description: string;
-                    ar_description: string;
-                    /** Format: binary */
-                    image?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Successful response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": Record<string, never>;
-                };
-            };
-            /** @description Validation Error - Request data failed validation */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description List of validation errors */
-                        detail: {
-                            /**
-                             * @description Error type
-                             * @example validation_error
-                             */
-                            type: string;
-                            /**
-                             * @description Location of the error (field path)
-                             * @example [
-                             *       "body",
-                             *       "is_active"
-                             *     ]
-                             */
-                            loc: (string | number)[];
-                            /**
-                             * @description Error message
-                             * @example Expected `bool`, got `int`
-                             */
-                            msg: string;
-                            /** @description The input value that caused the error (optional) */
-                            input?: unknown;
-                        }[];
-                    };
-                };
-            };
-        };
-    };
-    get_get_one_track: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Parameter track_name */
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TrackMSGSerializer"];
-                };
-            };
-        };
-    };
-    delete_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Parameter track_name */
-                track_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": Record<string, never>;
-                };
-            };
-        };
-    };
-    delete_reset_all: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": Record<string, never>;
-                };
-            };
-        };
-    };
     post_login: {
         parameters: {
             query?: never;
@@ -1178,6 +991,183 @@ export interface operations {
             };
         };
     };
+    get_test_auth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestAuthResponseMSG"];
+                };
+            };
+        };
+    };
+    get_get_all: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackMSGSerializer"][];
+                };
+            };
+        };
+    };
+    post_create_track: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Form data */
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    name: string;
+                    prefix: string;
+                    en_description: string;
+                    ar_description: string;
+                    image: string;
+                };
+                "application/x-www-form-urlencoded": {
+                    name: string;
+                    prefix: string;
+                    en_description: string;
+                    ar_description: string;
+                    image: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Validation Error - Request data failed validation */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description List of validation errors */
+                        detail: {
+                            /**
+                             * @description Error type
+                             * @example validation_error
+                             */
+                            type: string;
+                            /**
+                             * @description Location of the error (field path)
+                             * @example [
+                             *       "body",
+                             *       "is_active"
+                             *     ]
+                             */
+                            loc: (string | number)[];
+                            /**
+                             * @description Error message
+                             * @example Expected `bool`, got `int`
+                             */
+                            msg: string;
+                            /** @description The input value that caused the error (optional) */
+                            input?: unknown;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    get_get_one_track: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter track_name */
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackMSGSerializer"];
+                };
+            };
+        };
+    };
+    delete_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Parameter track_name */
+                track_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    delete_reset_all: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
     get_tech_get_all: {
         parameters: {
             query?: never;
@@ -1205,10 +1195,25 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Request body for payload */
+        /** @description Form data */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TaskCreateRequestMSG"];
+                "multipart/form-data": {
+                    task_number: number;
+                    /** Format: date-time */
+                    expires_at: string;
+                    description: string;
+                    links?: string[];
+                    images?: string[];
+                };
+                "application/x-www-form-urlencoded": {
+                    task_number: number;
+                    /** Format: date-time */
+                    expires_at: string;
+                    description: string;
+                    links?: string[];
+                    images?: string[];
+                };
             };
         };
         responses: {
@@ -1289,10 +1294,25 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Request body for payload */
+        /** @description Form data */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TaskCreateRequestMSG"];
+                "multipart/form-data": {
+                    task_number: number;
+                    /** Format: date-time */
+                    expires_at: string;
+                    description: string;
+                    links?: string[];
+                    images?: string[];
+                };
+                "application/x-www-form-urlencoded": {
+                    task_number: number;
+                    /** Format: date-time */
+                    expires_at: string;
+                    description: string;
+                    links?: string[];
+                    images?: string[];
+                };
             };
         };
         responses: {
@@ -1915,22 +1935,24 @@ export interface operations {
             cookie?: never;
         };
         /** @description Form data */
-        requestBody?: {
+        requestBody: {
             content: {
                 "multipart/form-data": {
+                    /** @default false */
                     is_register_enabled?: boolean;
                     organizer_can_edit?: string[];
-                    /** Format: binary */
+                    /** @default null */
                     site_image?: string;
-                    /** Format: binary */
+                    /** @default null */
                     hero_image?: string;
                 };
                 "application/x-www-form-urlencoded": {
+                    /** @default false */
                     is_register_enabled?: boolean;
                     organizer_can_edit?: string[];
-                    /** Format: binary */
+                    /** @default null */
                     site_image?: string;
-                    /** Format: binary */
+                    /** @default null */
                     hero_image?: string;
                 };
             };
@@ -2012,15 +2034,15 @@ export interface operations {
             content: {
                 "multipart/form-data": {
                     task_id: number;
+                    /** @default null */
                     notes?: string;
-                    /** Format: binary */
-                    files?: string;
+                    files?: string[];
                 };
                 "application/x-www-form-urlencoded": {
                     task_id: number;
+                    /** @default null */
                     notes?: string;
-                    /** Format: binary */
-                    files?: string;
+                    files?: string[];
                 };
             };
         };
@@ -2129,14 +2151,14 @@ export interface operations {
         requestBody: {
             content: {
                 "multipart/form-data": {
-                    notes: string;
-                    /** Format: binary */
-                    files?: string;
+                    /** @default null */
+                    notes?: string;
+                    files?: string[];
                 };
                 "application/x-www-form-urlencoded": {
-                    notes: string;
-                    /** Format: binary */
-                    files?: string;
+                    /** @default null */
+                    notes?: string;
+                    files?: string[];
                 };
             };
         };

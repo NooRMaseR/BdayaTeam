@@ -250,9 +250,6 @@ export default function TaskActions({ task, track_name }: TaskActionsProps) {
                 
                 if (data.links && data.links.length > 0) {
                     const rowLinks = `[${data.links.map(link => `"${link.url}"`).join(",")}]`;
-                    // data.links.forEach(link => {
-                    //     if (link.url.trim() !== '') link.url;
-                    // });
                     fd.append('links', rowLinks);
                 }
 

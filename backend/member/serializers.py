@@ -6,9 +6,7 @@ from core.models import BdayaUser
 from .models import Member, MemberStatus, ReciviedTask, ReciviedTaskFile
 from collections.abc import AsyncIterable, Iterable
 from datetime import datetime
-from utils import IntId
 from typing import Self
-
 
 class MemberBaseMSG(BaseMSGSerializer[Member], frozen=True):
     code: str
@@ -73,7 +71,7 @@ class MemberORGMSGSerializer(MemberBaseMSG, frozen=True):
         ]
 
 class SignedMSGBy(BaseMSGSerializer[BdayaUser], frozen=True):
-    id: IntId
+    id: int
     username: str
 
     @classmethod
@@ -84,7 +82,7 @@ class SignedMSGBy(BaseMSGSerializer[BdayaUser], frozen=True):
         )
 
 class RecivedTaskSmallMSGSerializer(BaseMSGSerializer[ReciviedTask], frozen=True):
-    id: IntId
+    id: int
     task: TaskSmallMSGSerializer
     member_code: str
     signed_by: SignedMSGBy | None = None
@@ -168,7 +166,7 @@ class MemberMSGSerializerForTask(BaseMSGSerializer[Member], frozen=True):
 
 
 class RecivedFile(BaseMSGSerializer[ReciviedTaskFile], frozen=True):
-    id: IntId
+    id: int
     file_url: str
     file_name: str
 
@@ -177,7 +175,7 @@ class RecivedFile(BaseMSGSerializer[ReciviedTaskFile], frozen=True):
         return cls(model.pk, model.file.url, model.file_name)
 
 class RecivedTaskMSGSerializer(BaseMSGSerializer[ReciviedTask], frozen=True):
-    id: IntId
+    id: int
     task: TaskMSGSerializer
     member: MemberMSGSerializerForTask
     track: TrackNameOnlyMSGSerializer

@@ -13,7 +13,7 @@ import AddIcon from '@mui/icons-material/Add';
 import Button from '@mui/material/Button';
 
 import { useForm, Controller, useFieldArray } from 'react-hook-form'; 
-import type { components } from '@/app/generated/api_types';
+import type { paths } from '@/app/generated/api_types';
 import { useLocale, useTranslations } from 'next-intl';
 import dayjs from '@/app/utils/dayjs.client';
 import BodyM from '@/app/components/bodyM';
@@ -21,11 +21,10 @@ import API from '@/app/utils/api.client';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-type FormCreateTask = components['schemas']['TaskCreateRequestMSG'];
+type FormCreateTask = paths['/api/technical/tasks/']['post']['requestBody']['content']['multipart/form-data'];
 
 type TaskFormValues = Omit<FormCreateTask, 'links'> & {
     links: { url: string }[];
-    images: File[];
 };
 
 export default function AddTaskPage() {
@@ -182,7 +181,7 @@ export default function AddTaskPage() {
                                 name="images"
                                 render={({ field }) => (
                                     <ImageUploadWithPreviews
-                                        images={field.value}
+                                        images={field.value as unknown as File[]}
                                         onChange={field.onChange}
                                     />
                                 )}
