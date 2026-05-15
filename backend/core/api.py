@@ -97,8 +97,6 @@ async def login(request: Request, body: api_schemas.LoginRequestMSG):
         track_data = TrackNameOnlyMSGSerializer.from_model(user.track)
     
     tokens = generate_jwts_for_user(user)
-    print(tokens.access)
-    print(tokens.refresh)
 
     data = api_schemas.LoginResponseMSG(
         username= user.username,
@@ -187,7 +185,7 @@ async def register(payload: api_schemas.RegisterRequestMSG):
     except ValueError as e:
         raise BadRequest(detail=str(e))
 
-    user = await BdayaUser.objects.aget(id=member.bdaya_user_id) # type: ignore
+    user = await BdayaUser.objects.select_related("member").aget(id=member.bdaya_user_id) # type: ignore
 
     tokens = generate_jwts_for_user(user)
     

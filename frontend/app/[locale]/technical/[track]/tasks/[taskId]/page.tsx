@@ -84,7 +84,7 @@ export default async function TaskViewPage({ params }: { params: Promise<{locale
                     {task.links && task.links.length > 0 && (
                         <div className="p-6 md:p-8 dark:bg-(--dark-color) bg-slate-50/50 border-t border-slate-200">
                             <Typography variant="overline" color="primary" fontWeight="bold">
-                                {tr('urls') || "Reference Links"}
+                                {tr('urls')}
                             </Typography>
                             <div className="flex flex-col gap-3 mt-3">
                                 {task.links.map((url: string, idx: number) => {
@@ -106,7 +106,7 @@ export default async function TaskViewPage({ params }: { params: Promise<{locale
                             </div>
                         </div>
                     )}
-                    <TaskImageGallery images={task.images} title="Reference Images" />
+                    <TaskImageGallery images={task.images} title={tr("images")} />
 
                 </Paper>
                 

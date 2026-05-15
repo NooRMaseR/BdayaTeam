@@ -1,4 +1,4 @@
-from django_bolt.serializers import HttpsURL, Serializer, field_validator
+from django_bolt.serializers import Serializer, field_validator
 from django_bolt import UploadFile
 from django.utils import timezone
 from datetime import datetime
@@ -10,8 +10,9 @@ class TaskCreateRequestMSG(Serializer):
     task_number: int
     expires_at: datetime
     description: str
-    links: list[HttpsURL] = []
+    # links: list[HttpsURL] = []
     # links: list[str] = []
+    links: str | None = None
     images: list[UploadFile] = []
     
     @field_validator("links", "before")

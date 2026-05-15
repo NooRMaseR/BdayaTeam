@@ -1,66 +1,128 @@
 services:
-  # 1. The Database
+  # Self Kernel
+  host-kernel-setup:
+    image: alpine
+    privileged: true
+    command: sysctl -w vm.overcommit_memory=1
+
+  # The Database (postgreSql)
   db:
     image: postgres:18.3
     restart: always
     user: postgres
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/
     expose:
       - "5432"
+    env_file:
+      - ./backend/.env
     healthcheck:
-      test: [ "CMD", "pg_isready" ]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # 2. The Cache
+  # The Cache (redis)
   redis:
     image: redis:7-alpine
     restart: always
     expose:
       - "6379"
+    depends_on:
+      host-kernel-setup:
+        condition: service_completed_successfully
 
-  # 3. The Backend (Django/Bolt)
+  # The Backend (Django/Bolt)
   bolt:
     build:
       context: ./backend
-    ports:
-      - "8000:8000"
+    image: bdayateam/backend:latest
     env_file:
       - ./backend/.env
     volumes:
-      - ./backend:/app 
+      - ./backend:/app
+      - backend_media:/app/media_files
+      - /app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
 
-  # 4. The Frontend (Next.js)
+  # Huey Worker
+  huey:
+    image: bdayateam/backend:latest
+    restart: always
+    env_file:
+      - ./backend/.env
+    command: ["uv", "run", "--no-dev", "manage.py", "run_huey"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # websocket (daphne)
+  daphne:
+    image: bdayateam/backend:latest
+    restart: always
+    env_file:
+      - ./backend/.env
+    command: ["uv", "run", "--no-dev", "daphne", "-b", "0.0.0.0", "-p", "8001", "BdayaTeam.asgi:application"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # The Frontend (Next.js)
   nextjs:
     build:
       context: ./frontend
-    ports:
-      - "3000:3000"
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_MEDIA_URL: ${NEXT_PUBLIC_MEDIA_URL}
+        NEXT_PUBLIC_WEBSOCKET_URL: ${NEXT_PUBLIC_WEBSOCKET_URL}
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
+        NEXT_API_URL: "https://nginx"
+    image: bdayateam/frontend:latest
     env_file:
       - ./frontend/.env
+    extra_hosts:
+      - "localhost:host-gateway"
     volumes:
-      - ./frontend:/app
       - /app/node_modules
+      - nextjs_static:/app/.next/static
     depends_on:
       bolt:
         condition: service_started
 
-  # 5. The Reverse Proxy (Nginx)
+  # The Reverse Proxy (Nginx)
   nginx:
     image: nginx:alpine
     restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx_teamBdaya.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx_main.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx_teamBdaya_docker.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./backend/localhost-key.pem:/etc/nginx/ssl/localhost-key.pem:ro
+      - ./backend/localhost.pem:/etc/nginx/ssl/localhost.pem:ro
+      - ./backend/static_files:/app/static_files:ro
+      - backend_media:/app/media_files:ro
+      - nextjs_static:/usr/share/nginx/nextjs_static:ro
     depends_on:
       bolt:
         condition: service_started
@@ -69,3 +131,5 @@ services:
 
 volumes:
   db-data:
+  nextjs_static:
+  backend_media:

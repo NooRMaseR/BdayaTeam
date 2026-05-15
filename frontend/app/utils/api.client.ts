@@ -42,7 +42,6 @@ export async function refreshToken(options: MiddlewareCallbackParams & {
                     newAccessToken = value.trim();
                 }
 
-                // 2. Safely replace the old token in the string, or append it
                 const regex = new RegExp(`(?:^|;\\s*)${key}=[^;]*`);
                 if (regex.test(cookies)) {
                     cookies = cookies.replace(regex, `; ${key}=${value}`);
@@ -51,7 +50,6 @@ export async function refreshToken(options: MiddlewareCallbackParams & {
                 }
             });
 
-            // Clean up any leading semicolons that might have formed
             cookies = cookies.replace(/^;\s*/, '');
             const retryRequest = new Request(options.request, {
                 ...options,
