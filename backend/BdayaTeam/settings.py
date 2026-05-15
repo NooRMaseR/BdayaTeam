@@ -31,10 +31,12 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
+USE_DOCKER = True
 
 ALLOWED_HOSTS = (
     "localhost",
     "127.0.0.1",
+    "nginx",
     "twist-raid-family-responsibility.trycloudflare.com"
 )
 
@@ -146,12 +148,10 @@ ASGI_APPLICATION = "BdayaTeam.asgi.application"
 
 DATABASES = {
     "default": {
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': BASE_DIR / 'db.sqlite3',
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "NAME": os.getenv("POSTGRES_DB"),
+        "USER": os.getenv("POSTGRES_USER"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
         "HOST": os.getenv("DB_HOST"),
         "PORT": os.getenv("DB_PORT"),
         "OPTIONS": {
@@ -167,7 +167,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "LOCATION": f"redis://{'redis' if USE_DOCKER else "127.0.0.1"}:6379/1", #* for Docker
         "TIMEOUT": 604800,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
@@ -183,13 +183,13 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': (('127.0.0.1', 6379),)
+            'hosts': (('redis' if USE_DOCKER else "127.0.0.1", 6379),) #* for Docker
         }
     }
 }
 
 LOGS_DIR = BASE_DIR / 'logs'
-LOGS_DIR.mkdir(exist_ok=True)
+# LOGS_DIR.mkdir(exist_ok=True)
 
 LOGGING = {
     'version': 1,
@@ -229,15 +229,15 @@ LOGGING = {
         },
 
         # Rotates at 10 MB, keeps last 5 files — safe for long-running servers
-        "file": {
-            "level": "INFO",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOGS_DIR / "app.log",
-            "maxBytes": 1024 * 1024 * 10,  # 10 MB
-            "backupCount": 5,
-            "formatter": "verbose",
-            "filters": ["require_debug_false"],  # File handler only in production
-        },
+        # "file": {
+        #     "level": "INFO",
+        #     "class": "logging.handlers.RotatingFileHandler",
+        #     "filename": LOGS_DIR / "app.log",
+        #     "maxBytes": 1024 * 1024 * 10,  # 10 MB
+        #     "backupCount": 5,
+        #     "formatter": "verbose",
+        #     "filters": ["require_debug_false"],  # File handler only in production
+        # },
 
         # Sends ERROR+ emails to ADMINS in settings — only fires in production
         "mail_admins": {
@@ -252,14 +252,14 @@ LOGGING = {
     'loggers': {
         # Catch-all for Django's internal routing and DB operations
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
         },
         
         # Specifically catches HTTP 5xx errors
         'django.request': {
-            'handlers': ['file'],
+            'handlers': ['console'],
             'level': 'ERROR',
             'propagate': False,
         },
@@ -276,7 +276,7 @@ HUEY = {
         "workers": 10,
         "worker_type": "greenlet",
     },
-    "connection": {"host": "127.0.0.1", "port": 6379, "db": 0},
+    "connection": {"host": 'redis' if USE_DOCKER else "127.0.0.1", "port": 6379, "db": 0}, #* for Docker
 }
 
 # Password validation
@@ -345,6 +345,7 @@ CORS_ALLOWED_ORIGINS = (
     "https://localhost:3000",
     "https://localhost:8000",
     "http://localhost:8000",
+    "https://nginx",
     "https://twist-raid-family-responsibility.trycloudflare.com",
 )
 
@@ -353,6 +354,7 @@ CSRF_TRUSTED_ORIGINS = (
     "https://localhost:3000",
     "https://localhost:8000",
     "http://localhost:8000",
+    "https://nginx",
     "https://twist-raid-family-responsibility.trycloudflare.com",
 )
 CSRF_COOKIE_HTTPONLY = True

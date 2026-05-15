@@ -268,13 +268,16 @@
         "expiresAt": "Expires At",
         "taskDesc": "Task Description",
         "create": "Create",
-        "metaTitle": "Track Tasks"
+        "metaTitle": "Track Tasks",
+        "urls": "URLs",
+        "images": "Images"
     },
     "taskPage": {
         "taskView": "Task View",
         "upload_title": "Drag or Click to upload",
         "upload_hint": "if file is > 300MB then share a link instead of a file",
         "urls": "URLs",
+        "images": "Images",
         "yes": "Yes",
         "notes": "Notes",
         "techNotes": "Technical Notes",

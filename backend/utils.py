@@ -62,7 +62,7 @@ def generate_dummy_image() -> bytes:
     file_obj.seek(0)
     return file_obj.read()
 
-def _enc_str(obj) -> str:
+def _enc_hook(obj) -> str:
     if isinstance(obj, PhoneNumber):
         return obj.as_e164
     elif isinstance(obj, Enum):
@@ -70,7 +70,7 @@ def _enc_str(obj) -> str:
     
     raise TypeError(f"Object of Type {type(obj)} is not a json serializer")
 
-serializer_encoder = msgspec.json.Encoder(enc_hook=_enc_str)
+serializer_encoder = msgspec.json.Encoder(enc_hook=_enc_hook)
 
 STORE = DjangoCacheRevocation()
 

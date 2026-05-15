@@ -56,7 +56,6 @@ export default function AddTaskPage() {
                 fd.append('expires_at', data.expires_at);
                 
                 if (data.links && data.links.length > 0) {
-                    // const rowLinks = `[${data.links.map(link => `"${link.url}"`).join(",")}]`;
                     fd.append('links', JSON.stringify(data.links.map(link => link.url)));
                 }
 
@@ -171,10 +170,10 @@ export default function AddTaskPage() {
                                 Add Link
                             </Button>
                         </div>
-                        {/* 🚨 NEW IMAGES FIELD */}
+                        
                         <div className="border border-slate-200 p-4 rounded-xl">
                             <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>
-                                Reference Images (Optional)
+                                {tr('images')}
                             </Typography>
                             <Controller
                                 control={control}

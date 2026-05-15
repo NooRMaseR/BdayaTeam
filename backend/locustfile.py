@@ -6,8 +6,8 @@ from locust import FastHttpUser, task, between
 
 class MemberBoltUser(FastHttpUser):
     wait_time = between(2, 5)
-    host="http://localhost:8000/api"
-    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzc4MTA2MzQ5LCJpYXQiOjE3NzgwODExNDksImlzX3N0YWZmIjpmYWxzZSwiaXNfc3VwZXJ1c2VyIjpmYWxzZSwidXNlcm5hbWUiOiJOb29yIiwiZW1haWwiOiJub29yd25lNkBnbWFpbC5jb20iLCJyb2xlIjoibWVtYmVyIiwiY29kZSI6InAtMSIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJqdGkiOiJhYTNhMzBmYS05MDQyLTQ1M2YtOGEzYi1hNGYyYzBlZjUyNjIifQ.c2_wxgWaUSqQ7zDEPT6Pd-i63H8H_it_oMKWFAamw_o"
+    host="http://localhost/api"
+    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzc4ODg1Nzg4LCJpYXQiOjE3Nzg4NjA1ODgsImlzX3N0YWZmIjpmYWxzZSwiaXNfc3VwZXJ1c2VyIjpmYWxzZSwidXNlcm5hbWUiOiJOb29yIiwiZW1haWwiOiJub29yd25lNkBnbWFpbC5jb20iLCJyb2xlIjoibWVtYmVyIiwiY29kZSI6InAtMSIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJqdGkiOiJlZDJmNzJhZS1lNWRiLTRhNGQtOTJlYy0zNDM0ZmZkMTE4M2QifQ.4POItsOPAMzjSl_cTSpmxH4O1YxB0dmfIUF6l7rGNXU"
     
     @task
     def see_tasks(self):

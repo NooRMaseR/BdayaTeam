@@ -4,7 +4,7 @@ import type { paths } from "@/app/generated/api_types";
 import createClient, { type Middleware } from "openapi-fetch";
 
 const API = createClient<paths>({
-    baseUrl: process.env.NEXT_PUBLIC_API_URL,
+    baseUrl: process.env.NEXT_API_URL,
     fetch: fetchWithCookies,
 });
 

@@ -367,16 +367,7 @@ async def update_settings(payload: Annotated[UpdateSettingsRequestMSG, Form()], 
             obj.is_register_enabled = payload.is_register_enabled
 
         if payload.organizer_can_edit != None:
-            
-            if isinstance(payload.organizer_can_edit, str):
-                cleaned_list = [x.strip() for x in payload.organizer_can_edit.split(",") if x.strip()]
-            
-            elif isinstance(payload.organizer_can_edit, list) and len(payload.organizer_can_edit) == 1 and "," in payload.organizer_can_edit[0]:
-                cleaned_list = [x.strip() for x in payload.organizer_can_edit[0].split(",") if x.strip()]
-            else:
-                cleaned_list = payload.organizer_can_edit
-                
-            obj.organizer_can_edit = cleaned_list  # type: ignore
+            obj.organizer_can_edit = payload.organizer_can_edit  # type: ignore
 
         if payload.site_image:
             obj.site_image = payload.site_image.file  # type: ignore

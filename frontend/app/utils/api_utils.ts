@@ -132,7 +132,7 @@ export async function serverGraphQL<T>(query: string, variables: Record<string, 
 
     const ap = new ApolloClient({
         link: new HttpLink({
-            uri: `${process.env.NEXT_PUBLIC_API_URL}/api/graphql/`,
+            uri: `${process.env.NEXT_API_URL}/api/graphql/`,
             headers: headers,
             credentials: "include"
         }),

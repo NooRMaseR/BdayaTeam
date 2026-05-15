@@ -1,61 +1,13 @@
 # instructions for Backend
 
-just run `setup.sh` from the project root and it will setup and installs the dependencies
-
-in your `env` add these
-
-```ini
-SECRET_KEY=<djang-secret>
-DB_NAME=teambdayadb
-DB_HOST=localhost
-DB_PORT=''
-DB_USER=root
-DB_PASSWORD=root123
-EMAIL_HOST=<host>
-EMAIL_PORT=<port>
-EMAIL_HOST_USER=<email>
-EMAIL_HOST_PASSWORD=<app-password>
-VAPID_PRIVATE_KEY=VAPID_PRIVATE_KEY
-VAPID_ADMIN_EMAIL=VAPID_ADMIN_EMAIL
-```
-
-## Postgres
-
-run these commands
-
-```bash
-sudo -u postgres psql -c "CREATE DATABASE teambdayadb;"
-sudo -u postgres psql -c "CREATE USER team WITH PASSWORD 'team111213';"
-sudo -u postgres psql -c "ALTER ROLE team SET client_encoding TO 'utf8';"
-sudo -u postgres psql -c "ALTER ROLE team SET default_transaction_isolation TO 'read committed';"
-sudo -u postgres psql -c "ALTER ROLE team SET timezone TO 'Africa/Cairo';"
-sudo -u postgres psql -c "ALTER USER team CREATEDB;"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE teambdayadb TO team;"
-sudo -u postgres psql -d teambdayadb -c "GRANT ALL PRIVILEGES ON SCHEMA public TO team;"
-```
-
 ## creating an admin user
 
 to create an admin user run this command
 
-```bash
-uv run manage.py createsuperuser
-```
-
-### Running the Server
-
-run the server by using this command
+using `Docker`
 
 ```bash
-uv run manage.py runbolt --processes 4 --keep-alive 10
-```
-
-## Redis
-
-test it from this command
-
-```bash
-redis-cli ping # you should get PONG
+docker compose exec bolt uv run manage.py createsuperuser
 ```
 
 ## Nginx
@@ -74,33 +26,6 @@ worker_rlimit_nofile 5000; # Add this line at the top level
 events {
     worker_connections 1500; # Increase this
 }
-```
-
-then always test nginx when changing the configirations inside `sites-avilable` using this command
-
-```bash
-sudo nginx -t
-```
-
-you should get somthing like this
-
-```bash
-nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
-nginx: configuration file /etc/nginx/nginx.conf test is successful
-```
-
-then restart nginx
-
-```bash
-sudo nginx -s reload
-```
-
-### Issue
-
-you can check the permissions using this command
-
-```bash
-sudo -u www-data head -n 5 /home/kali/BdayaTeam/nginx_teamBdaya.conf
 ```
 
 ## Formulas
