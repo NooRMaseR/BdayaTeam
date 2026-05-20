@@ -19,6 +19,7 @@ from django.db.models import (
     F,
 )
 
+# from core.middleware import TrackTimeMiddleware
 from core.permissions import get_member_user, get_any_authenticated_user
 from core.validators import validate_track_task_files
 from core.models import BdayaUser, Track
@@ -61,7 +62,8 @@ bolt = BoltAPI(
     prefix="/api/member/",
     trailing_slash="append",
     validate_response=False,
-    django_middleware=settings.BOLT_MIDDLEWARE
+    django_middleware=settings.BOLT_MIDDLEWARE,
+    # middleware=[TrackTimeMiddleware]
 )
 
 
