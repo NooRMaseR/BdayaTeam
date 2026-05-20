@@ -1,4 +1,4 @@
-from django_bolt.serializers import Serializer, field_validator
+from django_bolt.serializers import PositiveInt, Serializer, field_validator
 from django_bolt import UploadFile
 from django.utils import timezone
 from datetime import datetime
@@ -7,11 +7,10 @@ import msgspec
 import json
 
 class TaskCreateRequestMSG(Serializer):
-    task_number: int
+    task_number: PositiveInt
     expires_at: datetime
     description: str
     # links: list[HttpsURL] = []
-    # links: list[str] = []
     links: str | None = None
     images: list[UploadFile] = []
     
@@ -31,7 +30,7 @@ class TaskSignRequestMSG(msgspec.Struct):
     technical_notes: str
 
 class TechnicalMembersTasksUpdateRequestMSG(msgspec.Struct):
-    task_id: int
+    task_id: PositiveInt
     code: str
     value: int | str
     field: models.MemberTechEditType

@@ -2,7 +2,7 @@ from typing import Any, Literal, TypedDict
 from django_bolt import UploadFile
 from datetime import date
 
-from django_bolt.serializers import Serializer, field_validator
+from django_bolt.serializers import PositiveInt, Serializer, field_validator
 from . import models
 import msgspec
 import ast
@@ -15,7 +15,7 @@ class DayUpdateRequestMSG(msgspec.Struct):
     newDay: date
 
 class AttendanceDayResponseMSG(msgspec.Struct):
-    id: int
+    id: PositiveInt
     day: date
 
 class MemberEditGridRequestMSG(msgspec.Struct):

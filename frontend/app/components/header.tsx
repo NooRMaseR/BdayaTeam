@@ -29,7 +29,7 @@ import Image from 'next/image';
 
 type LogoutDialogProps = {
   open: boolean;
-  onSucces: () => void;
+  onSucces: () => Promise<void>;
   onClose: () => void;
 }
 
@@ -37,9 +37,9 @@ function LogoutDialog({ open, onSucces, onClose }: LogoutDialogProps) {
   const tr = useTranslations('header');
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
-  const onLogoutClick = () => {
+  const onLogoutClick = async () => {
     setIsLoggingOut(true);
-    onSucces();
+    await onSucces();
   }
   
   const onCancleClick = () => {

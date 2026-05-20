@@ -1,9 +1,9 @@
-from django_bolt.serializers import Serializer
+from django_bolt.serializers import PositiveInt, Serializer
 from django_bolt import UploadFile
 import msgspec
 
 class TaskSubmitRequestMSG(Serializer):
-    task_id: int
+    task_id: PositiveInt
     notes: str | None = None
     files: list[UploadFile] = []
 

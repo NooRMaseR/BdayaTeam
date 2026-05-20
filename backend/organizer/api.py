@@ -1,3 +1,4 @@
+# from core.middleware import TrackMemoryLeakMiddleware, TrackTimeMiddleware
 from core.permissions import (
     get_tech_or_org_user,
     get_org_user,
@@ -52,8 +53,9 @@ bolt = BoltAPI(
     prefix="/api/organizer/",
     trailing_slash="append",
     validate_response=False,
-    django_middleware=settings.BOLT_MIDDLEWARE
-)
+    django_middleware=settings.BOLT_MIDDLEWARE,
+    # middleware=[TrackTimeMiddleware, TrackMemoryLeakMiddleware]
+) 
 
 
 def move_member_to_another_track(code: str, current_track: str, move_to_track: str) -> None:

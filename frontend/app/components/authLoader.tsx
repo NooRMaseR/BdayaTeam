@@ -56,7 +56,7 @@ export default function AuthLoader({ authData, imagesData, children }: AuthLoade
                         isAuthed: true,
                         user: { ...res.data }
                     });
-                    router.refresh(); 
+                    router.refresh();
                 } else {
                     logout();
                 }

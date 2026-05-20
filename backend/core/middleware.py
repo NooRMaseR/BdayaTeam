@@ -1,11 +1,15 @@
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AnonymousUser
 from channels.middleware import BaseMiddleware
+from django_bolt import Middleware, Request
 from asgiref.sync import async_to_sync
 from django.http import SimpleCookie
 from django.conf import settings
 from .models import BdayaUser
 from utils import STORE
+from typing import Any
+import tracemalloc
+import time
 import jwt
 
 async def get_user_from_token(raw_token: str) -> BdayaUser | AnonymousUser:
@@ -93,4 +97,25 @@ class JWTSocketMiddleware(BaseMiddleware):
         
         return await super().__call__(scope, receive, send)
 
-    
+class TrackMemoryLeakMiddleware(Middleware):
+    async def process_request(self, request: Request) -> Any:
+        tracemalloc.start()
+        response = await self.get_response(request)
+        snapshot = tracemalloc.take_snapshot()
+        tracemalloc.stop()
+        
+        top_status = snapshot.statistics('lineno')
+        print("\nMemory Leaks")
+        for status in top_status[:5]:
+            print(status)
+        print()
+        return response
+
+class TrackTimeMiddleware(Middleware):
+    async def process_request(self, request: Request) -> Any:
+        start = time.perf_counter()
+        response = await self.get_response(request)
+        total = round(time.perf_counter() - start, 4)
+        print(f"\nAsync Finished at {total}\n")
+        response.headers['X-Time'] = f"{total}ms"
+        return response

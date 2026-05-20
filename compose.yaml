@@ -36,12 +36,13 @@ services:
   bolt:
     build:
       context: ./backend
+    # command: ["uv", "run", "--no-dev", "manage.py", "runbolt", "--dev"] #! Dev Only
     image: bdayateam/backend:latest
     env_file:
       - ./backend/.env
     volumes:
-      - ./backend:/app
       - backend_media:/app/media_files
+      - ./backend/backups:/app/backups
       - /app/logs
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
@@ -49,6 +50,19 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+          ignore:
+            - .venv/
+            - __pycache__/
+            - backups/
+    deploy:
+      resources:
+        limits:
+          memory: 2g
     depends_on:
       db:
         condition: service_healthy
@@ -62,6 +76,21 @@ services:
     env_file:
       - ./backend/.env
     command: ["uv", "run", "--no-dev", "manage.py", "run_huey"]
+    volumes:
+      - ./backend/backups:/app/backups
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./backend
+          target: /app
+          ignore:
+            - .venv/
+            - __pycache__/
+            - backups/
+    deploy:
+      resources:
+        limits:
+          memory: 2g
     depends_on:
       db:
         condition: service_healthy
@@ -75,6 +104,10 @@ services:
     env_file:
       - ./backend/.env
     command: ["uv", "run", "--no-dev", "daphne", "-b", "0.0.0.0", "-p", "8001", "BdayaTeam.asgi:application"]
+    deploy:
+      resources:
+        limits:
+          memory: 200m
     depends_on:
       db:
         condition: service_healthy
@@ -91,6 +124,7 @@ services:
         NEXT_PUBLIC_WEBSOCKET_URL: ${NEXT_PUBLIC_WEBSOCKET_URL}
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
         NEXT_API_URL: "https://nginx"
+    # command: ["bun", "run", "dev"] #! Dev only
     image: bdayateam/frontend:latest
     env_file:
       - ./frontend/.env
@@ -98,7 +132,17 @@ services:
       - "localhost:host-gateway"
     volumes:
       - /app/node_modules
-      - nextjs_static:/app/.next/static
+      # - nextjs_static:/app/.next/static
+      - nextjs_static:/app/_static
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/app
+          target: /app
+        - action: rebuild
+          path: ./frontend/.env
+        - action: rebuild
+          path: ./frontend/package.json
     depends_on:
       bolt:
         condition: service_started
@@ -128,6 +172,45 @@ services:
         condition: service_started
       nextjs:
         condition: service_started
+  
+  # The Restarter service (for refreshing the Memory (RAM))
+  restarter:
+    image: docker:cli
+    restart: always
+    environment:
+      - TZ=Africa/Cairo
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: ["/bin/sh", "-c"]
+    command: 
+      - |
+        # 1. Install tzdata and forcefully overwrite the container's core clock
+        apk add --no-cache tzdata
+        cp /usr/share/zoneinfo/Africa/Cairo /etc/localtime
+        echo "Africa/Cairo" > /etc/timezone
+        
+        while true; do
+          # The date command will now physically be unable to print UTC
+          echo "Container current time is: $$(date)"
+          
+          # Set this to a few minutes from now to test!
+          target=$$(date -d "04:30" +%s)
+          now=$$(date +%s)
+          
+          diff=$$((target - now))
+          
+          if [ $$diff -le 0 ]; then
+            diff=$$((diff + 86400))
+          fi
+          
+          echo "Sleeping for $$diff seconds until the next trigger..."
+          sleep $$diff
+          
+          echo "Executing restart command..."
+          docker restart bdayateam-huey-1 bdayateam-bolt-1 bdayateam-daphne-1
+          
+          sleep 60
+        done
 
 volumes:
   db-data:

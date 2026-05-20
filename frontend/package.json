@@ -8,6 +8,7 @@
     "build:pack": "next build --webpack && cp -r ./public ./.next/standalone/",
     "start": "next start",
     "alone": "bun run --bun .next/standalone/server.js",
+    "alone:docker": "bun run --bun server.js",
     "lint": "eslint"
   },
   "dependencies": {

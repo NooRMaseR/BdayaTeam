@@ -1,5 +1,5 @@
+from django_bolt.serializers import Email, Phone, PositiveInt, Serializer, field_validator
 from phonenumber_field.validators import validate_international_phonenumber
-from django_bolt.serializers import Serializer, field_validator
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -11,7 +11,7 @@ from . import models, validators
 import msgspec
 
 class LoginRequestMSG(msgspec.Struct):
-    email: str
+    email: Email
     password: str
 
 class LoginResponseMSG(msgspec.Struct):
@@ -21,10 +21,10 @@ class LoginResponseMSG(msgspec.Struct):
     track: TrackNameOnlyMSGSerializer | None = None
 
 class RegisterRequestMSG(Serializer):
-    request_track_id: int
-    email: str
+    request_track_id: PositiveInt
+    email: Email
     name: str
-    phone_number: str
+    phone_number: Phone
     collage_code: str
     
     @field_validator('email', 'before')
@@ -63,7 +63,7 @@ class RefreshTokenRequestMSG(msgspec.Struct):
 class RegisterResponseMSG(msgspec.Struct):
     code: str
     track: TrackNameOnlyMSGSerializer
-    email: str
+    email: Email
     name: str
 
 class TestAuthResponseMSG(msgspec.Struct):    
