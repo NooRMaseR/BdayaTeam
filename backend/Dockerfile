@@ -12,12 +12,15 @@ ENV UV_CACHE_DIR=/tmp/.uv-cache
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 lsb-release ca-certificates
-
-RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/pgdg-archive-keyring.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/pgdg-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    gnupg2 \
+    lsb-release \
+    ca-certificates && \
+    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/pgdg-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/pgdg-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     postgresql-client-18 \
@@ -32,19 +35,25 @@ RUN adduser \
     --no-create-home \
     appuser
 
-RUN mkdir -p /tmp/.uv-cache && \
-    chown -R appuser:appuser /app /tmp/.uv-cache
+RUN mkdir -p /app/media_files /app/static_files /app/.venv /tmp/.uv-cache && \
+    chown -R appuser:appuser /app/media_files /app/static_files /app/.venv /tmp/.uv-cache
 
-RUN mkdir -p /app/static_files /app/media_files && \
-    chown -R appuser:appuser /app/static_files /app/media_files
-
-USER appuser
-
-COPY --chown=appuser:appuser pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock ./
 
 RUN uv sync --locked --no-dev --no-cache
 
-COPY --chown=appuser:appuser . .
+USER appuser
+
+COPY . .
+
+RUN SECRET_KEY="alskjdlaskjdni;ac;mimq;schasbgyanlucdch" \
+    uv run --no-dev manage.py collectstatic --no-input
+
+USER root
+
+RUN chown -R root:root /app/static_files /app/.venv
+
+USER appuser
 
 EXPOSE 8000
 

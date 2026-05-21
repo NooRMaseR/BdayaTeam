@@ -6,7 +6,7 @@ FROM oven/bun:1-slim AS builder
 WORKDIR /app
 
 COPY package.json bun.lockb* ./
-    
+
 RUN bun install --frozen-lockfile
 
 COPY . .
@@ -42,8 +42,8 @@ RUN useradd \
     --no-create-home \
     appuser
 
-COPY --from=builder --chown=appuser:appuser /app/.next/standalone ./
-COPY --from=builder --chown=appuser:appuser /app/.next/static ./_static
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 USER appuser
 

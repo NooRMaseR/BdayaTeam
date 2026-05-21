@@ -42,6 +42,7 @@ services:
       - ./backend/.env
     volumes:
       - backend_media:/app/media_files
+      - backend_static:/app/static_files
       - ./backend/backups:/app/backups
       - /app/logs
     healthcheck:
@@ -131,9 +132,7 @@ services:
     extra_hosts:
       - "localhost:host-gateway"
     volumes:
-      - /app/node_modules
-      # - nextjs_static:/app/.next/static
-      - nextjs_static:/app/_static
+      - nextjs_static:/app/.next/static
     develop:
       watch:
         - action: sync
@@ -164,7 +163,7 @@ services:
       - ./nginx_teamBdaya_docker.conf:/etc/nginx/conf.d/default.conf:ro
       - ./backend/localhost-key.pem:/etc/nginx/ssl/localhost-key.pem:ro
       - ./backend/localhost.pem:/etc/nginx/ssl/localhost.pem:ro
-      - ./backend/static_files:/app/static_files:ro
+      - backend_static:/app/static_files:ro
       - backend_media:/app/media_files:ro
       - nextjs_static:/usr/share/nginx/nextjs_static:ro
     depends_on:
@@ -216,3 +215,4 @@ volumes:
   db-data:
   nextjs_static:
   backend_media:
+  backend_static:

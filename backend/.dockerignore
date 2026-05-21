@@ -36,3 +36,5 @@ README.md
 **/test.rest
 **/locustfile.py
 **/backups
+**/media_files
+**/static_files
