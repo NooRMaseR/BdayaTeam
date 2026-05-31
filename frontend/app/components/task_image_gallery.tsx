@@ -33,7 +33,7 @@ export default function TaskImageGallery({ images, title }: TaskImageGalleryProp
                                 src={img}
                                 fill
                                 alt={`task-img-${idx}`}
-                                unoptimized
+                                unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED == 'true'}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
@@ -49,7 +49,7 @@ export default function TaskImageGallery({ images, title }: TaskImageGalleryProp
                             src={selectedImg}
                             alt="Expanded view"
                             fill
-                            unoptimized
+                            unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED == 'true'}
                             className="object-contain drop-shadow-2xl" 
                         />
                     </div>

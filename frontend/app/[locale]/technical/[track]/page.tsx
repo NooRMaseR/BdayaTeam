@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import BodyM from "@/app/components/bodyM";
 import SeeProfileCard from "./see_profile_card";
 import { getTranslations } from "next-intl/server";
-import { fetchSiteImage } from "@/app/utils/api_utils";
+import { fetchSiteImage } from "@/app/utils/gql_applolo";
 import NavigationCard from "../../../components/navigation_card";
 import AskNotificationButton from "@/app/components/notification_button";
 

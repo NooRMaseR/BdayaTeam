@@ -9,7 +9,7 @@ import MemberTasks from './member_tasks';
 import BodyM from '@/app/components/bodyM';
 import API from '../../../utils/api.server';
 import { getTranslations } from 'next-intl/server';
-import { fetchSiteImage } from '@/app/utils/api_utils';
+import { fetchSiteImage } from "@/app/utils/gql_applolo";
 
 export async function generateMetadata(): Promise<Metadata> {
     const [tr, res] = await Promise.all([

@@ -1,32 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use server';
 
-import type { SeeOrganizerCanEditQuery, SettingsSiteImageQuery } from "../generated/graphql";
+import type { SeeOrganizerCanEditQuery } from "../generated/graphql";
 import { AttendanceStatus, MemberStatus, type GetMemberGridType } from "./api_types_helper";
 import type { GridColDef, GridColumnGroupingModel, GridRowsProp } from "@mui/x-data-grid";
-import { EDITABLE_FIELDS, GET_SITE_IMAGE_SETTINGS } from "./graphql_helpers";
-import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
+import { EDITABLE_FIELDS } from "./graphql_helpers";
+import { getAuthCookies, serverGraphQL } from "./gql_applolo";
 import { getTranslations } from "next-intl/server";
 import API, { fetchTracks } from "./api.server";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
-import { gql } from "graphql-tag";
-
-
-export async function getAuthCookies() {
-    const cookieStore = await cookies();
-    const access_token = cookieStore.get("access_token")?.value;
-    const refresh_token = cookieStore.get("refresh_token")?.value;
-    const csrfToken = cookieStore.get("csrftoken")?.value;
-    const locale = cookieStore.get("NEXT_LOCALE")?.value;
-
-    return {
-        token: access_token,
-        refresh: refresh_token,
-        csrf: csrfToken,
-        locale
-    }
-}
 
 function parseCookie(cookie: string) {
     const splited = cookie.split(";").map((value) => value.trim());
@@ -65,7 +48,7 @@ function parseCookie(cookie: string) {
     return cookieOptions;
 }
 
-export const fetchWithCookies: typeof fetch = async (url, options) => {
+export const fetchWithCookies = async (url: string | URL | Request, options?: RequestInit): Promise<Response> => {
     const cookieStore = await cookies();
     const { token, csrf, locale } = await getAuthCookies();
 
@@ -111,57 +94,6 @@ export const fetchWithCookies: typeof fetch = async (url, options) => {
 
     return response;
 };
-
-type GraphResponse<T> = {
-    data: T;
-    error?: any;
-    success: boolean;
-}
-
-export async function serverGraphQL<T>(query: string, variables: Record<string, any> = {}, mutate: boolean = false, useForm: boolean = false): Promise<GraphResponse<T>> {
-    const { token, csrf } = await getAuthCookies();
-
-    const headers: HeadersInit = {
-        Authorization: token ? `Bearer ${token}` : "",
-        "X-CSRFToken": csrf || ""
-    };
-
-    if (!useForm) {
-        headers["Content-Type"] = "application/json";
-    }
-
-    const ap = new ApolloClient({
-        link: new HttpLink({
-            uri: `${process.env.NEXT_API_URL}/api/graphql/`,
-            headers: headers,
-            credentials: "include"
-        }),
-        cache: new InMemoryCache(),
-    });
-
-    const wrappedQuery = gql`${query}`;
-
-    try {
-        const { data } = mutate
-            ? await ap.mutate({ mutation: wrappedQuery, variables })
-            : await ap.query({ query: wrappedQuery, variables });
-
-        return {
-            data: data as T,
-            success: true
-        };
-    } catch (error) {
-        return {
-            data: {} as T,
-            error: error,
-            success: false
-        };
-    }
-}
-
-export async function fetchSiteImage() {
-    return await serverGraphQL<SettingsSiteImageQuery>(GET_SITE_IMAGE_SETTINGS)
-}
 
 export async function revalidateTagName(tag: string) {
     revalidateTag(tag, 'max');

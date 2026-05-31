@@ -1,6 +1,6 @@
 import type { SeeCanRegisterQuery } from '../../generated/graphql';
 import { CAN_REGISTER } from '../../utils/graphql_helpers';
-import { serverGraphQL } from '../../utils/api_utils';
+import { serverGraphQL } from '../../utils/gql_applolo';
 import { fetchTracks } from '../../utils/api.server';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';

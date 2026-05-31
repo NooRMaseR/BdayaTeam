@@ -1,24 +1,16 @@
-from django_bolt.serializers import PositiveInt, Serializer, field_validator
+from django_bolt.serializers import HttpsURL, PositiveInt, Serializer, field_validator
 from django_bolt import UploadFile
 from django.utils import timezone
 from datetime import datetime
 from . import models
 import msgspec
-import json
 
 class TaskCreateRequestMSG(Serializer):
     task_number: PositiveInt
     expires_at: datetime
     description: str
-    # links: list[HttpsURL] = []
-    links: str | None = None
+    links: list[HttpsURL] = []
     images: list[UploadFile] = []
-    
-    @field_validator("links", "before")
-    def transform_links(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
     
     @field_validator("expires_at", 'before')
     def validate_expires(cls, v) -> None:

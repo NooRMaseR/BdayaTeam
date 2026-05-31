@@ -1,15 +1,14 @@
 import AskNotificationButton from '@/app/components/notification_button';
-import { fetchSiteImage, serverGraphQL } from '@/app/utils/api_utils';
 import type { Get_Member_CodeQuery } from '@/app/generated/graphql';
 import { GET_MEMBER_CODE } from '@/app/utils/graphql_helpers';
 import NavigationCard from '@/app/components/navigation_card';
+import { serverGraphQL } from '@/app/utils/gql_applolo';
+import { fetchSiteImage } from "@/app/utils/gql_applolo";
 import { getTranslations } from 'next-intl/server';
 import BodyM from '@/app/components/bodyM';
 import type { Metadata } from 'next';
 
-export type ParamsProps = {
-    params: Promise<{ trackName: string }>
-};
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
     const [tr, res] = await Promise.all(
@@ -32,6 +31,9 @@ export async function generateMetadata(): Promise<Metadata> {
     }
 }
 
+export type ParamsProps = {
+    params: Promise<{ trackName: string }>
+};
 
 export default async function MemberTrackPage({ params }: ParamsProps ) {
     const [tr, paramsPromise, codeRes ] = await Promise.all(

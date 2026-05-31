@@ -90,7 +90,7 @@ const FilePicker = React.forwardRef<HTMLInputElement, FileProps>(({ accept, prev
                             alt="Preview"
                             fill
                             style={{ objectFit: 'contain' }}
-                            unoptimized
+                            unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED == 'true'}
                         />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                             <span className="text-white font-medium bg-black/50 px-4 py-2 rounded-lg backdrop-blur-sm">

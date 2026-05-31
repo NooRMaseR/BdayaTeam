@@ -119,7 +119,7 @@ export default function SettingsClient({ recivedSettings }: { recivedSettings: S
             bodySerializer(body) {
                 const fd = new FormData();
                 if (isAdmin) fd.append("is_register_enabled", String(body?.is_register_enabled));
-                if (body.organizer_can_edit) fd.append("organizer_can_edit", JSON.stringify(body.organizer_can_edit ?? []));
+                if (body.organizer_can_edit) body.organizer_can_edit.forEach(f => fd.append("organizer_can_edit", f));
                 if (state.images.site.file) fd.append("site_image", state.images.site.file);
                 if (state.images.hero.file) fd.append("hero_image", state.images.hero.file);
 

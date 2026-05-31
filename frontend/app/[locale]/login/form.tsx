@@ -87,7 +87,7 @@ export default function LogInForm() {
                 width={150} 
                 height={150} 
                 loading='eager' 
-                unoptimized 
+                unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED == 'true'} 
                 className="dark:brightness-90 transition-all duration-300"
               />
             </Link>

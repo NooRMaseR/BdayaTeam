@@ -24,7 +24,6 @@ class TaskMSGSerializer(TaskSmallMSGSerializer, frozen=True):
     expired: bool
     images: list[str] = []
     links: list[HttpsURL] = []
-    # links: list[str] = []
     unsigned_tasks_count: int = 0
     
     @classmethod

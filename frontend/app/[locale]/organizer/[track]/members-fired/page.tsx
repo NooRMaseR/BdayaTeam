@@ -6,7 +6,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import type { Metadata } from 'next';
 import BodyM from '@/app/components/bodyM';
 import { getTranslations } from 'next-intl/server';
-import { serverGraphQL } from "@/app/utils/api_utils";
+import { serverGraphQL } from "@/app/utils/gql_applolo";
 import API, { fetchTracks } from "@/app/utils/api.server";
 import MembersGridTable from "@/app/components/member_grid_table";
 import { EDITABLE_FIELDS, GET_TRACK_IMAGE } from '@/app/utils/graphql_helpers';

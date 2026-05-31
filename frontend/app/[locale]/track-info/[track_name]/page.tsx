@@ -6,7 +6,7 @@ import Box from '@mui/material/Box';
 import type { Get_Track_ImageQuery } from '@/app/generated/graphql';
 import type { LocaleOptions } from '@/app/utils/api_types_helper';
 import { GET_TRACK_IMAGE } from '@/app/utils/graphql_helpers';
-import { serverGraphQL } from '@/app/utils/api_utils';
+import { serverGraphQL } from '@/app/utils/gql_applolo';
 import BodyM from '@/app/components/bodyM';
 import { NavButton } from './nav_button';
 import API from '@/app/utils/api.server';
@@ -72,7 +72,7 @@ export default async function TrackHero({ params }: Props ) {
                             fill
                             style={{ objectFit: 'contain' }}
                             priority
-                            unoptimized
+                            unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED == 'true'}
                         />
                     </Box>
                     {/* Track Text Section */}

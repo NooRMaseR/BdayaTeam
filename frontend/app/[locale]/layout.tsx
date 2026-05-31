@@ -1,5 +1,4 @@
 import "./globals.css";
-import API from "../utils/api.server";
 import Header from "../components/header";
 import { getMessages } from 'next-intl/server';
 import type { Metadata, Viewport } from "next";
@@ -7,12 +6,12 @@ import { Toaster } from "@/components/ui/sonner";
 import AuthLoader from "../components/authLoader";
 import { NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
-import { serverGraphQL } from "../utils/api_utils";
-import { GET_IMAGES_SETTINGS } from "../utils/graphql_helpers";
-import type { SettingsImagesQuery } from "../generated/graphql";
+import { SerwistProvider } from "@serwist/turbopack/react";
+import DynamicManifest from "../components/dynamic_manifest";
+import ClickSparkWrapper from "../components/click_spark_wrapper";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { LoadingProvider, RegisterNextThemeProvider, RegisterThemeProvider } from "./clientProviders";
-import ClickSparkWrapper from "../components/click_spark_wrapper";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL || "https://localhost"),
@@ -64,38 +63,33 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
   setRequestLocale(locale);
 
   const messages = await getMessages({ locale });
-  const [authResponse, imagesResponse] = await Promise.allSettled([
-    API.GET("/api/test-auth/"),
-    serverGraphQL<SettingsImagesQuery>(GET_IMAGES_SETTINGS)
-  ]);
-
-  const authData = authResponse.status === "fulfilled" && authResponse.value.data ? authResponse.value.data : null;
-  const imagesData = imagesResponse.status === "fulfilled" ? imagesResponse.value.data.allSettings : null;
 
   return (
     <html lang={locale} dir={locale === 'ar' ? "rtl" : 'ltr'} suppressHydrationWarning>
       <head>
         <link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="manifest" href={`/manifest.json?role=${authData?.role}&track=${authData?.track?.name}`} />
+        <DynamicManifest />
       </head>
       <body className="color-trans dark:bg-(--dark-color)">
-        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-          <RegisterNextThemeProvider attribute='class' defaultTheme="system" enableSystem>
-            <NextIntlClientProvider messages={messages}>
-              <RegisterThemeProvider>
-                <ClickSparkWrapper>
-                  <LoadingProvider>
-                    <AuthLoader authData={authData} imagesData={imagesData}>
-                      <Header />
-                      <Toaster />
-                      {children}
-                    </AuthLoader>
-                  </LoadingProvider>
-                </ClickSparkWrapper>
-              </RegisterThemeProvider>
-            </NextIntlClientProvider>
-          </RegisterNextThemeProvider>
-        </AppRouterCacheProvider>
+        <SerwistProvider swUrl="/serwist/sw.js">
+          <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+            <RegisterNextThemeProvider attribute='class' defaultTheme="system" enableSystem>
+              <NextIntlClientProvider messages={messages}>
+                <RegisterThemeProvider>
+                  <ClickSparkWrapper>
+                    <LoadingProvider>
+                      <AuthLoader>
+                        <Header />
+                        <Toaster />
+                        {children}
+                      </AuthLoader>
+                    </LoadingProvider>
+                  </ClickSparkWrapper>
+                </RegisterThemeProvider>
+              </NextIntlClientProvider>
+            </RegisterNextThemeProvider>
+          </AppRouterCacheProvider>
+        </SerwistProvider>
       </body>
     </html >
   );

@@ -1,12 +1,12 @@
 import NavigationCard from "../../components/navigation_card";
-import { fetchSiteImage } from "../../utils/api_utils";
+import { fetchSiteImage } from "@/app/utils/gql_applolo";
 import { fetchTracks } from "../../utils/api.server";
 import { getTranslations } from "next-intl/server";
 import BodyM from "@/app/components/bodyM";
 import type { Metadata } from "next";
 import ResetAll from "./reset_all";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
     const [tr, res] = await Promise.all(

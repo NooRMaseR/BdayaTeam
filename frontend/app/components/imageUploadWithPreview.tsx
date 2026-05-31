@@ -4,6 +4,7 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Image from 'next/image';
+import React from 'react';
 
 type Props = {
     images?: File[];
@@ -11,17 +12,26 @@ type Props = {
 };
 
 export default function ImageUploadWithPreviews({ images = [], onChange }: Props) {
+    const [previewImages, setPreviewImages] = React.useState<string[]>([]);
+
+    React.useEffect(() => { 
+        const urls = images.map(image => URL.createObjectURL(image));
+        setPreviewImages(urls);
+        return () => {
+            urls.forEach(url => URL.revokeObjectURL(url));
+        }
+    }, [images]);
     
     const handleAppend = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newFiles = e.target.files;
         if (!newFiles || newFiles.length === 0) return;
 
         const dt = new DataTransfer();
-        images.forEach(f => dt.items.add(f)); // Keep old
-        Array.from(newFiles).forEach(f => dt.items.add(f)); // Add new
+        images.forEach(f => dt.items.add(f));
+        Array.from(newFiles).forEach(f => dt.items.add(f));
 
         onChange(Array.from(dt.files));
-        e.target.value = ''; // Reset input
+        e.target.value = '';
     };
 
     const handleRemove = (indexToRemove: number) => {
@@ -31,12 +41,12 @@ export default function ImageUploadWithPreviews({ images = [], onChange }: Props
 
     return (
         <div className="flex flex-col gap-4">
-            {images.length > 0 && (
+            {previewImages.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {images.map((file, index) => (
+                    {previewImages.map((file, index) => (
                         <div key={index} className="relative group rounded-xl overflow-hidden border border-slate-200 aspect-square bg-slate-50">
                             <Image
-                                src={URL.createObjectURL(file)} 
+                                src={file} 
                                 alt={`preview-${index}`}
                                 fill
                                 className="w-full h-full object-cover"

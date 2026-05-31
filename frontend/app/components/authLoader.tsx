@@ -1,76 +1,79 @@
 "use client";
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import API from '../utils/api.client';
-import type { components } from '../generated/api_types';
-import { usePathname, useRouter } from '@/i18n/navigation';
-import SessionTimeoutDialog from './session_timeout_dialog';
+import { usePathname } from '@/i18n/navigation';
+import { serverGraphQL } from '../utils/gql_applolo';
+import { GET_IMAGES_SETTINGS } from '../utils/graphql_helpers';
 import { useAuthStore, useSettingsStore } from '../utils/store';
 import type { SettingsImagesQuery } from '../generated/graphql';
 import LoadingAnimation from './loading_animations/loading_animation';
 
 interface AuthLoaderProps {
-    authData: components["schemas"]["TestAuthResponseMSG"] | null;
-    imagesData: SettingsImagesQuery['allSettings'];
     children: React.ReactNode;
 }
 
-export default function AuthLoader({ authData, imagesData, children }: AuthLoaderProps) {
+const DynamicSessionTimeoutDialog = dynamic(() => import('./session_timeout_dialog'));
+
+export default function AuthLoader({ children }: AuthLoaderProps) {
     const path = usePathname();
-    const router = useRouter();
+    const isLoading = useAuthStore(state => state.isLoading);
     const setCredentials = useAuthStore(state => state.setCredentials);
     const logout = useAuthStore(state => state.logout);
     const setImages = useSettingsStore(state => state.setImages);
-    
-    const [isRefreshingClient, setIsRefreshingClient] = React.useState<boolean>(false);
 
     React.useEffect(() => {
-        if (imagesData) {
-            const { siteImage, heroImage } = imagesData;
-            setImages({
-                site_image: siteImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${siteImage}` : '',
-                hero_image: heroImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${heroImage}` : ''
-            });
-        }
+        let isMounted = true;
 
-        if (authData) {
-            setCredentials({
-                isLoading: false,
-                isAuthed: true,
-                user: {
-                    role: authData.role,
-                    username: authData.username,
-                    track: authData.track,
-                    is_admin: authData.is_admin
-                }
-            });
-        } 
-        else {
-            const runClientFallback = async () => {
-                setIsRefreshingClient(true);
-                const res = await API.GET("/api/test-auth/");
-                
-                if (res.data) {
-                    setCredentials({
-                        isLoading: false,
-                        isAuthed: true,
-                        user: { ...res.data }
-                    });
-                    router.refresh();
-                } else {
-                    logout();
-                }
-                setIsRefreshingClient(false);
-            };
-            
-            runClientFallback();
+        const getData = async () => {
+            const [authResponse, imagesResponse] = await Promise.allSettled([
+                API.GET("/api/test-auth/"),
+                serverGraphQL<SettingsImagesQuery>(GET_IMAGES_SETTINGS)
+            ]);
+
+            if (!isMounted) return;
+    
+            if (imagesResponse.status === "fulfilled" && imagesResponse.value.data.allSettings) {
+                const { siteImage, heroImage } = imagesResponse.value.data.allSettings;
+                setImages({
+                    site_image: siteImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${siteImage}` : '',
+                    hero_image: heroImage ? `${process.env.NEXT_PUBLIC_MEDIA_URL}${heroImage}` : ''
+                });
+            }
+    
+            if (authResponse.status === "fulfilled" && authResponse.value.data) {
+                const authData = authResponse.value.data;
+                setCredentials({
+                    isLoading: false,
+                    isAuthed: true,
+                    user: {
+                        role: authData.role,
+                        username: authData.username,
+                        track: authData.track,
+                        is_admin: authData.is_admin
+                    }
+                });
+            } 
+            else {
+                logout();
+                setCredentials({
+                    isLoading: false,
+                    isAuthed: false,
+                    user: null
+                });
+            }
         }
-    }, [authData, imagesData, setCredentials, setImages, logout, router]);
+        getData();
+        return () => {
+            isMounted = false;
+        }
+    }, [setCredentials, setImages, logout]);
 
     const isAuthed = useAuthStore(state => state.isAuthed);
     const isPublicRoute = path.includes("login") || path.includes("register") || path.includes("track-info/") || path === "/";
 
-    if (isRefreshingClient) {
+    if (isLoading) {
         return (
             <div className='flex w-full h-svh justify-center items-center'>
                 <LoadingAnimation />
@@ -81,6 +84,6 @@ export default function AuthLoader({ authData, imagesData, children }: AuthLoade
     if (isAuthed || isPublicRoute) {
         return <>{children}</>;
     } else {
-        return <SessionTimeoutDialog open />;
+        return <DynamicSessionTimeoutDialog open />;
     }
 }

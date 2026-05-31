@@ -14,7 +14,8 @@
     "jsx": "react-jsx",
     "incremental": true,
     "types": [
-      "@serwist/next/typings"
+      "@serwist/next/typings",
+      "bun"
     ],
     "plugins": [
       {

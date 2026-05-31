@@ -329,7 +329,7 @@ MEDIA_URL = "api/media/"
 MEDIA_ROOT = BASE_DIR / "media_files"
 
 UNFOLD = {
-    "SHOW_LANGUAGES": True,
+    "SHOW_LANGUAGES": False,
 }
 
 # Default primary key field type

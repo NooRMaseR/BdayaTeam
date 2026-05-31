@@ -49,7 +49,7 @@ export default function NavigationCard({ title, desc, imageUrl, url, badgeConten
                 alt={`${title} Track`}
                 fill
                 style={{ objectFit: 'cover' }}
-                unoptimized
+                unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED == 'true'}
                 className="dark:opacity-90 dark:brightness-90 transition-all duration-300" 
               />
             </CardMedia>

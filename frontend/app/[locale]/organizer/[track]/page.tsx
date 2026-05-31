@@ -1,7 +1,7 @@
 import type { Get_Track_ImageQuery } from "@/app/generated/graphql";
 import NavigationCard from "@/app/components/navigation_card";
 import { GET_TRACK_IMAGE } from "@/app/utils/graphql_helpers";
-import { serverGraphQL } from "@/app/utils/api_utils";
+import { serverGraphQL } from "@/app/utils/gql_applolo";
 import { getTranslations } from "next-intl/server";
 import BodyM from "@/app/components/bodyM";
 import DeleteTrack from "./delete-track";

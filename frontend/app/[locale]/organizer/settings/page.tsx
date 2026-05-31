@@ -1,7 +1,7 @@
 import type { GetAllSettingsQuery } from "@/app/generated/graphql";
 import { GET_ALL_SETTINGS } from "@/app/utils/graphql_helpers";
 import type { components } from "@/app/generated/api_types";
-import { serverGraphQL } from "@/app/utils/api_utils";
+import { serverGraphQL } from "@/app/utils/gql_applolo";
 import Typography from "@mui/material/Typography";
 import SettingsClient from "./client_page";
 

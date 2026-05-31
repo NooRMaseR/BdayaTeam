@@ -24,6 +24,7 @@ import { getHomeUrl } from "../utils/api.client";
 import { useTranslations } from 'next-intl';
 import ThemeSwitcher from './themeSwitcher';
 import API from '@/app/utils/api.client';
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import Image from 'next/image';
 
@@ -33,22 +34,22 @@ type LogoutDialogProps = {
   onClose: () => void;
 }
 
-function LogoutDialog({ open, onSucces, onClose }: LogoutDialogProps) {
+const LogoutDialog = dynamic(() => Promise.resolve(function LogoutDialog(props: LogoutDialogProps) {
   const tr = useTranslations('header');
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
   const onLogoutClick = async () => {
     setIsLoggingOut(true);
-    await onSucces();
+    await props.onSucces();
   }
   
   const onCancleClick = () => {
     setIsLoggingOut(false);
-    onClose();
+    props.onClose();
   }
 
   return (
-    <Dialog open={open}>
+    <Dialog open={props.open}>
       <DialogTitle>{tr('logout')} {tr("?")}</DialogTitle>
       <DialogContent>
         <DialogContentText>{tr('logoutConf')}</DialogContentText>
@@ -59,7 +60,7 @@ function LogoutDialog({ open, onSucces, onClose }: LogoutDialogProps) {
       </DialogActions>
     </Dialog>
   )
-}
+}), { ssr: false });
 
 async function performSecureLogout() {
   try {
@@ -129,7 +130,7 @@ export default function Header() {
             {
               site_image
                 ? <Box sx={{ width: "100px", height: "50px", position: "relative" }} >
-                  <Image src={site_image} alt='Team Bdaya' loading='eager' fill unoptimized />
+                  <Image src={site_image} alt='Team Bdaya' loading='eager' fill unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED == 'true'} />
                 </Box>
                 : <Typography component='h5' variant='h5'>{tr('teamBdaya')}</Typography>
             }

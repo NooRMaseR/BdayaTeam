@@ -111,7 +111,7 @@ export default function RegisterForm({ tracks, canRegister = false }: RegisterFo
               width={150}
               height={0}
               loading='eager'
-              unoptimized
+              unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED == 'true'}
               className="dark:brightness-90 transition-all duration-300"
             />
           )

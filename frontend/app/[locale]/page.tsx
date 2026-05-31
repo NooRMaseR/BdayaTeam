@@ -8,7 +8,7 @@ import Container from '@mui/material/Container';
 import { fetchTracks } from '../utils/api.server';
 import NavButtons from '../components/nav_buttons';
 import { getTranslations } from 'next-intl/server';
-import { serverGraphQL } from '../utils/api_utils';
+import { serverGraphQL } from '../utils/gql_applolo';
 import NavigationCard from '../components/navigation_card';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import type { SettingsHeroImageQuery } from '../generated/graphql';
@@ -47,7 +47,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <section className="relative bg-sky-500 py-24 overflow-hidden aspect-16/10">
         {
           hero.success && hero.data.allSettings?.heroImage
-            ? <Image src={`${process.env.NEXT_PUBLIC_MEDIA_URL}${hero.data.allSettings?.heroImage}`} alt='Team pic' fill priority style={{ objectFit: "cover" }} unoptimized />
+            ? <Image src={`${process.env.NEXT_PUBLIC_MEDIA_URL}${hero.data.allSettings?.heroImage}`} alt='Team pic' fill priority style={{ objectFit: "cover" }} unoptimized={process.env.NEXT_PUBLIC_UNOPTIMIZED == 'true'} />
             : null
         }
       </section>

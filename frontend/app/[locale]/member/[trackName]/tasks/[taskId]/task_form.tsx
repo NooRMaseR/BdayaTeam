@@ -81,13 +81,13 @@ export default function TaskForm({ task, track_name, extensions }: TaskActionsPr
                 },
                 bodySerializer(body) {
                     const fd = new FormData();
-                    fd.append('task_id', JSON.stringify(body.task_id));
+                    fd.append('task_id', body.task_id.toString());
 
                     if (body.notes)
-                        fd.append('notes', JSON.stringify(body.notes));
+                        fd.append('notes', body.notes);
 
                     if (body.files && body.files.length > 0) {
-                        (body.files as unknown as string[]).forEach(f => fd.append('files', f));
+                        body.files.forEach(f => fd.append('files', f));
                     }
                     return fd;
                 }

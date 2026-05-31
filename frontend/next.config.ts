@@ -1,13 +1,7 @@
 import type { NextConfig } from "next";
-import withSerwistInit from "@serwist/next";
+import { withSerwist } from "@serwist/turbopack";
 import createNextIntlPlugin from 'next-intl/plugin';
 
-const withSerwist = withSerwistInit({
-  swSrc: "app/sw.ts",
-  swDest: "public/sw.js",
-  disable: process.env.NODE_ENV === "development",
-  exclude: [/api\/*/, /\.map$/, /^manifest.*\.js$/]
-});
 const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {

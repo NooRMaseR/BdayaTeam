@@ -1,6 +1,6 @@
 import createClient, { type MiddlewareCallbackParams, type Middleware } from "openapi-fetch";
 import type { paths } from "@/app/generated/api_types";
-import { getAuthCookies } from "./api_utils";
+import { getAuthCookies } from "./gql_applolo";
 import type { UserAuth } from "./store";
 import { toast } from "sonner";
 

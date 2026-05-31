@@ -5,9 +5,10 @@ import DialogContentText from '@mui/material/DialogContentText';
 
 import type { Metadata } from 'next';
 import BodyM from '@/app/components/bodyM';
-import { getOrgMemberGrid, serverGraphQL } from "@/app/utils/api_utils";
-import MembersGridTable from "@/app/components/member_grid_table";
+import { serverGraphQL } from '@/app/utils/gql_applolo';
+import { getOrgMemberGrid } from "@/app/utils/api_utils";
 import { GET_TRACK_IMAGE } from '@/app/utils/graphql_helpers';
+import MembersGridTable from "@/app/components/member_grid_table";
 import type { Get_Track_ImageQuery } from '@/app/generated/graphql';
 
 
