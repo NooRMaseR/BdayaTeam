@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const tr = await getTranslations('loginPage');
   
   return {
-    title: tr('metaTitle'),
+    title: tr('login'),
     description: tr('metaDesc'),
     openGraph: {
       title: tr('metaTitle'),

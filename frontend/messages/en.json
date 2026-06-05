@@ -38,7 +38,6 @@
         "hours": "Hours",
         "minutes": "Minutes",
         "seconds": "Seconds",
-        "metaTitle": "Team Bdaya Login",
         "metaDesc": "Login to Team Bdaya now"
     },
     "header": {
@@ -67,7 +66,7 @@
         "minutes": "Minutes",
         "seconds": "Seconds",
         "haveAcc": "Already have an account?",
-        "metaTitle": "Team Bdaya Register",
+        "metaTitle": "Register",
         "metaDesc": "Register with Team Bdaya now"
     },
     "organizerPage": {

@@ -13,7 +13,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { LoadingProvider, RegisterNextThemeProvider, RegisterThemeProvider } from "./clientProviders";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL || "https://localhost"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost"),
   applicationName: "Team Bdaya",
   category: "Courses",
   creator: "NooR MaseR",
@@ -29,10 +29,10 @@ export const metadata: Metadata = {
     { name: "Mohamed Zainhom" },
   ],
   alternates: {
-    canonical: "https://localhost",
+    canonical: process.env.NEXT_PUBLIC_API_URL,
     languages: {
-      en: "https://localhost/en",
-      ar: "https://localhost/ar",
+      en: `${process.env.NEXT_PUBLIC_API_URL}/en`,
+      ar: `${process.env.NEXT_PUBLIC_API_URL}/ar`,
     }
   },
 };
