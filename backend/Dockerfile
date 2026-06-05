@@ -15,6 +15,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     gnupg2 \
+    libjemalloc2 \
     lsb-release \
     ca-certificates && \
     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/pgdg-archive-keyring.gpg && \
@@ -26,6 +27,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client-18 \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
 
 RUN adduser \
     --disabled-password \
