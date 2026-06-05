@@ -11,7 +11,6 @@ import DynamicManifest from "../components/dynamic_manifest";
 import ClickSparkWrapper from "../components/click_spark_wrapper";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { LoadingProvider, RegisterNextThemeProvider, RegisterThemeProvider } from "./clientProviders";
-import { Suspense } from "react";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_API_URL || "https://localhost"),
