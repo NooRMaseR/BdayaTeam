@@ -104,16 +104,18 @@ async def add_task(payload: Annotated[TaskCreateRequestMSG, Form()], user: Bdaya
     
     @sync_to_async
     def perform_safe_create() -> Task:
-        created_task = Task.objects.create(
-            task_number = payload.task_number,
-            expires_at = payload.expires_at,
-            description = payload.description,
-            track=TRACK,
-            links=payload.links,
-        )
-        task_images = (TaskImage(task=created_task, image=image.file) for image in payload.images)
-        TaskImage.objects.bulk_create(task_images)
-        return created_task
+        with transaction.atomic():
+            created_task = Task.objects.create(
+                task_number = payload.task_number,
+                expires_at = payload.expires_at,
+                description = payload.description,
+                track=TRACK,
+                links=payload.links,
+                can_recive_tasks_after_expiration=payload.can_recive_tasks_after_expiration
+            )
+            task_images = (TaskImage(task=created_task, image=image.file) for image in payload.images)
+            TaskImage.objects.bulk_create(task_images)
+            return created_task
     
     try:
         created_task = await perform_safe_create()
@@ -191,6 +193,10 @@ async def update_task(task_id: int, payload: Annotated[TaskCreateRequestMSG, For
     if payload.links:
         TASK.links = payload.links # type: ignore
         data_to_update.add("links")
+    
+    if payload.can_recive_tasks_after_expiration != TASK.can_recive_tasks_after_expiration:
+        TASK.can_recive_tasks_after_expiration = payload.can_recive_tasks_after_expiration
+        data_to_update.add("can_recive_tasks_after_expiration")
 
     if not data_to_update:
         raise BadRequest(detail="nothing to update")

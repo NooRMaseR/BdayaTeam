@@ -25,6 +25,7 @@ class TaskMSGSerializer(TaskSmallMSGSerializer, frozen=True):
     images: list[str] = []
     links: list[HttpsURL] = []
     unsigned_tasks_count: int = 0
+    can_recive_tasks_after_expiration: bool = False
     
     @classmethod
     def from_model(cls, model: Task) -> Self:
@@ -37,6 +38,7 @@ class TaskMSGSerializer(TaskSmallMSGSerializer, frozen=True):
             expired=model.is_expired,
             links=model.links if model.links else [],
             images=[image.image.url for image in model.images.all()], # type: ignore
+            can_recive_tasks_after_expiration=model.can_recive_tasks_after_expiration
         )
 
 

@@ -4,7 +4,6 @@ import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 
-import TaskImageGallery from '@/app/components/task_image_gallery';
 import dayjs, { checkLateStatus } from "@/app/utils/dayjs.client";
 import type { LocaleOptions } from '@/app/utils/api_types_helper';
 import { getTranslations } from 'next-intl/server';
@@ -12,7 +11,10 @@ import BodyM from '@/app/components/bodyM';
 import { Link } from '@/i18n/navigation';
 import API from '@/app/utils/api.server';
 import type { Metadata } from 'next';
-import TaskForm from './task_form';
+import dynamic from 'next/dynamic';
+
+const DynamicTaskForm = dynamic(() => import("./task_form"));
+const DynamicTaskImageGallery = dynamic(() => import("@/app/components/task_image_gallery"));
 
 export type TaskViewProps = {
     params: Promise<{
@@ -49,8 +51,10 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
     }
 
     const lateStatus = checkLateStatus(task.expires_at, locale);
-    const lateString = tr(lateStatus.status, { time: lateStatus.from })
-
+    const lateString = tr(lateStatus.status, { time: lateStatus.from });
+    const allowForm = !task.expired || task.can_recive_tasks_after_expiration;
+    const showImages = task.images && task.images.length > 0;
+    
     return (
         <BodyM>
             <div className="max-w-3xl mx-auto py-8 px-4 flex flex-col gap-6 mt-8">
@@ -92,10 +96,10 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
                                 {task.links.map((url, idx: number) => {
                                     return (
                                         <Link
-                                            key={idx} 
-                                            href={url} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
+                                            key={idx}
+                                            href={url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                             className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline transition-colors w-fit bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg"
                                         >
                                             <LinkIcon fontSize="small" />
@@ -109,13 +113,14 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
                         </div>
                     )}
 
-                    <TaskImageGallery images={task.images} title={tr('images')} />
+                    {showImages && <DynamicTaskImageGallery images={task.images} title={tr('images')} />}
                 </Paper>
 
                 <div className="mt-4">
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 3, px: 1 }}>
                         {tr('sub')}
                     </Typography>
+
                     {task.expired && (
                         <Paper elevation={0} className="p-6 text-center border border-red-100 bg-red-50/50 rounded-2xl">
                             <Typography color="error" fontWeight="medium">
@@ -123,7 +128,8 @@ export default async function TaskViewPage({ params }: TaskViewProps) {
                             </Typography>
                         </Paper>
                     )}
-                    <TaskForm task={task} track_name={trackName} extensions={extensions?.extensions} />
+
+                    {allowForm && <DynamicTaskForm task={task} track_name={trackName} extensions={extensions?.extensions} />}
                 </div>
             </div>
         </BodyM>

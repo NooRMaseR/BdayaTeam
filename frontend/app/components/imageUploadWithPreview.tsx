@@ -3,6 +3,7 @@
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import React from 'react';
 
@@ -13,6 +14,7 @@ type Props = {
 
 export default function ImageUploadWithPreviews({ images = [], onChange }: Props) {
     const [previewImages, setPreviewImages] = React.useState<string[]>([]);
+    const tr = useTranslations("tasksPage");
 
     React.useEffect(() => { 
         const urls = images.map(image => URL.createObjectURL(image));
@@ -80,7 +82,7 @@ export default function ImageUploadWithPreviews({ images = [], onChange }: Props
                     className="inline-flex items-center gap-2 px-4 py-2 border-2 border-dashed border-blue-400 text-blue-600 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors font-medium text-sm"
                 >
                     <AddPhotoAlternateIcon fontSize="small" />
-                    Add Images
+                    {tr("addImages")}
                 </label>
             </div>
         </div>

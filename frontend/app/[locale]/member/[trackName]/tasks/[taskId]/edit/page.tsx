@@ -7,12 +7,14 @@ import Chip from '@mui/material/Chip';
 
 import dayjs, { checkLateStatus } from "@/app/utils/dayjs.client";
 import type { TaskViewProps } from '../page';
-import TaskEditForm from './task_edit_form';
 import BodyM from '@/app/components/bodyM';
 import API from '@/app/utils/api.server';
-import type { Metadata } from 'next';
-import TaskImageGallery from '@/app/components/task_image_gallery';
 import { Link } from '@/i18n/navigation';
+import type { Metadata } from 'next';
+import dynamic from 'next/dynamic';
+
+const DynamicTaskEditForm = dynamic(() => import("./task_edit_form"));
+const DynamicTaskImageGallery = dynamic(() => import("@/app/components/task_image_gallery"));
 
 export async function generateMetadata(): Promise<Metadata> {
     const tr = await getTranslations("taskPage");
@@ -41,7 +43,9 @@ export default async function TaskViewEditPage({ params }: TaskViewProps) {
     }
 
     const lateStatus = checkLateStatus(task.task.expires_at, locale);
-    const lateString = tr(lateStatus.status, { time: lateStatus.from })
+    const lateString = tr(lateStatus.status, { time: lateStatus.from });
+    const allowForm = !task.task.expired || task.task.can_recive_tasks_after_expiration;
+    const showImages = task.task.images && task.task.images.length > 0;
 
     return (
         <BodyM>
@@ -101,7 +105,7 @@ export default async function TaskViewEditPage({ params }: TaskViewProps) {
                         </div>
                     )}
 
-                    <TaskImageGallery images={task.task.images} title={tr('images')} />
+                    {showImages && <DynamicTaskImageGallery images={task.task.images} title={tr('images')} />}
                 </Paper>
 
                 <div className="mt-4">
@@ -115,7 +119,7 @@ export default async function TaskViewEditPage({ params }: TaskViewProps) {
                             </Typography>
                         </Paper>
                     )}
-                    <TaskEditForm task={task} track_name={trackName} extensions={extensions?.extensions} />
+                    {allowForm && <DynamicTaskEditForm task={task} track_name={trackName} extensions={extensions?.extensions} />}
                 </div>
             </div>
         </BodyM>

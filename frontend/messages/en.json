@@ -268,8 +268,12 @@
         "taskDesc": "Task Description",
         "create": "Create",
         "metaTitle": "Track Tasks",
+        "addUrl": "Add Url",
         "urls": "URLs",
-        "images": "Images"
+        "urlError": "there's a link that isn't valid, make sure all links starts with https",
+        "images": "Images",
+        "addImages": "Add Images",
+        "acceptTasks": "Accept tasks from members after expiration"
     },
     "taskPage": {
         "taskView": "Task View",

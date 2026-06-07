@@ -11,8 +11,9 @@ class TaskCreateRequestMSG(Serializer):
     description: str
     links: list[HttpsURL] = []
     images: list[UploadFile] = []
+    can_recive_tasks_after_expiration: bool = False
     
-    @field_validator("expires_at", 'before')
+    @field_validator("expires_at", 'before') # type: ignore
     def validate_expires(cls, v) -> None:
         if v <= timezone.now():
             raise ValueError("expires_at cannot be in the past")

@@ -21,6 +21,7 @@ class Task(models.Model):
     expires_at = models.DateTimeField()
     description = models.TextField()
     links = ArrayField(models.URLField(), null=True, blank=True)
+    can_recive_tasks_after_expiration = models.BooleanField(default=False)
     
     @property
     def is_expired(self) -> bool:

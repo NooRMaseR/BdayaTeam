@@ -181,15 +181,16 @@ CACHES = {
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'BACKEND': 'channels_redis.pubsub.RedisPubSubChannelLayer',
         'CONFIG': {
-            'hosts': (('redis' if USE_DOCKER else "127.0.0.1", 6379),) #* for Docker
+            'hosts': (
+                f"redis://{'redis' if USE_DOCKER else "127.0.0.1"}:6379/2",
+            ),
         }
     }
 }
 
 LOGS_DIR = BASE_DIR / 'logs'
-# LOGS_DIR.mkdir(exist_ok=True)
 
 LOGGING = {
     'version': 1,
@@ -219,8 +220,6 @@ LOGGING = {
     
     # 3. HANDLERS: Where the logs go
     'handlers': {
-        # Console output for local dev or standard Gunicorn tracking
-        # Only active when DEBUG=True (dev only)
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
@@ -229,15 +228,14 @@ LOGGING = {
         },
 
         # Rotates at 10 MB, keeps last 5 files — safe for long-running servers
-        # "file": {
-        #     "level": "INFO",
-        #     "class": "logging.handlers.RotatingFileHandler",
-        #     "filename": LOGS_DIR / "app.log",
-        #     "maxBytes": 1024 * 1024 * 10,  # 10 MB
-        #     "backupCount": 5,
-        #     "formatter": "verbose",
-        #     "filters": ["require_debug_false"],  # File handler only in production
-        # },
+        "file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOGS_DIR / "app.log",
+            "maxBytes": 1024 * 1024 * 10,  # 10 MB
+            "formatter": "verbose",
+            "filters": ["require_debug_false"],  # File handler only in production
+        },
 
         # Sends ERROR+ emails to ADMINS in settings — only fires in production
         "mail_admins": {
@@ -259,7 +257,7 @@ LOGGING = {
         
         # Specifically catches HTTP 5xx errors
         'django.request': {
-            'handlers': ['console'],
+            'handlers': ['file'],
             'level': 'ERROR',
             'propagate': False,
         },
@@ -276,7 +274,7 @@ HUEY = {
         "workers": 10,
         "worker_type": "greenlet",
     },
-    "connection": {"host": 'redis' if USE_DOCKER else "127.0.0.1", "port": 6379, "db": 0}, #* for Docker
+    "connection": {"host": 'redis' if USE_DOCKER else "127.0.0.1", "port": 6379, "db": 0},
 }
 
 # Password validation

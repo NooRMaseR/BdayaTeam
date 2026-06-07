@@ -1,9 +1,9 @@
 'use client';
 
 import { MembersRecivedTaskItem } from '../../technical/[track]/tasks/[taskId]/member_task';
+import TaskShowCase, { MemberTaskItemProps } from '@/app/components/task_show_case';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import type { components } from '@/app/generated/api_types';
-import TaskShowCase, { MemberTaskItemProps } from '@/app/components/task_show_case';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { useAuthStore } from '@/app/utils/store';
@@ -21,9 +21,9 @@ type Task = MemberTaskItemProps['tasksRecived'][0] | null;
 export default function MemberTasks({ memberProfile, track }: MemberTasksProps) {
     const tr = useTranslations('memebersTasksPage');
     const userRole = useAuthStore(state => state.user?.role);
-    const isMember = userRole === "member";
     const [open, setOpen] = useState<boolean>(false);
     const [selectedTask, setSelecteTask] = useState<Task>(null);
+    const isMember = userRole === "member";
 
     const onClick = (task: Task) => {
         setSelecteTask(task);
@@ -53,7 +53,20 @@ export default function MemberTasks({ memberProfile, track }: MemberTasksProps) 
                     task={task}
                     showSigned
                     onClick={() => onClick(task)}
-                    overrideText={{ primary: tr('task', { number: task.task.task_number }), secondary: isMember ? <Link href={`/member/${track}/tasks/${task.id}/edit`}><IconButton><EditOutlinedIcon /></IconButton></Link> : undefined }}
+                    overrideText={
+                        {
+                            primary: tr('task', { number: task.task.task_number }),
+                            secondary: (
+                                isMember && (!task.task.expired || task.task.can_recive_tasks_after_expiration)
+                                    ? <Link href={`/member/${track}/tasks/${task.id}/edit`}>
+                                        <IconButton title='Edit'>
+                                            <EditOutlinedIcon />
+                                        </IconButton>
+                                    </Link>
+                                    : undefined
+                            )
+                        }
+                    }
                 />
             )}
         </>

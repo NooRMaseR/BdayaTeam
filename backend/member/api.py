@@ -19,7 +19,6 @@ from django.db.models import (
     F,
 )
 
-# from core.middleware import TrackTimeMiddleware
 from core.permissions import get_member_user, get_any_authenticated_user
 from core.validators import validate_track_task_files
 from core.models import BdayaUser, Track
@@ -63,7 +62,6 @@ bolt = BoltAPI(
     trailing_slash="append",
     validate_response=False,
     django_middleware=settings.BOLT_MIDDLEWARE,
-    # middleware=[TrackTimeMiddleware]
 )
 
 
@@ -107,6 +105,14 @@ async def get_all_tasks(user: BdayaUser = Depends(get_member_user)):  # type: ig
 async def submit_task(form: Annotated[TaskSubmitRequestMSG, Form()], user: BdayaUser = Depends(get_member_user)):  # type: ignore
     "submit task solution"
     
+    try:
+        task = await Task.objects.only("id", "task_number", "created_at", "expires_at", "can_recive_tasks_after_expiration").aget(id=form.task_id)
+    except Task.DoesNotExist:
+        raise NotFound(detail=f"Task with id={form.task_id} does not exists")
+    
+    if not task.can_recive_tasks_after_expiration and task.is_expired:
+        raise BadRequest(detail="Cannot Recive Tasks when expired")
+    
     member: Member = user.member  # type: ignore
     TRACK: Track = user.track  # type: ignore
     
@@ -117,11 +123,6 @@ async def submit_task(form: Annotated[TaskSubmitRequestMSG, Form()], user: Bdaya
     except ValueError as e:
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(e))
 
-    try:
-        task = await Task.objects.only("id", "task_number", "created_at", "expires_at").aget(id=form.task_id)
-    except Task.DoesNotExist:
-        raise NotFound(detail=f"Task with id={form.task_id} does not exists")
-    
     @sync_to_async
     def safe_transaction():
         with transaction.atomic():

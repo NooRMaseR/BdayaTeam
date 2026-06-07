@@ -4,7 +4,6 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV UV_CACHE_DIR=/tmp/.uv-cache
 ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
 
 WORKDIR /app
@@ -25,31 +24,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/nonexistent" \
-    --shell "/sbin/nologin" \
-    --no-create-home \
-    appuser
-
-RUN mkdir -p /app/media_files /app/logs && \
-    chown -R appuser:appuser /app/media_files && \
-    touch app.log
-
 COPY pyproject.toml uv.lock ./
 
-RUN uv sync --locked --no-dev --no-cache
+RUN uv sync --locked
 
 COPY . .
 
 RUN SECRET_KEY="alskjdlaskjdni;ac;mimq;schasbgyanlucdch" \
     uv run --no-dev manage.py collectstatic --no-input
 
-RUN chown -R appuser:appuser /tmp/.uv-cache /app/logs/app.log
-
-USER appuser
-
 EXPOSE 8000
 
-CMD uv run --no-dev manage.py runbolt --processes $(( $(nproc) - 1 )) --keep-alive 10
+CMD ["uv", "run", "manage.py", "runbolt"]

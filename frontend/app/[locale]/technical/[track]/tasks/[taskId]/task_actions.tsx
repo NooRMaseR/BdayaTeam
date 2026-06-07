@@ -2,6 +2,7 @@
 
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import DialogContentText from '@mui/material/DialogContentText';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -11,13 +12,14 @@ import TextField from '@mui/material/TextField';
 import AddIcon from '@mui/icons-material/Add';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import Switch from '@mui/material/Switch';
 
 import { type FieldErrors, useForm, UseFormHandleSubmit, UseFormRegister, Controller, type Control, useFieldArray } from 'react-hook-form';
 import ImageUploadWithPreviews from '@/app/components/imageUploadWithPreview';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import type { components, paths } from '@/app/generated/api_types';
 import LocaledTextField from '@/app/components/localed_textField';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import type { components } from '@/app/generated/api_types';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import dayjs from '@/app/utils/dayjs.client';
@@ -38,12 +40,9 @@ type DeleteDialogProps = {
     isLoading: boolean;
 }
 
-type TaskFormValues = {
-    task_number: number;
-    description: string;
-    expires_at: string;
+type FormCreateTask = paths['/api/technical/tasks/']['post']['requestBody']['content']['multipart/form-data'];
+type TaskFormValues = Omit<FormCreateTask, 'links'> & {
     links: { url: string }[];
-    images: File[];
 };
 
 type EditDialogProps = Omit<DeleteDialogProps, 'onAccept'> & {
@@ -133,7 +132,6 @@ function EditDialog({ open, onAccept, onCancel, taskNumber, isLoading, register,
                         helperText={errors.description?.message} 
                     />
 
-                    {/* 🚨 Links Section */}
                     <div className="border border-slate-200 p-4 rounded-xl">
                         <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>
                             {tr('urls') || "Reference Links"}
@@ -162,27 +160,29 @@ function EditDialog({ open, onAccept, onCancel, taskNumber, isLoading, register,
                             sx={{ mt: 2 }}
                             size="small"
                         >
-                            Add Link
+                            {tr("addLinks")}
                         </Button>
                     </div>
 
-                    {/* 🚨 Images Section */}
                     <div className="border border-slate-200 p-4 rounded-xl">
                         <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>
-                            Add New Reference Images
+                            {tr("addImages")}
                         </Typography>
                         <Controller
                             control={control}
                             name="images"
                             render={({ field }) => (
                                 <ImageUploadWithPreviews
-                                    images={field.value} 
+                                    images={field.value as File[] | undefined} 
                                     onChange={field.onChange} 
                                 />
                             )}
                         />
                     </div>
-
+                    <FormControlLabel
+                        control={<Switch {...register("can_recive_tasks_after_expiration")} />}
+                        label={tr("acceptTasks")}
+                    />
                 </form>
             </DialogContent>
             <DialogActions sx={{ p: 2 }}>

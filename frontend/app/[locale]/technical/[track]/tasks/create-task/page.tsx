@@ -5,11 +5,13 @@ import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import LocaledTextField from '@/app/components/localed_textField';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import GroupTitled from '@/app/components/group_titled';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import AddIcon from '@mui/icons-material/Add';
+import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
 
 import { useForm, Controller, useFieldArray } from 'react-hook-form'; 
@@ -31,7 +33,8 @@ export default function AddTaskPage() {
     const { register, control, handleSubmit, setError, formState: { errors } } = useForm<TaskFormValues>({
         defaultValues: {
             links: [],
-            images: []
+            images: [],
+            can_recive_tasks_after_expiration: false
         }
     });
     
@@ -43,6 +46,7 @@ export default function AddTaskPage() {
     const [isLoading, setIsloading] = useState<boolean>(false);
     const tr = useTranslations('tasksPage');
     const locale = useLocale();
+    const allowedErrors = ['task_number', 'expires_at', 'description', 'can_recive_tasks_after_expiration', 'links', 'images'];
 
     const onSubmit = async (data: TaskFormValues) => {
         setIsloading(true);
@@ -54,9 +58,10 @@ export default function AddTaskPage() {
                 fd.append('task_number', data.task_number.toString());
                 fd.append('description', data.description);
                 fd.append('expires_at', data.expires_at);
+                fd.append('can_recive_tasks_after_expiration', (data.can_recive_tasks_after_expiration ?? false).toString());
                 
                 if (data.links && data.links.length > 0) {
-                    fd.append('links', JSON.stringify(data.links.map(link => link.url)));
+                    data.links.forEach(link => fd.append('links', link.url));
                 }
 
                 if (data.images && data.images.length > 0) {
@@ -73,12 +78,21 @@ export default function AddTaskPage() {
         toast.promise(submitPromise, {
             loading: tr('creating'),
             success: (num) => tr('taskCreated', { num }),
-            error: (errorsFound: Record<string, string>) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            error: (errorsFound: Record<string, any>) => {
+                let hasInnerError: boolean = false;
                 Object.entries(errorsFound || {}).forEach(([key, val]) => {
-                    if (['task_number', 'expires_at', 'description'].includes(key)) {
-                        setError(key as keyof TaskFormValues, { message: val as string });
+                    if (allowedErrors.includes(key)) {
+                        hasInnerError = true;
+                        setError(key as keyof TaskFormValues, { message: val});
                     }
                 });
+                if (!hasInnerError) {
+                    const fieldError = errorsFound.detail[0]?.loc[errorsFound.detail[0]?.loc.length - 1] as keyof TaskFormValues;
+                    if (fieldError == "links") {
+                        toast.error(tr("urlError"), {duration: 8000});
+                    }
+                }
                 return tr('error');
             },
             finally: () => setIsloading(false)
@@ -167,7 +181,7 @@ export default function AddTaskPage() {
                                 sx={{ mt: 2 }}
                                 size="small"
                             >
-                                Add Link
+                                {tr('addUrl')}
                             </Button>
                         </div>
                         
@@ -186,6 +200,10 @@ export default function AddTaskPage() {
                                 )}
                             />
                         </div>
+                        <FormControlLabel
+                            control={<Switch {...register("can_recive_tasks_after_expiration")} />}
+                            label={tr("acceptTasks")}
+                        />
                         <div className="flex justify-end mt-2">
                             <Button
                                 type='submit'

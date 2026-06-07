@@ -79,13 +79,16 @@ export default function TaskEditForm({ task, track_name, extensions }: TaskActio
                 files: data.files ? Array.from(data.files) : []
             },
             bodySerializer(body) {
-                const fd = new FormData();
-                if (body.notes) fd.append('notes', body.notes);
+                if (body) {
+                    const fd = new FormData();
+                    if (body.notes) fd.append('notes', body.notes);
+    
+                    if (body.files && body.files.length > 0) {
+                        (body.files as unknown as string[]).forEach(f => fd.append('files', f));
+                    }
 
-                if (body.files && body.files.length > 0) {
-                    (body.files as unknown as string[]).forEach(f => fd.append('files', f));
+                    return fd;
                 }
-                return fd;
             }
         });
 

@@ -500,43 +500,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/static/{path:path}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Serve static files for Django admin and other apps. */
-        get: operations["get_static_handler"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** LoginRequestMSG */
         LoginRequestMSG: {
             email: string;
             password: string;
         };
+        /** LoginResponseMSG */
         LoginResponseMSG: {
             username: string;
             is_admin: boolean;
             /** @enum {string} */
             role: "member" | "technical" | "organizer";
             /** @default null */
-            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+            track: components["schemas"]["TrackNameOnlyMSGSerializer"] | null;
         };
+        /** TrackNameOnlyMSGSerializer */
         TrackNameOnlyMSGSerializer: {
             id: number;
             name: string;
         };
+        /** RegisterRequestMSG */
         RegisterRequestMSG: {
             request_track_id: number;
             email: string;
@@ -544,16 +531,19 @@ export interface components {
             phone_number: string;
             collage_code: string;
         };
+        /** RegisterResponseMSG */
         RegisterResponseMSG: {
             code: string;
             track: components["schemas"]["TrackNameOnlyMSGSerializer"];
             email: string;
             name: string;
         };
+        /** RefreshTokenRequestMSG */
         RefreshTokenRequestMSG: {
             /** @default null */
-            refresh: string;
+            refresh: string | null;
         };
+        /** TestAuthResponseMSG */
         TestAuthResponseMSG: {
             username: string;
             /** @enum {string} */
@@ -561,14 +551,16 @@ export interface components {
             is_admin: boolean;
             settings: components["schemas"]["SiteSettingsImagesMSGSerializer"];
             /** @default null */
-            track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+            track: components["schemas"]["TrackNameOnlyMSGSerializer"] | null;
         };
+        /** SiteSettingsImagesMSGSerializer */
         SiteSettingsImagesMSGSerializer: {
             /** @default null */
-            site_image: string;
+            site_image: string | null;
             /** @default null */
-            hero_image: string;
+            hero_image: string | null;
         };
+        /** TrackMSGSerializer */
         TrackMSGSerializer: {
             id: number;
             name: string;
@@ -576,6 +568,7 @@ export interface components {
             ar_description: string;
             image: string;
         };
+        /** TaskMSGSerializer */
         TaskMSGSerializer: {
             id: number;
             task_number: number;
@@ -589,34 +582,41 @@ export interface components {
             links?: string[];
             /** @default 0 */
             unsigned_tasks_count: number;
+            /** @default false */
+            can_recive_tasks_after_expiration: boolean;
         };
+        /** RecivedTaskMSGSerializer */
         RecivedTaskMSGSerializer: {
             id: number;
             task: components["schemas"]["TaskMSGSerializer"];
             member: components["schemas"]["MemberMSGSerializerForTask"];
             track: components["schemas"]["TrackNameOnlyMSGSerializer"];
             files_url: components["schemas"]["RecivedFile"][];
-            notes: string;
-            degree: number;
+            notes: string | null;
+            degree: number | null;
             signed: boolean;
             /** Format: date-time */
             recived_at: string;
             /** @default null */
-            technical_notes: string;
+            technical_notes: string | null;
         };
+        /** MemberMSGSerializerForTask */
         MemberMSGSerializerForTask: {
             code: string;
             name: string;
         };
+        /** RecivedFile */
         RecivedFile: {
             id: number;
             file_url: string;
             file_name: string;
         };
+        /** TaskSignRequestMSG */
         TaskSignRequestMSG: {
             degree: number;
             technical_notes: string;
         };
+        /** MemberTechnicalMSGSerializer */
         MemberTechnicalMSGSerializer: {
             code: string;
             name: string;
@@ -629,27 +629,31 @@ export interface components {
             status: "normal" | "warning 1" | "warning 2" | "fired";
             tasks?: components["schemas"]["RecivedTaskSmallMSGSerializer"][];
         };
+        /** RecivedTaskSmallMSGSerializer */
         RecivedTaskSmallMSGSerializer: {
             id: number;
             task: components["schemas"]["TaskSmallMSGSerializer"];
             member_code: string;
             /** @default null */
-            signed_by: components["schemas"]["SignedMSGBy"];
+            signed_by: components["schemas"]["SignedMSGBy"] | null;
             /** @default null */
-            notes: string;
+            notes: string | null;
             /** @default null */
-            technical_notes: string;
+            technical_notes: string | null;
             /** @default null */
-            degree: number;
+            degree: number | null;
         };
+        /** TaskSmallMSGSerializer */
         TaskSmallMSGSerializer: {
             id: number;
             task_number: number;
         };
+        /** SignedMSGBy */
         SignedMSGBy: {
             id: number;
             username: string;
         };
+        /** TechnicalMembersTasksUpdateRequestMSG */
         TechnicalMembersTasksUpdateRequestMSG: {
             task_id: number;
             code: string;
@@ -657,13 +661,16 @@ export interface components {
             /** @enum {string} */
             field: "notes" | "degree";
         };
+        /** TrackExtenstionsSerializer */
         TrackExtenstionsSerializer: {
             track: components["schemas"]["TrackNameOnlyMSGSerializer"];
             extensions?: string[];
         };
+        /** TrackExtensionsRequestMSG */
         TrackExtensionsRequestMSG: {
             extensions?: string[];
         };
+        /** MemberORGMSGSerializer */
         MemberORGMSGSerializer: {
             code: string;
             name: string;
@@ -676,23 +683,27 @@ export interface components {
             status: "normal" | "warning 1" | "warning 2" | "fired";
             attendances?: components["schemas"]["AttendanceMSGSerializer"][];
         };
+        /** AttendanceMSGSerializer */
         AttendanceMSGSerializer: {
             date: components["schemas"]["AttendanceDayMSGSerializer"];
             /** @enum {string} */
             status: "present" | "absent" | "excused";
             by: components["schemas"]["AttendanceMSGBy"];
             /** @default null */
-            excuse_reason: string;
+            excuse_reason: string | null;
         };
+        /** AttendanceDayMSGSerializer */
         AttendanceDayMSGSerializer: {
             id: number;
             /** Format: date */
             day: string;
         };
+        /** AttendanceMSGBy */
         AttendanceMSGBy: {
             id: number;
             username: string;
         };
+        /** MemberEditGridRequestMSG */
         MemberEditGridRequestMSG: {
             /** @enum {string} */
             type: "attendance" | "data";
@@ -700,32 +711,37 @@ export interface components {
             field: string;
             value: string | number;
             /** @default null */
-            excuse: string;
+            excuse: string | null;
         };
+        /** AttendanceDayResponseMSG */
         AttendanceDayResponseMSG: {
             id: number;
             /** Format: date */
             day: string;
         };
+        /** DayRequestMSG */
         DayRequestMSG: {
             /** Format: date */
             day: string;
         };
+        /** DayUpdateRequestMSG */
         DayUpdateRequestMSG: {
             /** Format: date */
             oldDay: string;
             /** Format: date */
             newDay: string;
         };
+        /** SiteSettingsMSGSerializer */
         SiteSettingsMSGSerializer: {
             /** @default null */
-            site_image: string;
+            site_image: string | null;
             /** @default null */
-            hero_image: string;
+            hero_image: string | null;
             /** @default false */
             is_register_enabled: boolean;
             organizer_can_edit?: string[];
         };
+        /** MemberProfileMSGSerializer */
         MemberProfileMSGSerializer: {
             absents: number;
             track: components["schemas"]["TrackNameOnlyMSGSerializer"];
@@ -736,11 +752,13 @@ export interface components {
             status: string;
             tasks?: components["schemas"]["RecivedTaskMSGSerializer"][];
         };
+        /** SubscriptionRequestMSG */
         SubscriptionRequestMSG: {
             endpoint: string;
             auth: string;
             p256dh: string;
         };
+        /** UnsubscribeRequestMSG */
         UnsubscribeRequestMSG: {
             endpoint: string;
         };
@@ -1046,6 +1064,7 @@ export interface operations {
                     prefix: string;
                     en_description: string;
                     ar_description: string;
+                    /** Format: binary */
                     image: string;
                 };
                 "application/x-www-form-urlencoded": {
@@ -1053,6 +1072,7 @@ export interface operations {
                     prefix: string;
                     en_description: string;
                     ar_description: string;
+                    /** Format: binary */
                     image: string;
                 };
             };
@@ -1200,19 +1220,21 @@ export interface operations {
             content: {
                 "multipart/form-data": {
                     task_number: number;
-                    /** Format: date-time */
                     expires_at: string;
                     description: string;
                     links?: string[];
                     images?: string[];
+                    /** @default false */
+                    can_recive_tasks_after_expiration?: boolean;
                 };
                 "application/x-www-form-urlencoded": {
                     task_number: number;
-                    /** Format: date-time */
                     expires_at: string;
                     description: string;
                     links?: string[];
                     images?: string[];
+                    /** @default false */
+                    can_recive_tasks_after_expiration?: boolean;
                 };
             };
         };
@@ -1299,19 +1321,21 @@ export interface operations {
             content: {
                 "multipart/form-data": {
                     task_number: number;
-                    /** Format: date-time */
                     expires_at: string;
                     description: string;
                     links?: string[];
                     images?: string[];
+                    /** @default false */
+                    can_recive_tasks_after_expiration?: boolean;
                 };
                 "application/x-www-form-urlencoded": {
                     task_number: number;
-                    /** Format: date-time */
                     expires_at: string;
                     description: string;
                     links?: string[];
                     images?: string[];
+                    /** @default false */
+                    can_recive_tasks_after_expiration?: boolean;
                 };
             };
         };
@@ -1935,24 +1959,36 @@ export interface operations {
             cookie?: never;
         };
         /** @description Form data */
-        requestBody: {
+        requestBody?: {
             content: {
                 "multipart/form-data": {
                     /** @default false */
                     is_register_enabled?: boolean;
                     organizer_can_edit?: string[];
-                    /** @default null */
+                    /**
+                     * Format: binary
+                     * @default null
+                     */
                     site_image?: string;
-                    /** @default null */
+                    /**
+                     * Format: binary
+                     * @default null
+                     */
                     hero_image?: string;
                 };
                 "application/x-www-form-urlencoded": {
                     /** @default false */
                     is_register_enabled?: boolean;
                     organizer_can_edit?: string[];
-                    /** @default null */
+                    /**
+                     * Format: binary
+                     * @default null
+                     */
                     site_image?: string;
-                    /** @default null */
+                    /**
+                     * Format: binary
+                     * @default null
+                     */
                     hero_image?: string;
                 };
             };
@@ -2148,7 +2184,7 @@ export interface operations {
             cookie?: never;
         };
         /** @description Form data */
-        requestBody: {
+        requestBody?: {
             content: {
                 "multipart/form-data": {
                     /** @default null */
@@ -2342,29 +2378,6 @@ export interface operations {
                             input?: unknown;
                         }[];
                     };
-                };
-            };
-        };
-    };
-    get_static_handler: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Parameter path */
-                path: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": Record<string, never>;
                 };
             };
         };
