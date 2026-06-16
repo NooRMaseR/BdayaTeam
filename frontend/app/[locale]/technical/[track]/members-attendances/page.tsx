@@ -8,6 +8,7 @@ import DialogContent from '@mui/material/DialogContent';
 import { getOrgMemberGrid } from '@/app/utils/api_utils';
 import DialogContentText from '@mui/material/DialogContentText';
 
+export const dynamic = 'force-dynamic';
 
 export default async function MembersPage({ params }: TechnicalParams) {
   const { track } = await params;

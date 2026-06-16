@@ -3,11 +3,21 @@
 # from pprint import pprint
 from locust import FastHttpUser, task, between
 
-
-class MemberBoltUser(FastHttpUser):
+class OrgUser(FastHttpUser):
+    weight = 1
     wait_time = between(2, 5)
     host="http://localhost/api"
-    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0IiwiZXhwIjoxNzgwNTIzODI4LCJpYXQiOjE3ODA0OTg2MjgsImlzX3N0YWZmIjpmYWxzZSwiaXNfc3VwZXJ1c2VyIjpmYWxzZSwidXNlcm5hbWUiOiJOb29yIiwiZW1haWwiOiJub29yd25lNkBnbWFpbC5jb20iLCJyb2xlIjoibWVtYmVyIiwiY29kZSI6InAtMSIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJqdGkiOiIzMWE5OTQ4NC1iODQwLTRlN2ItOTM2MS03NjMwMzE5NDQ2ZjUifQ.SVVpPDLlyiB9-BM6pPBVec8Hq-bgN687u-MhDJ5D-Xs"
+    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzgxNjU5NjEwLCJpYXQiOjE3ODE2MzQ0MTAsImlzX3N0YWZmIjp0cnVlLCJpc19zdXBlcnVzZXIiOnRydWUsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJvcmdhbml6ZXIiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwianRpIjoiMTY5Y2JkZTEtOTQ0ZC00ZmVhLWJlM2UtZmYyMDJjMGJiYjdmIn0.wO0Olf0zLG1wyiKdsTgBnM8fmK7N2Aunqqo0pDO6kck"
+    
+    @task
+    def see_members(self):
+        self.client.get("/organizer/members/Python/", headers={"Authorization": self.TOKEN})
+
+class MemberUser(FastHttpUser):
+    weight = 150
+    wait_time = between(2, 5)
+    host="http://localhost/api"
+    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzgxNjU0OTQ2LCJpYXQiOjE3ODE2Mjk3NDYsImlzX3N0YWZmIjpmYWxzZSwiaXNfc3VwZXJ1c2VyIjpmYWxzZSwidXNlcm5hbWUiOiJub29yIiwiZW1haWwiOiJub29yd25lNkBnbWFpbC5jb20iLCJyb2xlIjoibWVtYmVyIiwiY29kZSI6InAtMSIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJqdGkiOiI4MWFjYmFmMi0wYjI3LTQ0MGUtODFkZC0wZGMzMWQxNjhlMTkifQ.FnTxFUa-7hYb6_0bXEXhJmccKpJQKamZe0rkxiFH-MA"
     
     @task
     def see_tasks(self):

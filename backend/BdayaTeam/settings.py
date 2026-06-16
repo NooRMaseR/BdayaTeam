@@ -37,6 +37,7 @@ ALLOWED_HOSTS = (
     "localhost",
     "127.0.0.1",
     "nginx",
+    "bolt",
     "twist-raid-family-responsibility.trycloudflare.com"
 )
 
@@ -173,7 +174,7 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
             "CONNECTION_POOL_KWARGS": {
-                "max_connections": 800
+                "max_connections": 3000
             }
         },
     }

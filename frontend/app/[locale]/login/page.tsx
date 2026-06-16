@@ -11,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: tr('login'),
     description: tr('metaDesc'),
     openGraph: {
-      title: tr('metaTitle'),
+      title: tr('login'),
       description: tr('metaDesc'),
       images: ["/favicon.ico"],
     },

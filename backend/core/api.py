@@ -43,7 +43,8 @@ bolt = BoltAPI(
     openapi_config=OpenAPIConfig(
         title="Bdaya Team Api",
         version="1.2.0",
-        path="/api/docs"
+        path="/api/docs",
+        enabled=False
     ),
     validate_response=False,
     django_middleware=settings.BOLT_MIDDLEWARE

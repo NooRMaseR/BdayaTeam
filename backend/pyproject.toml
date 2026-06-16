@@ -9,7 +9,7 @@ dependencies = [
     "channels-redis>=4.3.0",
     "daphne>=4.2.1",
     "django>=6.0.5",
-    "django-bolt>=0.8.1",
+    "django-bolt>=0.8.3",
     "django-cleanup>=9.0.0",
     "django-cors-headers>=4.9.0",
     "django-imagekit>=6.0.0",
@@ -42,3 +42,6 @@ dev = [
     "psutil>=7.2.0",
     "requests>=2.32.5",
 ]
+
+[tool.uv.sources]
+django-bolt = { git = "https://github.com/dj-bolt/django-bolt.git", branch = "master" }

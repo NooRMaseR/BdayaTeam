@@ -41,6 +41,7 @@ const LogoutDialog = dynamic(() => Promise.resolve(function LogoutDialog(props: 
   const onLogoutClick = async () => {
     setIsLoggingOut(true);
     await props.onSucces();
+    setIsLoggingOut(false);
   }
   
   const onCancleClick = () => {
@@ -69,7 +70,7 @@ async function performSecureLogout() {
       const registration = await navigator.serviceWorker.getRegistration();
       
       if (!registration) {
-        console.log("No active service worker found. Skipping push cleanup.");
+        console.warn("No active service worker found. Skipping push cleanup.");
         return; 
       }
 

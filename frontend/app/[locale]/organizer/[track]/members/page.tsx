@@ -11,6 +11,7 @@ import { GET_TRACK_IMAGE } from '@/app/utils/graphql_helpers';
 import MembersGridTable from "@/app/components/member_grid_table";
 import type { Get_Track_ImageQuery } from '@/app/generated/graphql';
 
+export const dynamic = 'force-dynamic';
 
 type Props = {
     params: Promise<{ track: string }>;
@@ -25,7 +26,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
         title: `${readableTrack} Track Members`,
         description: `Manage members, attendance, and days for the ${readableTrack} track.`,
-
         openGraph: {
             title: `${readableTrack} Track Members`,
             description: `Manage ${readableTrack} track members and attendance.`,

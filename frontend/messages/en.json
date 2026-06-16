@@ -198,6 +198,7 @@
         "enterDetails": "Enter Track Details",
         "enterDesc": "Fill in the details below to create a new track",
         "name": "Track Name",
+        "err_invalid_letters": "Please Enter Letters Only from A-z or أ-ي and -_ are allowed",
         "pre": "Track Prefix",
         "err_max_pre": "Prefix must be a maximum of 2 characters",
         "en_desc": "Track Description (EN)",

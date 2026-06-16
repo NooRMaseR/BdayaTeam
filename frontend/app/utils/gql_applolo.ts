@@ -2,10 +2,11 @@
 'use server';
 
 import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
+import type { SettingsSiteImageQuery } from "../generated/graphql";
+import { SetContextLink } from "@apollo/client/link/context";
+import { GET_SITE_IMAGE_SETTINGS } from "./graphql_helpers";
 import { cookies } from "next/headers";
 import { gql } from "graphql-tag";
-import type { SettingsSiteImageQuery } from "../generated/graphql";
-import { GET_SITE_IMAGE_SETTINGS } from "./graphql_helpers";
 
 export async function getAuthCookies() {
     const cookieStore = await cookies();
@@ -28,34 +29,34 @@ type GraphResponse<T> = {
     success: boolean;
 }
 
-export async function serverGraphQL<T>(query: string, variables: Record<string, any> = {}, mutate: boolean = false, useForm: boolean = false): Promise<GraphResponse<T>> {
+const httpLink = new HttpLink({ uri: `${process.env.NEXT_API_URL}/api/graphql/` });
+
+const authLink = new SetContextLink(async (prevContext) => {
     const { token, csrf } = await getAuthCookies();
 
-    const headers: HeadersInit = {
-        Authorization: token ? `Bearer ${token}` : "",
-        "X-CSRFToken": csrf || ""
+    return {
+        headers: {
+            ...prevContext.headers,
+            Authorization: token ? `Bearer ${token}` : "",
+            "X-CSRFToken": csrf || ""
+        }
     };
+});
 
-    if (!useForm) {
-        headers["Content-Type"] = "application/json";
-    }
+const client = new ApolloClient({
+    link: authLink.concat(httpLink),
+    cache: new InMemoryCache(),
+});
 
-    const ap = new ApolloClient({
-        link: new HttpLink({
-            uri: `${process.env.NEXT_API_URL}/api/graphql/`,
-            headers: headers,
-            credentials: "include"
-        }),
-        cache: new InMemoryCache(),
-    });
+export async function serverGraphQL<T>(query: string, variables: Record<string, any> = {}, mutate: boolean = false): Promise<GraphResponse<T>> {
 
     const wrappedQuery = gql`${query}`;
 
     try {
         const { data } = mutate
-            ? await ap.mutate({ mutation: wrappedQuery, variables })
-            : await ap.query({ query: wrappedQuery, variables });
-
+            ? await client.mutate({ mutation: wrappedQuery, variables })
+            : await client.query({ query: wrappedQuery, variables });
+        
         return {
             data: data as T,
             success: true
@@ -68,6 +69,7 @@ export async function serverGraphQL<T>(query: string, variables: Record<string, 
         };
     }
 }
+
 export async function fetchSiteImage() {
     return await serverGraphQL<SettingsSiteImageQuery>(GET_SITE_IMAGE_SETTINGS);
 }

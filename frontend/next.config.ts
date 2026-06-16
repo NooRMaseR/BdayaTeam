@@ -7,12 +7,18 @@ const withNextIntl = createNextIntlPlugin();
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
-  allowedDevOrigins: ['twist-raid-family-responsibility.trycloudflare.com'],
+  allowedDevOrigins: ['twist-raid-family-responsibility.trycloudflare.com', 'localhost'],
   output: "standalone",
   images: {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'localhost',
+        port: '',
+        pathname: '/api/media/**',
+      },
+      {
+        protocol: 'http',
         hostname: 'localhost',
         port: '',
         pathname: '/api/media/**',

@@ -1,99 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server';
 
-import type { SeeOrganizerCanEditQuery } from "../generated/graphql";
 import { AttendanceStatus, MemberStatus, type GetMemberGridType } from "./api_types_helper";
 import type { GridColDef, GridColumnGroupingModel, GridRowsProp } from "@mui/x-data-grid";
+import type { SeeOrganizerCanEditQuery } from "../generated/graphql";
 import { EDITABLE_FIELDS } from "./graphql_helpers";
-import { getAuthCookies, serverGraphQL } from "./gql_applolo";
 import { getTranslations } from "next-intl/server";
 import API, { fetchTracks } from "./api.server";
+import { serverGraphQL } from "./gql_applolo";
 import { revalidateTag } from "next/cache";
-import { cookies } from "next/headers";
-
-function parseCookie(cookie: string) {
-    const splited = cookie.split(";").map((value) => value.trim());
-    const [nameVal, ...attributes] = splited;
-    const [name, ...valueParts] = nameVal.split('=');
-    const value = valueParts.join('=');
-
-    if (!name || !value) return null;
-
-    const cookieOptions: any = {
-        name: name,
-        value: value,
-        path: '/',
-    };
-    attributes.forEach(attr => {
-        const lowerAttr = attr.toLowerCase();
-
-        if (lowerAttr === 'httponly') {
-            cookieOptions.httpOnly = true;
-        } else if (lowerAttr === 'secure') {
-            cookieOptions.secure = true;
-        } else if (lowerAttr.startsWith('samesite=')) {
-            const sameSiteVal = attr.split('=')[1].toLowerCase();
-            if (['lax', 'strict', 'none'].includes(sameSiteVal)) {
-                cookieOptions.sameSite = sameSiteVal as 'lax' | 'strict' | 'none';
-            }
-        } else if (lowerAttr.startsWith('max-age=')) {
-            cookieOptions.maxAge = parseInt(attr.split('=')[1]);
-        } else if (lowerAttr.startsWith('expires=')) {
-            const dateStr = attr.split('=')[1];
-            cookieOptions.expires = new Date(dateStr).getTime();
-        } else if (lowerAttr.startsWith('path=')) {
-            cookieOptions.path = attr.split('=')[1];
-        }
-    });
-    return cookieOptions;
-}
-
-export const fetchWithCookies = async (url: string | URL | Request, options?: RequestInit): Promise<Response> => {
-    const cookieStore = await cookies();
-    const { token, csrf, locale } = await getAuthCookies();
-
-    const headers = new Headers(options?.headers);
-    if (!headers.get("Content-Type")) {
-        headers.set("Content-Type", "application/json");
-    }
-
-    const cookieString = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
-    if (cookieString) {
-        headers.set("Cookie", cookieString);
-    }
-
-    if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-    }
-
-    if (csrf) {
-        headers.set("X-CSRFToken", csrf);
-    }
-
-    if (locale) {
-        headers.set("Accept-Language", locale);
-    }
-
-    const response = await fetch(url, {
-        ...options,
-        headers,
-        credentials: "include",
-    });
-
-    const setCookieHeaders = response.headers.getSetCookie();
-    if (setCookieHeaders && setCookieHeaders.length > 0) {
-        setCookieHeaders.forEach((cookieStr) => {
-            const parsed = parseCookie(cookieStr);
-            if (parsed) {
-                try {
-                    cookieStore.set(parsed.name, parsed.value, parsed);
-                } catch {}
-            }
-        });
-    }
-
-    return response;
-};
 
 export async function revalidateTagName(tag: string) {
     revalidateTag(tag, 'max');
@@ -118,9 +32,10 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
     if (!membersRes.response.ok) {
         return Promise.reject(membersRes.error);
     };
-    
+
 
     const rows: GridRowsProp = (membersRes.data as unknown as (typeof membersRes.data)[])?.map((member) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const row: any = {
             id: member?.code,
             code: member?.code,
@@ -163,7 +78,7 @@ export async function getOrgMemberGrid(track: string, safe: boolean = false): Pr
                     filterable: false,
                     editable: !safe,
                     type: "singleSelect",
-                    valueOptions: Object.values(AttendanceStatus).map(status => ({label: tr(status), value: status})),
+                    valueOptions: Object.values(AttendanceStatus).map(status => ({ label: tr(status), value: status })),
                 },
                 {
                     field: `${day.day}_excuse`,

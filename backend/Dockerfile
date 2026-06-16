@@ -1,15 +1,14 @@
-FROM python:3.14.5-slim
+FROM python:3.14.6-slim
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV UV_CACHE_DIR=/tmp/.uv-cache
-ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt install -y --no-install-recommends \
     wget \
     gnupg2 \
     libjemalloc2 \
@@ -24,6 +23,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client-18 \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
 
 RUN adduser \
     --disabled-password \
@@ -52,4 +53,7 @@ USER appuser
 
 EXPOSE 8000
 
-CMD uv run --no-dev manage.py runbolt --processes $(( $(nproc) - 1 )) --keep-alive 10
+CMD uv run --no-dev manage.py runbolt \
+    --processes $( nproc ) \
+    --keep-alive 10 \
+    --backlog 3000

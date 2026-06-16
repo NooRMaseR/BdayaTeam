@@ -71,7 +71,11 @@ export default function RegisterForm({ tracks, canRegister = false }: RegisterFo
           }
         } else if (response.status === 400 && error) {
           Object.entries(error).forEach(er => {
-            setError(er[0] as keyof SendRegister, { message: er[1] as unknown as string });
+            if (er[0] == "phone") {
+              setError("phone_number", { message: er[1] as unknown as string });
+            } else {
+              setError(er[0] as keyof SendRegister, { message: er[1] as unknown as string });
+            }
           });
         } else if (response.status === 429) {
           const time = formatTime(parseInt(response.headers.get("Retry-After") ?? '0'));

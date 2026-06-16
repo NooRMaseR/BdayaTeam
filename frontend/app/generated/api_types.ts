@@ -506,6 +506,10 @@ export interface components {
     schemas: {
         /** LoginRequestMSG */
         LoginRequestMSG: {
+            /**
+             * @description Valid email address
+             * @example user@example.com
+             */
             email: string;
             password: string;
         };
@@ -525,9 +529,19 @@ export interface components {
         };
         /** RegisterRequestMSG */
         RegisterRequestMSG: {
+            /** @description Positive integer (> 0) */
             request_track_id: number;
+            /**
+             * @description Valid email address
+             * @example user@example.com
+             */
             email: string;
             name: string;
+            /**
+             * @description Phone number (E.164 format)
+             * @example +14155551234
+             * @example 14155551234
+             */
             phone_number: string;
             collage_code: string;
         };
@@ -535,6 +549,10 @@ export interface components {
         RegisterResponseMSG: {
             code: string;
             track: components["schemas"]["TrackNameOnlyMSGSerializer"];
+            /**
+             * @description Valid email address
+             * @example user@example.com
+             */
             email: string;
             name: string;
         };
@@ -655,6 +673,7 @@ export interface components {
         };
         /** TechnicalMembersTasksUpdateRequestMSG */
         TechnicalMembersTasksUpdateRequestMSG: {
+            /** @description Positive integer (> 0) */
             task_id: number;
             code: string;
             value: number | string;
@@ -715,6 +734,7 @@ export interface components {
         };
         /** AttendanceDayResponseMSG */
         AttendanceDayResponseMSG: {
+            /** @description Positive integer (> 0) */
             id: number;
             /** Format: date */
             day: string;
@@ -787,7 +807,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: unknown;
+                        [key: string]: string;
                     };
                 };
             };
@@ -1219,6 +1239,7 @@ export interface operations {
         requestBody: {
             content: {
                 "multipart/form-data": {
+                    /** @description Positive integer (> 0) */
                     task_number: number;
                     expires_at: string;
                     description: string;
@@ -1228,6 +1249,7 @@ export interface operations {
                     can_recive_tasks_after_expiration?: boolean;
                 };
                 "application/x-www-form-urlencoded": {
+                    /** @description Positive integer (> 0) */
                     task_number: number;
                     expires_at: string;
                     description: string;
@@ -1320,6 +1342,7 @@ export interface operations {
         requestBody: {
             content: {
                 "multipart/form-data": {
+                    /** @description Positive integer (> 0) */
                     task_number: number;
                     expires_at: string;
                     description: string;
@@ -1329,6 +1352,7 @@ export interface operations {
                     can_recive_tasks_after_expiration?: boolean;
                 };
                 "application/x-www-form-urlencoded": {
+                    /** @description Positive integer (> 0) */
                     task_number: number;
                     expires_at: string;
                     description: string;
@@ -2069,12 +2093,14 @@ export interface operations {
         requestBody: {
             content: {
                 "multipart/form-data": {
+                    /** @description Positive integer (> 0) */
                     task_id: number;
                     /** @default null */
                     notes?: string;
                     files?: string[];
                 };
                 "application/x-www-form-urlencoded": {
+                    /** @description Positive integer (> 0) */
                     task_id: number;
                     /** @default null */
                     notes?: string;

@@ -1,4 +1,4 @@
-schema: https://127.0.0.1/api/graphql/
+schema: https://localhost/api/graphql/
 documents: app/**/*.{graphql,ts,tsx}
 generates:
   app/generated/graphql.ts:

@@ -103,10 +103,40 @@ export default function AddTrackPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <div className="md:col-span-3">
-                                <LocaledTextField label={tr('name')} {...register("name", { required: true })} required fullWidth error={!!errors.name} helperText={errors.name?.message} />
+                                <LocaledTextField 
+                                    label={tr('name')} 
+                                    {...register("name", {
+                                        required: true,
+                                        pattern: {
+                                            value: /^[A-Za-z\u0621-\u064A\s\-_]+$/,
+                                            message: tr("err_invalid_letters")
+                                        }
+                                    })}
+                                    required 
+                                    fullWidth 
+                                    error={!!errors.name} 
+                                    helperText={errors.name?.message} 
+                                />
                             </div>
                             <div className="md:col-span-1">
-                                <LocaledTextField label={tr('pre')} {...register("prefix", { required: true, maxLength: {value: 2, message: tr("err_max_pre")} })} required fullWidth error={!!errors.prefix} helperText={errors.prefix?.message} />
+                                <LocaledTextField 
+                                    label={tr('pre')} 
+                                    {...register("prefix", {
+                                        required: true,
+                                        pattern: {
+                                            value: /^[A-Za-z\u0621-\u064A\s\-_]+$/,
+                                            message: tr("err_invalid_letters")
+                                        },
+                                        maxLength: {
+                                            value: 2,
+                                            message: tr("err_max_pre")
+                                        }
+                                    })}
+                                    required 
+                                    fullWidth 
+                                    error={!!errors.prefix} 
+                                    helperText={errors.prefix?.message} 
+                                />
                             </div>
                         </div>
                         <LocaledTextField label={tr('en_desc')} {...register("en_description", { required: true })} required minRows={3} multiline fullWidth error={!!errors.en_description} helperText={errors.en_description?.message} />
