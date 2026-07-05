@@ -56,4 +56,7 @@ EXPOSE 8000
 CMD uv run --no-dev manage.py runbolt \
     --processes $( nproc ) \
     --keep-alive 10 \
-    --backlog 3000
+    --backlog 3000 \
+    --max-rss 512 \
+    --workers-lifetime 3600 \
+    --respawn-failed-workers

@@ -7,17 +7,17 @@ class OrgUser(FastHttpUser):
     weight = 1
     wait_time = between(2, 5)
     host="http://localhost/api"
-    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzgxNjU5NjEwLCJpYXQiOjE3ODE2MzQ0MTAsImlzX3N0YWZmIjp0cnVlLCJpc19zdXBlcnVzZXIiOnRydWUsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJvcmdhbml6ZXIiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwianRpIjoiMTY5Y2JkZTEtOTQ0ZC00ZmVhLWJlM2UtZmYyMDJjMGJiYjdmIn0.wO0Olf0zLG1wyiKdsTgBnM8fmK7N2Aunqqo0pDO6kck"
+    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzgzMjk1NTk1LCJpYXQiOjE3ODMyNzAzOTUsImlzX3N0YWZmIjp0cnVlLCJpc19zdXBlcnVzZXIiOnRydWUsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJvcmdhbml6ZXIiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwianRpIjoiODJlZGY4YjEtOTA1MS00NDBmLWFlZDQtMjc3ZTQ4N2Y5MWNmIn0.7ztPEU7wMAlOktGgIUwTGtAX6VwIfMG8vQqh-tE5ayo"
     
     @task
     def see_members(self):
         self.client.get("/organizer/members/Python/", headers={"Authorization": self.TOKEN})
 
 class MemberUser(FastHttpUser):
-    weight = 150
+    weight = 250
     wait_time = between(2, 5)
     host="http://localhost/api"
-    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzgxNjU0OTQ2LCJpYXQiOjE3ODE2Mjk3NDYsImlzX3N0YWZmIjpmYWxzZSwiaXNfc3VwZXJ1c2VyIjpmYWxzZSwidXNlcm5hbWUiOiJub29yIiwiZW1haWwiOiJub29yd25lNkBnbWFpbC5jb20iLCJyb2xlIjoibWVtYmVyIiwiY29kZSI6InAtMSIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJqdGkiOiI4MWFjYmFmMi0wYjI3LTQ0MGUtODFkZC0wZGMzMWQxNjhlMTkifQ.FnTxFUa-7hYb6_0bXEXhJmccKpJQKamZe0rkxiFH-MA"
+    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzgzMjk1NjgzLCJpYXQiOjE3ODMyNzA0ODMsImlzX3N0YWZmIjpmYWxzZSwiaXNfc3VwZXJ1c2VyIjpmYWxzZSwidXNlcm5hbWUiOiJub29yIiwiZW1haWwiOiJub29yd25lNkBnbWFpbC5jb20iLCJyb2xlIjoibWVtYmVyIiwiY29kZSI6InAtMSIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJqdGkiOiJhNWI2ZTkwNi1lMGNlLTQzMGUtOTNlZS0zNDAzYzQxNDFjNTIifQ.5VskCOjb54Lza_-J1krjmi-mkKAkG0CJmwmJqw8X6do"
     
     @task
     def see_tasks(self):

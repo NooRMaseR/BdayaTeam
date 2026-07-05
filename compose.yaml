@@ -24,7 +24,7 @@ services:
 
   # The Cache (redis)
   redis:
-    image: redis:8.8.0-alpine
+    image: redis:8-alpine
     restart: always
     expose:
       - "6379"
@@ -177,45 +177,6 @@ services:
       nextjs:
         condition: service_started
   
-  # The Restarter service (for refreshing the Memory (RAM))
-  restarter:
-    image: docker:cli
-    restart: always
-    environment:
-      - TZ=Africa/Cairo
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    entrypoint: ["/bin/sh", "-c"]
-    command: 
-      - |
-        # 1. Install tzdata and forcefully overwrite the container's core clock
-        apk add --no-cache tzdata
-        cp /usr/share/zoneinfo/Africa/Cairo /etc/localtime
-        echo "Africa/Cairo" > /etc/timezone
-        
-        while true; do
-          # The date command will now physically be unable to print UTC
-          echo "Container current time is: $$(date)"
-          
-          # Set this to a few minutes from now to test!
-          target=$$(date -d "04:30" +%s)
-          now=$$(date +%s)
-          
-          diff=$$((target - now))
-          
-          if [ $$diff -le 0 ]; then
-            diff=$$((diff + 86400))
-          fi
-          
-          echo "Sleeping for $$diff seconds until the next trigger..."
-          sleep $$diff
-          
-          echo "Executing restart command..."
-          docker restart bdayateam-huey-1 bdayateam-bolt-1 bdayateam-daphne-1
-          
-          sleep 60
-        done
-
 volumes:
   db-data:
   nextjs_static:

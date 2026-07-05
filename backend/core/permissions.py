@@ -6,7 +6,7 @@ from django.conf import settings
 from .models import BdayaUser, UserRole
 from django_bolt.exceptions import Unauthorized, Forbidden, BadRequest
 
-def require_role(role_label: str, allowed_jwt_roles: list[UserRole]):
+def require_role(role_label: str, allowed_jwt_roles: tuple[UserRole, ...]):
     """
     A Dependency Factory that builds a specific security gatekeeper.
     """
@@ -56,13 +56,13 @@ def require_role(role_label: str, allowed_jwt_roles: list[UserRole]):
     return security_dependency
 
 # Exact Roles
-get_org_user    = require_role("Organizers", [UserRole.ORGANIZER])
-get_tech_user   = require_role("Technicals", [UserRole.TECHNICAL])
-get_member_user = require_role("Members",    [UserRole.MEMBER])
+get_org_user    = require_role("Organizers", (UserRole.ORGANIZER,))
+get_tech_user   = require_role("Technicals", (UserRole.TECHNICAL,))
+get_member_user = require_role("Members",    (UserRole.MEMBER,))
 
 # Combined Roles
-get_tech_or_org_user    = require_role("Technicals or Organizers", [UserRole.TECHNICAL, UserRole.ORGANIZER])
-get_tech_or_member_user = require_role("Technicals or Members",    [UserRole.TECHNICAL, UserRole.MEMBER])
+get_tech_or_org_user    = require_role("Technicals or Organizers", (UserRole.TECHNICAL, UserRole.ORGANIZER,))
+get_tech_or_member_user = require_role("Technicals or Members",    (UserRole.TECHNICAL, UserRole.MEMBER,))
 
 # A baseline auth for any valid user
-get_any_authenticated_user = require_role("Authenticated Users", [UserRole.TECHNICAL, UserRole.ORGANIZER, UserRole.MEMBER])
+get_any_authenticated_user = require_role("Authenticated Users", (UserRole.TECHNICAL, UserRole.ORGANIZER, UserRole.MEMBER,))
