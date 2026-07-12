@@ -2,10 +2,10 @@ from django.core.exceptions import ValidationError
 from collections.abc import Iterable
 from django_bolt import UploadFile
 from .models import Track
+from pathlib import Path
 import filetype
 import asyncio
 import uuid
-import os
 import re
 
 STUDENT_CODE_PATTERN = re.compile(r"^\w-\d+$")
@@ -42,7 +42,7 @@ def validate_collage_code(code: str) -> None:
         raise ValidationError("collage Code is Not Valid")
 
 async def _validate_track_file(uploaded_file: UploadFile, track: Track, extensions: Iterable[str]) -> UploadFile:
-    ext = os.path.splitext(uploaded_file.filename)[1][1:].lower()
+    ext = Path(uploaded_file.filename).suffix[1:].lower()
     if ext == "jpeg":
         ext = "jpg"
     

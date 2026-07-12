@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django.utils.translation import gettext_lazy as _
 from django.db import IntegrityError, transaction
 from django.shortcuts import aget_object_or_404
@@ -134,7 +136,7 @@ async def submit_task(form: Annotated[TaskSubmitRequestMSG, Form()], user: Bdaya
                     ReciviedTaskFile(
                         recivied_task=rec_task,
                         file=valid_file.file,
-                        file_name=os.path.basename(org_file_name),
+                        file_name=Path(org_file_name).name,
                     )
                     for valid_file, org_file_name in zip(new_validated_files, org_files_names, strict=True)
                 )

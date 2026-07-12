@@ -13,9 +13,6 @@ import time
 import jwt
 
 async def get_user_from_token(raw_token: str) -> BdayaUser | AnonymousUser:
-    """
-    Universal async authenticator. Replaces CookiesJWTAuthentication.
-    """
     if not raw_token:
         return AnonymousUser()
         
@@ -97,17 +94,20 @@ class JWTSocketMiddleware(BaseMiddleware):
         
         return await super().__call__(scope, receive, send)
 
-class TrackMemoryLeakMiddleware(Middleware):
+class TrackMemoryMiddleware(Middleware):
     async def process_request(self, request: Request) -> Any:
         tracemalloc.start()
+        pre_snap = tracemalloc.take_snapshot()
         response = await self.get_response(request)
-        snapshot = tracemalloc.take_snapshot()
+        after_snap = tracemalloc.take_snapshot()
+        
+        top_status = after_snap.compare_to(pre_snap, key_type='lineno')
         tracemalloc.stop()
         
-        top_status = snapshot.statistics('lineno')
-        print("\nMemory Leaks")
+        print("\nMemory > 1MB")
         for status in top_status[:5]:
-            print(status)
+            if status.size_diff > 1024 * 1024:
+                print(status)
         print()
         return response
 

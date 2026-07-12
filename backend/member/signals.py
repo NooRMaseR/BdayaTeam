@@ -1,15 +1,14 @@
 from django.dispatch import receiver
 from django.db.models import signals
 from core.models import BdayaUser
+from contextlib import suppress
+from pathlib import Path
 from . import models
-import os
-
 
 @receiver(signals.post_delete, sender=models.ReciviedTaskFile)
 def delete_tasks_files(sender, instance: models.ReciviedTaskFile, **kwargs):
-    file = instance.file.path
-    if os.path.exists(file):
-        os.remove(file)
+    with suppress(FileNotFoundError):
+        Path(instance.file.path).unlink()
         
 
 @receiver(signals.post_delete, sender=models.Member)

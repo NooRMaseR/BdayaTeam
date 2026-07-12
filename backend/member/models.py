@@ -3,7 +3,7 @@ from core.models import BdayaUser, Track
 from technical.models import Task
 from django.db import models
 from core import validators
-import os
+from pathlib import Path
 
 # Create your models here.
 
@@ -79,5 +79,5 @@ class ReciviedTaskFile(models.Model):
     
     def save(self, *args, **kwargs) -> None:
         if self.file:
-            self.file_name = os.path.basename(self.file.name)
+            self.file_name = Path(self.file.name).name
         return super().save(*args, **kwargs)

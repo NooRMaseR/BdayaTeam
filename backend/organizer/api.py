@@ -1,4 +1,3 @@
-# from core.middleware import TrackMemoryLeakMiddleware, TrackTimeMiddleware
 from core.permissions import (
     get_tech_or_org_user,
     get_org_user,
@@ -54,7 +53,6 @@ bolt = BoltAPI(
     trailing_slash="append",
     validate_response=False,
     django_middleware=settings.BOLT_MIDDLEWARE,
-    # middleware=[TrackTimeMiddleware, TrackMemoryLeakMiddleware]
 ) 
 
 

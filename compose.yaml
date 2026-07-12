@@ -60,10 +60,6 @@ services:
             - .venv/
             - __pycache__/
             - backups/
-    deploy:
-      resources:
-        limits:
-          memory: 8g
     depends_on:
       db:
         condition: service_healthy
@@ -82,16 +78,28 @@ services:
     develop:
       watch:
         - action: sync+restart
-          path: ./backend
+          path: ./backend/core/tasks.py
           target: /app
           ignore:
             - .venv/
             - __pycache__/
             - backups/
-    deploy:
-      resources:
-        limits:
-          memory: 2g
+        
+        - action: sync+restart
+          path: ./backend/notifications/tasks.py
+          target: /app
+          ignore:
+            - .venv/
+            - __pycache__/
+            - backups/
+        
+        - action: sync+restart
+          path: ./backend/organizer/tasks.py
+          target: /app
+          ignore:
+            - .venv/
+            - __pycache__/
+            - backups/
     depends_on:
       db:
         condition: service_healthy
@@ -105,10 +113,6 @@ services:
     env_file:
       - ./backend/.env
     command: ["uv", "run", "--no-dev", "daphne", "-b", "0.0.0.0", "-p", "8001", "BdayaTeam.asgi:application"]
-    deploy:
-      resources:
-        limits:
-          memory: 200m
     depends_on:
       db:
         condition: service_healthy
