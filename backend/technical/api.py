@@ -1,6 +1,7 @@
+from core.auth import JWT_COOKIES_AUTH
 from core.models import BdayaUser, Track
 from core.serializers import TrackNameOnlyMSGSerializer
-from core.permissions import get_tech_user, get_tech_or_member_user
+from core.permissions import IsTechnical, IsTechnicalOrMember
 from notifications.tasks import send_notification_to_track_members, send_notification_to_user
 
 from member.serializers import MemberTechnicalMSGSerializer, RecivedTaskMSGSerializer
@@ -43,8 +44,8 @@ from django.db.models import (
     Count,
     Q,
 )
+from django_bolt import BoltAPI, IsAuthenticated, Request, Response, status
 from django_bolt.exceptions import NotFound, BadRequest, Forbidden
-from django_bolt import BoltAPI, Depends, Response, status
 from django_bolt.param_functions import Form
 
 bolt = BoltAPI(
@@ -55,11 +56,12 @@ bolt = BoltAPI(
 )
 
 
-@bolt.get("/tasks/", response_model=list[TaskMSGSerializer])
-async def tech_get_all(user: BdayaUser = Depends(get_tech_user)): # type: ignore
+@bolt.get("/tasks/", response_model=list[TaskMSGSerializer], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnical])
+async def tech_get_all(request: Request): # type: ignore
     "get all created tasks"
     
-    TRACK: Track = user.track # type: ignore
+    USER: BdayaUser = request.user
+    TRACK: Track = USER.track # type: ignore
     if cached := await cache.aget(technical_tasks_cache_key(TRACK.name)):
         return HttpResponse(cached, content_type=JSON_CONTENT_TYPE)
     
@@ -93,11 +95,11 @@ async def tech_get_all(user: BdayaUser = Depends(get_tech_user)): # type: ignore
     await cache.aset(technical_tasks_cache_key(TRACK.name), encoded_data, DEFAULT_CACHE_DURATION)
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
-@bolt.post("/tasks/", status_code=201, response_model=TaskMSGSerializer)
-async def add_task(payload: Annotated[TaskCreateRequestMSG, Form()], user: BdayaUser = Depends(get_tech_user)): # type: ignore
+@bolt.post("/tasks/", status_code=201, response_model=TaskMSGSerializer, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnical])
+async def add_task(request: Request, payload: Annotated[TaskCreateRequestMSG, Form()]): # type: ignore
     "create a task"
     
-    TRACK: Track = user.track # type: ignore
+    TRACK: Track = request.user.track # type: ignore
     
     if await Task.objects.filter(track=TRACK, task_number=payload.task_number).aexists():
         return Response({"task_number": "This task number already exists"}, status.HTTP_400_BAD_REQUEST)
@@ -133,8 +135,8 @@ async def add_task(payload: Annotated[TaskCreateRequestMSG, Form()], user: Bdaya
     cache.delete_pattern(f"member_tasks:t{TRACK.name}*") # type: ignore
     return Response(status_code=status.HTTP_201_CREATED)
 
-@bolt.get("/tasks/{task_id}/", response_model=TaskMSGSerializer)
-async def get_one_task(task_id: int, user = Depends(get_tech_or_member_user)):
+@bolt.get("/tasks/{task_id}/", response_model=TaskMSGSerializer, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnicalOrMember])
+async def get_one_task(task_id: int):
     "get one task"
     
     CACHE_KEY = task_view_cache_key(task_id)
@@ -161,11 +163,11 @@ async def get_one_task(task_id: int, user = Depends(get_tech_or_member_user)):
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 
-@bolt.put('/tasks/{task_id}/', status_code=204)
-async def update_task(task_id: int, payload: Annotated[TaskCreateRequestMSG, Form()], user: BdayaUser = Depends(get_tech_user)): # type: ignore
+@bolt.put('/tasks/{task_id}/', status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnical])
+async def update_task(request: Request, task_id: int, payload: Annotated[TaskCreateRequestMSG, Form()]): # type: ignore
     "update task info"
     
-    TRACK: Track = user.track # type: ignore
+    TRACK: Track = request.user.track
     data_to_update: set[str] = set()
 
     try:
@@ -219,8 +221,8 @@ async def update_task(task_id: int, payload: Annotated[TaskCreateRequestMSG, For
     except Exception as e:
         raise BadRequest(detail=repr(e))
 
-@bolt.delete('/tasks/{task_id}/', status_code=204)
-async def delete_task(task_id: int, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+@bolt.delete('/tasks/{task_id}/', status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnical])
+async def delete_task(request: Request, task_id: int): # type: ignore
     """delete task
     
     delete a task and all sent tasks to this task
@@ -237,16 +239,16 @@ async def delete_task(task_id: int, user: BdayaUser = Depends(get_tech_user)): #
     await cache.adelete_many(
         [
             task_view_cache_key(task_id),
-            technical_tasks_cache_key(user.track.name), # type: ignore
+            technical_tasks_cache_key(request.user.track.name), # type: ignore
         ]
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@bolt.get("/tasks/{task_id}/recived/", response_model=list[RecivedTaskMSGSerializer])
-async def get_recived_tasks_from_members(task_id: int, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+@bolt.get("/tasks/{task_id}/recived/", response_model=list[RecivedTaskMSGSerializer], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnical])
+async def get_recived_tasks_from_members(request: Request, task_id: int): # type: ignore
     "get recived tasks from members"
     
-    track: Track = user.track # type: ignore
+    track: Track = request.user.track # type: ignore
     
     CACHE_KEY = tasks_from_memebrs_cache_key(track.name, task_id)
     if cached := await cache.aget(CACHE_KEY):
@@ -275,11 +277,12 @@ async def get_recived_tasks_from_members(task_id: int, user: BdayaUser = Depends
     await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
-@bolt.post("/tasks/{task_id}/recived/", status_code=204)
-async def sign_task(task_id: int, payload: TaskSignRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+@bolt.post("/tasks/{task_id}/recived/", status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnical])
+async def sign_task(request: Request, task_id: int, payload: TaskSignRequestMSG): # type: ignore
     "sign a task with a `degree` and `message`"
     
-    track: Track = user.track # type: ignore
+    USER: BdayaUser = request.user
+    track: Track = USER.track # type: ignore
     try:
         recived_task = await (
             ReciviedTask.objects
@@ -294,7 +297,7 @@ async def sign_task(task_id: int, payload: TaskSignRequestMSG, user: BdayaUser =
             degree=payload.degree,
             technical_notes=payload.technical_notes,
             signed=True,
-            signed_by=user
+            signed_by=USER
         )
         
         await send_notification_to_user(
@@ -317,15 +320,16 @@ async def sign_task(task_id: int, payload: TaskSignRequestMSG, user: BdayaUser =
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@bolt.get("/members/{track_name}/with-tasks/", response_model=list[MemberTechnicalMSGSerializer])
-async def get_members(track_name: str, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+@bolt.get("/members/{track_name}/with-tasks/", response_model=list[MemberTechnicalMSGSerializer], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnical])
+async def get_members(request: Request, track_name: str): # type: ignore
     "get all track members with their sent tasks"
     
+    USER: BdayaUser = request.user
     TRACK = track_name.replace("%20", " ")
-    track_obj: Track = user.track # type: ignore
+    track_obj: Track = USER.track # type: ignore
     
-    if user.is_technical and track_obj.name != TRACK: # type: ignore
-        raise Forbidden(detail=f"Not Your Track {user.username}")
+    if USER.is_technical and track_obj.name != TRACK: # type: ignore
+        raise Forbidden(detail=f"Not Your Track {USER.username}")
 
     CACHE_KEY = members_by_technicals_cache_key(track_name)
     if cached_data := await cache.aget(CACHE_KEY):
@@ -352,8 +356,8 @@ async def get_members(track_name: str, user: BdayaUser = Depends(get_tech_user))
     await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
-@bolt.put("/members/{track_name}/with-tasks/", status_code=204)
-async def update_member_task(track_name: str, payload: TechnicalMembersTasksUpdateRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
+@bolt.put("/members/{track_name}/with-tasks/", status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnical])
+async def update_member_task(request: Request, track_name: str, payload: TechnicalMembersTasksUpdateRequestMSG): # type: ignore
     "update a reviewed task"
     
     try:
@@ -371,16 +375,16 @@ async def update_member_task(track_name: str, payload: TechnicalMembersTasksUpda
         case MemberTechEditType.DEGREE:
             recivied_task.degree = int(payload.value)
     
-    recivied_task.signed_by = user # type: ignore
+    recivied_task.signed_by = request.user
             
     await recivied_task.asave()
     cache.delete(members_by_technicals_cache_key(track_name))
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@bolt.get("/extension/", response_model=TrackExtenstionsSerializer)
-async def get_extensions(user: BdayaUser = Depends(get_tech_or_member_user)): # type: ignore
-    TRACK: Track = user.track # type: ignore
+@bolt.get("/extension/", response_model=TrackExtenstionsSerializer, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnicalOrMember])
+async def get_extensions(request: Request):
+    TRACK: Track = request.user.track # type: ignore
     CACHE_KEY = extenstions_cache_key(TRACK.name)
     
     if cached_data:=await cache.aget(CACHE_KEY):
@@ -396,9 +400,9 @@ async def get_extensions(user: BdayaUser = Depends(get_tech_or_member_user)): # 
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 
-@bolt.put("/extension/", status_code=204)
-async def get_extensions(payload: TrackExtensionsRequestMSG, user: BdayaUser = Depends(get_tech_user)): # type: ignore
-    TRACK: Track = user.track # type: ignore
+@bolt.put("/extension/", status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnical])
+async def update_extensions(request: Request, payload: TrackExtensionsRequestMSG): # type: ignore
+    TRACK: Track = request.user.track # type: ignore
     CACHE_KEY = extenstions_cache_key(TRACK.name)
     
     extensions_lowerd = [x.lower() for x in payload.extensions]

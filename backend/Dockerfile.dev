@@ -1,10 +1,9 @@
-FROM python:3.14.5-slim
+FROM python:3.14.6-slim
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
 
 WORKDIR /app
 
@@ -23,6 +22,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client-18 \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2
 
 COPY pyproject.toml uv.lock ./
 

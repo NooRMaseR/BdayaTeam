@@ -29,21 +29,19 @@ def generate_jwts_for_user(user: BdayaUser) -> GeneratedJWT:
     
     access_token = create_jwt_for_user(
         user, 
+        expires_in=current_time + ACCESS_EXP,
         extra_claims={
             **claims,
             "token_type": "access",
-            "exp": current_time + ACCESS_EXP,
-            "sub": str(user.pk),
             "jti": str(uuid.uuid4())
         }
     )
     refresh_token = create_jwt_for_user(
         user, 
+        expires_in=current_time + REFRESH_EXP,
         extra_claims={
             **claims,
-            "token_type": "refresh",
-            "exp": current_time + REFRESH_EXP,
-            "sub": str(user.pk),
+            "typ": "refresh",
             "jti": str(uuid.uuid4())
         }
     )

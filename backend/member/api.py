@@ -1,9 +1,10 @@
-from pathlib import Path
-
+from django_bolt import BoltAPI, IsAuthenticated, Request, Response, status
+from django_bolt.exceptions import NotFound, BadRequest, HTTPException
 from django.utils.translation import gettext_lazy as _
 from django.db import IntegrityError, transaction
 from django.shortcuts import aget_object_or_404
 from django.db.models.functions import Coalesce
+from django_bolt.param_functions import Form
 from asgiref.sync import sync_to_async
 from django.http import HttpResponse
 from django.core.cache import cache
@@ -21,9 +22,10 @@ from django.db.models import (
     F,
 )
 
-from core.permissions import get_member_user, get_any_authenticated_user
-from core.validators import validate_track_task_files
+from core.auth import JWT_COOKIES_AUTH
+from core.permissions import IsMember
 from core.models import BdayaUser, Track
+from core.validators import validate_track_task_files
 
 from .serializers import MemberProfileMSGSerializer, RecivedTaskMSGSerializer
 from notifications.tasks import send_notification_to_track_technicals
@@ -49,13 +51,10 @@ from utils import (
 )
 from .caches import member_profile_cache_key, tasks_cache_key
 from channels.layers import get_channel_layer
-import mimetypes, asyncio, logging, os
+import mimetypes, asyncio, logging
 from urllib.parse import quote
 from typing import Annotated
-
-from django_bolt.exceptions import NotFound, BadRequest, HTTPException
-from django_bolt import BoltAPI, Depends, Response, status
-from django_bolt.param_functions import Form
+from pathlib import Path
 
 logger = logging.getLogger("member")
 
@@ -67,15 +66,15 @@ bolt = BoltAPI(
 )
 
 
-@bolt.get("/tasks/", response_model=list[TaskMSGSerializer])
-async def get_all_tasks(user: BdayaUser = Depends(get_member_user)):  # type: ignore
+@bolt.get("/tasks/", response_model=list[TaskMSGSerializer], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsMember])
+async def get_all_tasks(request: Request):  # type: ignore
     """get all unsigned tasks
     
     fetches all the tasks that hasen't reviewed yet by a technical `signed=False`
     """
-    
-    TRACK: Track = user.track  # type: ignore
-    CACHE_KEY = tasks_cache_key(TRACK.name, user.id)  # type: ignore
+    USER: BdayaUser = request.user
+    TRACK: Track = USER.track  # type: ignore
+    CACHE_KEY = tasks_cache_key(TRACK.name, USER.id)  # type: ignore
 
     if data := await cache.aget(CACHE_KEY):
         return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
@@ -91,7 +90,7 @@ async def get_all_tasks(user: BdayaUser = Depends(get_member_user)):  # type: ig
         .exclude(
             id__in=Subquery(
                 ReciviedTask.objects.only("id", "task_id")
-                .filter(member__code=user.member.code)  # type: ignore
+                .filter(member__code=USER.member.code)  # type: ignore
                 .values("task_id")
             )
         )
@@ -103,9 +102,10 @@ async def get_all_tasks(user: BdayaUser = Depends(get_member_user)):  # type: ig
     await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
-@bolt.post("/tasks/", status_code=201)
-async def submit_task(form: Annotated[TaskSubmitRequestMSG, Form()], user: BdayaUser = Depends(get_member_user)):  # type: ignore
+@bolt.post("/tasks/", status_code=201, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsMember])
+async def submit_task(request: Request, form: Annotated[TaskSubmitRequestMSG, Form()]):  # type: ignore
     "submit task solution"
+    USER: BdayaUser = request.user
     
     try:
         task = await Task.objects.only("id", "task_number", "created_at", "expires_at", "can_recive_tasks_after_expiration").aget(id=form.task_id)
@@ -115,8 +115,8 @@ async def submit_task(form: Annotated[TaskSubmitRequestMSG, Form()], user: Bdaya
     if not task.can_recive_tasks_after_expiration and task.is_expired:
         raise BadRequest(detail="Cannot Recive Tasks when expired")
     
-    member: Member = user.member  # type: ignore
-    TRACK: Track = user.track  # type: ignore
+    member: Member = USER.member  # type: ignore
+    TRACK: Track = USER.track  # type: ignore
     
     org_files_names = [file.filename for file in form.files]
     
@@ -153,7 +153,7 @@ async def submit_task(form: Annotated[TaskSubmitRequestMSG, Form()], user: Bdaya
 
     await cache.adelete_many(
         [
-            tasks_cache_key(TRACK.name, user.id),  # type: ignore
+            tasks_cache_key(TRACK.name, USER.id),  # type: ignore
             task_view_cache_key(form.task_id),
             member_profile_cache_key(member.code),
             technical_tasks_cache_key(TRACK.name),
@@ -172,14 +172,14 @@ async def submit_task(form: Annotated[TaskSubmitRequestMSG, Form()], user: Bdaya
                 "type": "broadcast_technical",
                 "data": {
                     "message": _("Member {username} sent task {task_number}").format(
-                        username=user.username, task_number=task.task_number
+                        username=USER.username, task_number=task.task_number
                     )
                 },
             },
         ),
         send_notification_to_track_technicals(
             track_id=TRACK.pk,
-            title=f"{user.username} - {member.code}",
+            title=f"{USER.username} - {member.code}",
             body=f"Sent Task {task.task_number}",
             url=f"/technical/{TRACK.name}/tasks/{task.pk}",
         ),
@@ -231,8 +231,8 @@ def get_sub_queries():
     )
 
 
-@bolt.get("/profile/{member_code}/", response_model=MemberProfileMSGSerializer)
-async def get_profile(member_code: str, user: BdayaUser = Depends(get_any_authenticated_user)):  # type: ignore
+@bolt.get("/profile/{member_code}/", response_model=MemberProfileMSGSerializer, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated()])
+async def get_profile(request: Request, member_code: str):  # type: ignore
     """get member profile
     
     if the requested user is a `member` the `member_code` parameter is ignored
@@ -240,8 +240,10 @@ async def get_profile(member_code: str, user: BdayaUser = Depends(get_any_authen
     else then it uses the `member_code` parameter
     """
     
-    if user.is_member:  # type: ignore
-        target_code = user.member.code  # type: ignore
+    USER: BdayaUser = request.user
+    
+    if USER.is_member:  # type: ignore
+        target_code = USER.member.code  # type: ignore
     else:
         target_code = member_code
 
@@ -261,8 +263,8 @@ async def get_profile(member_code: str, user: BdayaUser = Depends(get_any_authen
 
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
-@bolt.get("/edit-task/{sent_task_id}/", response_model=RecivedTaskMSGSerializer)
-async def get_editable_task(sent_task_id: int, user: BdayaUser = Depends(get_member_user)):  # type: ignore
+@bolt.get("/edit-task/{sent_task_id}/", response_model=RecivedTaskMSGSerializer, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsMember])
+async def get_editable_task(request: Request, sent_task_id: int):
     """get the signed task to edit
     
     it allows the `member` to get the task that he sent to edit it
@@ -281,7 +283,7 @@ async def get_editable_task(sent_task_id: int, user: BdayaUser = Depends(get_mem
                 "member__status",
             )
 	        .prefetch_related("task__images")
-            .aget(id=sent_task_id, member__code=user.member.code)  # type: ignore
+            .aget(id=sent_task_id, member__code=request.context['auth_claims']['code'])
         )
     except ReciviedTask.DoesNotExist:
         raise NotFound(detail=f"Recived Task with id {sent_task_id} does not exists")
@@ -289,14 +291,14 @@ async def get_editable_task(sent_task_id: int, user: BdayaUser = Depends(get_mem
     task_serialized_encoded = RecivedTaskMSGSerializer.from_model(task).encode()
     return HttpResponse(task_serialized_encoded, content_type=JSON_CONTENT_TYPE)
 
-@bolt.put("/edit-task/{sent_task_id}/", status_code=204)
-async def update_my_task(sent_task_id: int, payload: Annotated[TaskUpdateRequestMSG, Form()], user: BdayaUser = Depends(get_member_user)): # type: ignore
+@bolt.put("/edit-task/{sent_task_id}/", status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsMember])
+async def update_my_task(request: Request, sent_task_id: int, payload: Annotated[TaskUpdateRequestMSG, Form()]): # type: ignore
     """send task edits
     
     once the `member` finish editing and sends it here it marks the task to be `signed=False`
     """
-    
-    TRACK: Track = user.track # type: ignore
+    USER: BdayaUser = request.user
+    TRACK: Track = USER.track # type: ignore
     org_files_names = [file.filename for file in payload.files]
     
     try:
@@ -309,7 +311,7 @@ async def update_my_task(sent_task_id: int, payload: Annotated[TaskUpdateRequest
             ReciviedTask.objects
             .only("notes", "signed", "member__code", "task_id")
             .select_related("member", "task")
-            .aget(id=sent_task_id, member__bdaya_user__email=user.email) # type: ignore
+            .aget(id=sent_task_id, member__bdaya_user__email=USER.email) # type: ignore
         )
     except ReciviedTask.DoesNotExist:
         raise NotFound(detail=f"Recived Task with id {sent_task_id} does not exists")
@@ -352,15 +354,15 @@ async def update_my_task(sent_task_id: int, payload: Annotated[TaskUpdateRequest
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@bolt.get("/protected_media/tasks/{sent_task_id}/")
-async def get_protected_file(sent_task_id: int, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+@bolt.get("/protected_media/tasks/{sent_task_id}/", auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated()])
+async def get_protected_file(request: Request, sent_task_id: int): # type: ignore
     """access a protected file
     
     it check if the requested user is an `organizer` or `technical` to get the file
     
     or check if the user is a `member` and it's the same `member` that uplouded this task to get open the file
     """
-    
+    USER: BdayaUser = request.user
     try:
         document = await ReciviedTaskFile.objects \
             .only("id", 'file', "file_name", "recivied_task__member__bdaya_user__email") \
@@ -370,7 +372,7 @@ async def get_protected_file(sent_task_id: int, user: BdayaUser = Depends(get_an
         raise NotFound(detail=f"File with recived task id {sent_task_id} does not exists")
     
     # check if it's an organizer or technical to get the file or check if the user is a member and it's the same member that uplouded this task
-    if (user.is_member and document.recivied_task.member.bdaya_user.email != user.email):
+    if (USER.is_member and document.recivied_task.member.bdaya_user.email != USER.email):
         raise NotFound()
 
     content_type, _ = mimetypes.guess_type(document.file.url)

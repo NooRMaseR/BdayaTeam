@@ -47,7 +47,7 @@ COPY . .
 RUN SECRET_KEY="alskjdlaskjdni;ac;mimq;schasbgyanlucdch" \
     uv run --no-dev manage.py collectstatic --no-input
 
-RUN chown -R appuser:appuser /tmp/.uv-cache /app/logs/app.log
+RUN chown -R appuser:appuser /tmp/.uv-cache /app/media_files
 
 USER appuser
 

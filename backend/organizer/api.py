@@ -1,6 +1,7 @@
+from core.auth import JWT_COOKIES_AUTH
 from core.permissions import (
-    get_tech_or_org_user,
-    get_org_user,
+    IsOrganizer,
+    IsTechnicalOrOrganizer,
 )
 from core.serializers import TrackNameOnlyMSGSerializer
 from core.api_schemas import RegisterRequestMSG
@@ -44,8 +45,8 @@ from asgiref.sync import sync_to_async
 from typing import Annotated
 from datetime import date
 
+from django_bolt import BoltAPI, IsAuthenticated, Request, Response, status
 from django_bolt.exceptions import Forbidden, NotFound, BadRequest
-from django_bolt import BoltAPI, Depends, Response, status
 from django_bolt.param_functions import Form
 
 bolt = BoltAPI(
@@ -83,15 +84,15 @@ def move_member_to_another_track(code: str, current_track: str, move_to_track: s
     )
 
 
-@bolt.get("/members/{track_name}/", tags=["Organizer"], response_model=MemberORGMSGSerializer)
-async def get_unfireed_track_members(track_name: str, user: BdayaUser = Depends(get_tech_or_org_user)):  # type: ignore
+@bolt.get("/members/{track_name}/", tags=["Organizer"], response_model=MemberORGMSGSerializer, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnicalOrOrganizer])
+async def get_unfireed_track_members(request: Request, track_name: str):  # type: ignore
     "get track members who's not fired with attendances"
-    
+    USER: BdayaUser = request.user
     TRACK = track_name.replace("%20", " ")
-    track: Track = user.track  # type: ignore
+    track: Track = USER.track  # type: ignore
 
-    if user.is_technical and track.name != TRACK:
-        raise Forbidden(detail=f"Not Your Track {user.username}")
+    if USER.is_technical and track.name != TRACK:
+        raise Forbidden(detail=f"Not Your Track {USER.username}")
 
     CACHE_KEY = members_by_organizer_cache_key(track_name)
     if cached_data := await cache.aget(CACHE_KEY):
@@ -126,15 +127,16 @@ async def get_unfireed_track_members(track_name: str, user: BdayaUser = Depends(
     return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
 
 
-@bolt.get("/members/{track_name}/fired/", tags=["Organizer"], response_model=MemberORGMSGSerializer)
-async def get_fireed_track_members(track_name: str, user: BdayaUser = Depends(get_tech_or_org_user)):  # type: ignore
+@bolt.get("/members/{track_name}/fired/", tags=["Organizer"], response_model=MemberORGMSGSerializer, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnicalOrOrganizer])
+async def get_fireed_track_members(request: Request, track_name: str):  # type: ignore
     "get track fired members with attendances"
     
+    USER: BdayaUser = request.user
     TRACK = track_name.replace("%20", " ")
-    track: Track = user.track  # type: ignore
+    track: Track = USER.track  # type: ignore
 
-    if user.is_technical and track.name != TRACK:
-        raise Forbidden(detail=f"Not Your Track {user.username}")
+    if USER.is_technical and track.name != TRACK:
+        raise Forbidden(detail=f"Not Your Track {USER.username}")
 
     CACHE_KEY = fired_members_by_organizer_cache_key(track_name)
     if cached_data := await cache.aget(CACHE_KEY):
@@ -168,13 +170,14 @@ async def get_fireed_track_members(track_name: str, user: BdayaUser = Depends(ge
     return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
 
 
-@bolt.post("/members/{track_name}/", status_code=204, tags=["Organizer"])
-async def edit_member_grid(track_name: str, payload: MemberEditGridRequestMSG, user=Depends(get_org_user)):
+@bolt.post("/members/{track_name}/", status_code=204, tags=["Organizer"], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
+async def edit_member_grid(request: Request, track_name: str, payload: MemberEditGridRequestMSG):
     """edit a member from DataGrid
     
     if the `field=track` then it deletes the user and creates a new user with the new `track`
     """
     
+    USER: BdayaUser = request.user
     TRACK = track_name.replace("%20", " ")
     CACHE_KEY = members_by_organizer_cache_key(track_name)
 
@@ -197,7 +200,7 @@ async def edit_member_grid(track_name: str, payload: MemberEditGridRequestMSG, u
                         ).update(
                             status=AttendanceStatus(payload.value),
                             excuse_reason=payload.excuse,
-                            by=user,
+                            by=USER,
                         )
                         cache.delete(CACHE_KEY)
                     else:
@@ -211,7 +214,7 @@ async def edit_member_grid(track_name: str, payload: MemberEditGridRequestMSG, u
                             )
 
                         Attendance.objects.create(
-                            member=member, date=day, status=payload.value, by=user
+                            member=member, date=day, status=payload.value, by=USER
                         )
                         cache.delete(CACHE_KEY)
                         return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -250,8 +253,8 @@ async def edit_member_grid(track_name: str, payload: MemberEditGridRequestMSG, u
 
     return await safe_transaction()
 
-@bolt.get("/attendance/{track_name}/days/", response_model=list[AttendanceDayResponseMSG])
-async def get_attendance_days(track_name: str, user=Depends(get_tech_or_org_user)):
+@bolt.get("/attendance/{track_name}/days/", response_model=list[AttendanceDayResponseMSG], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnicalOrOrganizer])
+async def get_attendance_days(track_name: str):
     "get track days for the attendace"
     
     TRACK = track_name.replace("%20", " ")
@@ -268,7 +271,7 @@ async def get_attendance_days(track_name: str, user=Depends(get_tech_or_org_user
     await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
-@bolt.post("/attendance/{track_name}/days/", status_code=201, response_model=AttendanceDayResponseMSG)
+@bolt.post("/attendance/{track_name}/days/", status_code=201, response_model=AttendanceDayResponseMSG, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
 async def create_day(track_name: str, payload: DayRequestMSG):
     "create day"
     
@@ -303,7 +306,7 @@ async def create_day(track_name: str, payload: DayRequestMSG):
             content_type=JSON_CONTENT_TYPE,
         )
 
-@bolt.delete("/attendance/{track_name}/days/", status_code=204)
+@bolt.delete("/attendance/{track_name}/days/", status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
 async def delete_day(track_name: str, day: str):
     "delete day"
     
@@ -319,7 +322,7 @@ async def delete_day(track_name: str, day: str):
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@bolt.put("/attendance/{track_name}/days/", status_code=204)
+@bolt.put("/attendance/{track_name}/days/", status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
 async def update_day(track_name: str, payload: DayUpdateRequestMSG):
     "update day"
     
@@ -355,15 +358,15 @@ async def get_settings():
     await cache.aset(SETTINGS_CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
-@bolt.put("/settings/", status_code=204)
-async def update_settings(payload: Annotated[UpdateSettingsRequestMSG, Form()], user: BdayaUser = Depends(get_org_user)): # type: ignore
+@bolt.put("/settings/", status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
+async def update_settings(request: Request, payload: Annotated[UpdateSettingsRequestMSG, Form()]): # type: ignore
     "update the site settings"
 
     @sync_to_async
     def safe_update_settings() -> None:
         obj = SiteSetting.get_solo()
 
-        if user.is_superuser and payload.is_register_enabled != None:
+        if request.context['auth_claims']['is_superuser'] and payload.is_register_enabled != None:
             obj.is_register_enabled = payload.is_register_enabled
 
         if payload.organizer_can_edit != None:

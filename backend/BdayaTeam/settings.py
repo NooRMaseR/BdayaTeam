@@ -168,7 +168,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{'redis' if USE_DOCKER else "127.0.0.1"}:6379/1", #* for Docker
+        "LOCATION": f"redis://{os.getenv("REDIS_HOST")}:{os.getenv('REDIS_PORT')}/1",
         "TIMEOUT": 604800,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
@@ -185,7 +185,7 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels_redis.pubsub.RedisPubSubChannelLayer',
         'CONFIG': {
             'hosts': (
-                f"redis://{'redis' if USE_DOCKER else "127.0.0.1"}:6379/2",
+                f"redis://{os.getenv("REDIS_HOST")}:{os.getenv('REDIS_PORT')}/2",
             ),
         }
     }
@@ -228,16 +228,6 @@ LOGGING = {
             "formatter": "simple",
         },
 
-        # Rotates at 10 MB, keeps last 5 files — safe for long-running servers
-        "file": {
-            "level": "INFO",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOGS_DIR / "app.log",
-            "maxBytes": 1024 * 1024 * 10,  # 10 MB
-            "formatter": "verbose",
-            "filters": ["require_debug_false"],  # File handler only in production
-        },
-
         # Sends ERROR+ emails to ADMINS in settings — only fires in production
         "mail_admins": {
             "level": "ERROR",
@@ -258,7 +248,7 @@ LOGGING = {
         
         # Specifically catches HTTP 5xx errors
         'django.request': {
-            'handlers': ['file'],
+            'handlers': ['console'],
             'level': 'ERROR',
             'propagate': False,
         },
@@ -275,7 +265,7 @@ HUEY = {
         "workers": 10,
         "worker_type": "greenlet",
     },
-    "connection": {"host": 'redis' if USE_DOCKER else "127.0.0.1", "port": 6379, "db": 0},
+    "connection": {"host": os.getenv("REDIS_HOST"), "port": os.getenv("REDIS_PORT"), "db": 0},
 }
 
 # Password validation

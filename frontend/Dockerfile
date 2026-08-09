@@ -1,6 +1,3 @@
-
-# Stage 1
-
 FROM oven/bun:1-slim AS builder
 
 WORKDIR /app
@@ -36,6 +33,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME=0.0.0.0
 
 RUN useradd \
     --system \
@@ -54,4 +52,4 @@ USER appuser
 
 EXPOSE 3000
 
-CMD ["bun", "run", "alone:docker"]
+CMD ["bun", "run", "alone:docker", "-H", "0.0.0.0"]

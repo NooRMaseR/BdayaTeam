@@ -1,13 +1,7 @@
 services:
-  # Self Kernel
-  host-kernel-setup:
-    image: alpine
-    privileged: true
-    command: sysctl -w vm.overcommit_memory=1
-
   # The Database (postgreSql)
   db:
-    image: postgres:18.3
+    image: docker.io/library/postgres:18.3
     restart: always
     user: postgres
     volumes:
@@ -24,27 +18,23 @@ services:
 
   # The Cache (redis)
   redis:
-    image: redis:8-alpine
+    image: docker.io/library/redis:8-alpine
     restart: always
     expose:
       - "6379"
-    depends_on:
-      host-kernel-setup:
-        condition: service_completed_successfully
 
   # The Backend (Django/Bolt)
   bolt:
     build:
       context: ./backend
       # dockerfile: Dockerfile.dev
-    image: bdayateam/backend:latest
+    image: localhost/bdayateam/backend:latest
     env_file:
       - ./backend/.env
     volumes:
       - backend_media:/app/media_files
       - backend_static:/app/static_files
       - ./backend/backups:/app/backups
-      - /app/logs
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost/api/health/ || exit 1"]
       interval: 30s
@@ -68,13 +58,11 @@ services:
 
   # Huey Worker
   huey:
-    image: bdayateam/backend:latest
+    image: localhost/bdayateam/backend:latest
     restart: always
     env_file:
       - ./backend/.env
     command: ["uv", "run", "--no-dev", "manage.py", "run_huey"]
-    volumes:
-      - ./backend/backups:/app/backups
     develop:
       watch:
         - action: sync+restart
@@ -108,7 +96,7 @@ services:
 
   # websocket (daphne)
   daphne:
-    image: bdayateam/backend:latest
+    image: localhost/bdayateam/backend:latest
     restart: always
     env_file:
       - ./backend/.env
@@ -131,7 +119,7 @@ services:
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
         NEXT_PUBLIC_UNOPTIMIZED: ${NEXT_PUBLIC_UNOPTIMIZED}
         NEXT_API_URL: ${NEXT_API_URL}
-    image: bdayateam/frontend:latest
+    image: localhost/bdayateam/frontend:latest
     # image: bdayateam/frontend:dev
     env_file:
       - ./frontend/.env
@@ -157,7 +145,7 @@ services:
 
   # The Reverse Proxy (Nginx)
   nginx:
-    image: nginx:alpine
+    image: docker.io/library/nginx:alpine
     restart: always
     ulimits:
       nproc: 65535

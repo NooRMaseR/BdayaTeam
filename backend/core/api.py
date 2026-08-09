@@ -3,10 +3,11 @@ from organizer.models import SiteSetting
 from organizer.serializers import SiteSettingsImagesMSGSerializer
 
 from .serializers import TrackMSGSerializer, TrackNameOnlyMSGSerializer
-from .permissions import get_any_authenticated_user, get_org_user
+from .permissions import IsOrganizer, IsSuperUser, JWTCookiesAuthentication
 from .models import BdayaUser, Track, TrackCounter, UserRole
 from .tasks import delete_all_tracks, send_member_email
 from .caches import TRACKS_CACHE_KEY, track_cache_key
+from .auth import JWT_COOKIES_AUTH
 from . import api_schemas
 
 from django.db import IntegrityError, transaction, connection
@@ -24,14 +25,14 @@ from typing import Annotated
 import asyncio
 import jwt
 
-from django_bolt.exceptions import BadRequest, Unauthorized, NotFound, Forbidden, InternalServerError
+from django_bolt.exceptions import BadRequest, NotFound, InternalServerError
 from django_bolt.health import register_health_checks, add_health_check
 from django_bolt.param_functions import Form
 from django_bolt import (
+    IsAuthenticated,
     OpenAPIConfig,
     Response,
     BoltAPI,
-    Depends,
     Request,
     status,
     JSON,
@@ -44,7 +45,7 @@ bolt = BoltAPI(
         title="Bdaya Team Api",
         version="1.2.0",
         path="/api/docs",
-        enabled=False
+        enabled=True
     ),
     validate_response=False,
     django_middleware=settings.BOLT_MIDDLEWARE
@@ -217,46 +218,15 @@ async def register(payload: api_schemas.RegisterRequestMSG):
 
     return response
 
-@bolt.post("/token/refresh/", tags=['Auth'], auth=None, status_code=204)
-async def refresh_tokens(request: Request, payload: api_schemas.RefreshTokenRequestMSG):
+@bolt.post("/token/refresh/", tags=['Auth'], auth=[JWTCookiesAuthentication(token_type="refresh", cookie="refresh_token", require_jti=True, revocation_store=STORE)], guards=[IsAuthenticated()], status_code=204)
+async def refresh_tokens(request: Request):
     """Refresh Tokens
     
     refreshes the tokens from the cookies
     
     it looks for the the refresh token in the `cookies`, if not found then search for it in the `payload`
     """
-    
-    raw_refresh = request.cookies.get("refresh_token") or payload.refresh
-    
-    if not raw_refresh:
-        raise Unauthorized(detail="Refresh token missing")
-
-    try:
-        decoded = jwt.decode(raw_refresh, settings.SECRET_KEY, ['HS256'])
-    except jwt.ExpiredSignatureError:
-        raise Unauthorized(detail="Refresh token expired. Please log in again.")
-    except jwt.InvalidTokenError:
-        raise Unauthorized(detail="Invalid refresh token")
-    
-    if decoded.get("token_type") != "refresh":
-        raise Unauthorized(detail="Invalid token type")
-    
-    jti = decoded.get("jti")
-    exp = decoded.get("exp")
-    user_id = decoded.get("sub")
-    
-    if jti and await STORE.is_revoked(jti):
-        raise Unauthorized(detail="Refresh token has been revoked or already used.")
-    
-    try:
-        user = await BdayaUser.objects.select_related("member").aget(id=user_id)
-    except BdayaUser.DoesNotExist:
-        raise NotFound(detail="User Does not exists")
-    
-    if jti and exp:
-        await STORE.revoke(jti=jti, exp=exp)
-    
-    tokens = generate_jwts_for_user(user)
+    tokens = generate_jwts_for_user(request.user)
     
     response = Response(status_code=status.HTTP_204_NO_CONTENT) \
     .set_cookie(
@@ -326,12 +296,13 @@ def create_member_transaction(payload: api_schemas.RegisterRequestMSG) -> Member
     except IntegrityError:
         raise ValueError("something went wrong, Please try again.")
 
-@bolt.get("/test-auth/", tags=['Auth'], response_model=api_schemas.TestAuthResponseMSG)
-async def test_auth(user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+@bolt.get("/test-auth/", tags=['Auth'], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated()])
+async def new_test_auth(request: Request) -> api_schemas.TestAuthResponseMSG: # type: ignore
     """test authentication
     
     test if the user is authenticated and return the user `credentials`
     """
+    user: BdayaUser = request.user
     
     track: TrackNameOnlyMSGSerializer | None = None
     
@@ -340,15 +311,14 @@ async def test_auth(user: BdayaUser = Depends(get_any_authenticated_user)): # ty
     
     settings = await sync_to_async(SiteSetting.get_solo)()
     
-    data = api_schemas.TestAuthResponseMSG(
+    return api_schemas.TestAuthResponseMSG(
         username= user.username,
         is_admin= user.is_superuser,
         role= UserRole(user.role),
         track= track,
         settings= SiteSettingsImagesMSGSerializer.from_model(settings),
     )
-    
-    return JSON(data)
+
 
 @bolt.get("/tracks/", tags=['Track'], response_model=list[TrackMSGSerializer], validate_response=False)
 async def get_all():
@@ -371,8 +341,8 @@ async def get_all():
     
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
-@bolt.post('/tracks/', tags=["Track"], status_code=201)
-async def create_track(payload: Annotated[api_schemas.TrackCreateRequestMSG, Form()], user = Depends(get_org_user)): # type: ignore
+@bolt.post('/tracks/', tags=["Track"], status_code=201, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
+async def create_track(payload: Annotated[api_schemas.TrackCreateRequestMSG, Form()]): # type: ignore
     """create a track
     
     the `name` and `prefix` must be `unique`
@@ -425,15 +395,12 @@ async def get_one_track(track_name: str):
     
     return HttpResponse(track_encoded, content_type=JSON_CONTENT_TYPE)
 
-@bolt.delete('/tracks/{track_name}/', tags=['Track'], status_code=204)
-async def delete(track_name: str, user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+@bolt.delete('/tracks/{track_name}/', tags=['Track'], status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsSuperUser])
+async def delete(track_name: str): # type: ignore
     """delete a track (Very Dangerios)
 
     this endpoint deletes a track along with `all related fields`
     """
-    
-    if not user.is_superuser:
-        raise Forbidden(detail="Only Admin allowed")
     
     count, _ = await Track.objects.filter(name=track_name).adelete()
     
@@ -443,15 +410,12 @@ async def delete(track_name: str, user: BdayaUser = Depends(get_any_authenticate
     await cache.adelete_many([TRACKS_CACHE_KEY, track_cache_key(track_name)])
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@bolt.delete('/reset-all/', status_code=202, tags=['Auth'])
-async def reset_all(user: BdayaUser = Depends(get_any_authenticated_user)): # type: ignore
+@bolt.delete('/reset-all/', status_code=202, tags=['Auth'], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsSuperUser])
+async def reset_all(): # type: ignore
     """Reset All
     
     `Very Dangerios`, Deletes all tracks and members and tasks and technicals, every thing related to the `tracks`
     """
-    
-    if not user.is_superuser:
-        raise Forbidden(detail="Only Admin allowed")
     
     try:
         delete_all_tracks()

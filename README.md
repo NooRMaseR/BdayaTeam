@@ -24,21 +24,30 @@ for the user in docker, edit the `Dockerfile` at `useradd` or `adduser` code
 
 for the dev mode in `Next.js`, uncomment the `dockerfile` property in `compose.yaml`
 
-## 2- Run docker
+## 2- Run docker/Podman (Recomended) for better performance
 
-you need to run docker like this first
+you need to run docker/podman like this first
 
 ```bash
+# Docker
 docker compose up -d
+# Podman
+podman-compose up -d
 ```
+
+<b><i>Note:</i></b>
+
+if you used `podman` you should use the full container name like `bdayateam_bolt_1` for better security, if you are using docker, you can use the service name like `bolt`
 
 ## 3- migrate the database
 
 you need to make\apply migrations for the database as the root user for creating migrations files
 
+you can replace `docker compose` with `podman-compose`
+
 ```bash
-docker compose exec -u root bolt uv run --no-dev manage.py makemigrations
-docker compose exec -u root bolt uv run --no-dev manage.py migrate
+docker compose exec -it -u root bdayateam_bolt_1 uv run --no-dev manage.py makemigrations
+docker compose exec -it bdayateam_bolt_1 uv run --no-dev manage.py migrate
 ```
 
 ## 4- create superuser
@@ -52,7 +61,7 @@ docker compose exec bolt uv run --no-dev manage.py createsuperuser
 you need to restart the backend for the changes
 
 ```bash
-docker compose restart bolt
+docker compose restart bdayateam_bolt_1
 ```
 
 ## 6- Testing
