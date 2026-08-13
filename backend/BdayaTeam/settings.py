@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-load_dotenv()
+load_dotenv('.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -38,7 +38,8 @@ ALLOWED_HOSTS = (
     "127.0.0.1",
     "nginx",
     "bolt",
-    "twist-raid-family-responsibility.trycloudflare.com"
+    "twist-raid-family-responsibility.trycloudflare.com",
+    "testserver.local",
 )
 
 # Application definition
@@ -116,7 +117,7 @@ GRAPHENE = {
 ROOT_URLCONF = "BdayaTeam.urls"
 AUTH_USER_MODEL = "core.BdayaUser"
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_USE_TLS = True

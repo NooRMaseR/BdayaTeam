@@ -35,6 +35,9 @@ services:
       - backend_media:/app/media_files
       - backend_static:/app/static_files
       - ./backend/backups:/app/backups
+      - ./backend:/app
+      - /app/.venv
+      - /app/__pycache__
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost/api/health/ || exit 1"]
       interval: 30s
@@ -153,7 +156,7 @@ services:
         soft: 65535
         hard: 65535
     ports:
-      - "80:80"
+      - "8080:80"
       - "443:443"
     volumes:
       - ./nginx_main.conf:/etc/nginx/nginx.conf:ro

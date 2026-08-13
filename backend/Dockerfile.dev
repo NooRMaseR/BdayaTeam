@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt install -y --no-install-recommends \
     wget \
     gnupg2 \
     libjemalloc2 \
@@ -37,8 +37,4 @@ RUN SECRET_KEY="alskjdlaskjdni;ac;mimq;schasbgyanlucdch" \
 
 EXPOSE 8000
 
-CMD uv run --no-dev manage.py runbolt \
-    --dev \
-    --max-rss 512 \
-    --workers-lifetime 3600 \
-    --respawn-failed-workers
+CMD uv run --no-dev manage.py runbolt --dev

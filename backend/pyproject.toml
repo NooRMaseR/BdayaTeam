@@ -40,5 +40,11 @@ dev = [
     "memory-profiler>=0.61.0",
     "ps-mem>=3.14",
     "psutil>=7.2.0",
+    "pytest-asyncio>=1.4.0",
+    "pytest-django>=4.14.0",
     "requests>=2.32.5",
 ]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "BdayaTeam.settings"
+python_files = ["tests.py"]

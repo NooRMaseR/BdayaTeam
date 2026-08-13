@@ -1,36 +1,37 @@
-# import random
-# from faker import Faker
-# from pprint import pprint
+import random
+from faker import Faker
+from pprint import pprint
 from locust import FastHttpUser, task, between
 
-class OrgUser(FastHttpUser):
-    weight = 1
-    wait_time = between(2, 5)
-    host="http://localhost/api"
-    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzgzMjk1NTk1LCJpYXQiOjE3ODMyNzAzOTUsImlzX3N0YWZmIjp0cnVlLCJpc19zdXBlcnVzZXIiOnRydWUsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJvcmdhbml6ZXIiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwianRpIjoiODJlZGY4YjEtOTA1MS00NDBmLWFlZDQtMjc3ZTQ4N2Y5MWNmIn0.7ztPEU7wMAlOktGgIUwTGtAX6VwIfMG8vQqh-tE5ayo"
+# class OrgUser(FastHttpUser):
+#     weight = 1
+#     wait_time = between(2, 5)
+#     host="http://localhost/api"
+#     TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzgzMjk1NTk1LCJpYXQiOjE3ODMyNzAzOTUsImlzX3N0YWZmIjp0cnVlLCJpc19zdXBlcnVzZXIiOnRydWUsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdtYWlsLmNvbSIsInJvbGUiOiJvcmdhbml6ZXIiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwianRpIjoiODJlZGY4YjEtOTA1MS00NDBmLWFlZDQtMjc3ZTQ4N2Y5MWNmIn0.7ztPEU7wMAlOktGgIUwTGtAX6VwIfMG8vQqh-tE5ayo"
     
-    @task
-    def see_members(self):
-        self.client.get("/organizer/members/Python/", headers={"Authorization": self.TOKEN})
+#     @task
+#     def see_members(self):
+#         self.client.get("/organizer/members/Python/", headers={"Authorization": self.TOKEN})
 
-class MemberUser(FastHttpUser):
-    weight = 250
-    wait_time = between(2, 5)
-    host="http://localhost/api"
-    TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzgzMjk1NjgzLCJpYXQiOjE3ODMyNzA0ODMsImlzX3N0YWZmIjpmYWxzZSwiaXNfc3VwZXJ1c2VyIjpmYWxzZSwidXNlcm5hbWUiOiJub29yIiwiZW1haWwiOiJub29yd25lNkBnbWFpbC5jb20iLCJyb2xlIjoibWVtYmVyIiwiY29kZSI6InAtMSIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJqdGkiOiJhNWI2ZTkwNi1lMGNlLTQzMGUtOTNlZS0zNDAzYzQxNDFjNTIifQ.5VskCOjb54Lza_-J1krjmi-mkKAkG0CJmwmJqw8X6do"
+# class MemberUser(FastHttpUser):
+#     weight = 250
+#     wait_time = between(2, 5)
+#     host="http://localhost/api"
+#     TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiZXhwIjoxNzgzMjk1NjgzLCJpYXQiOjE3ODMyNzA0ODMsImlzX3N0YWZmIjpmYWxzZSwiaXNfc3VwZXJ1c2VyIjpmYWxzZSwidXNlcm5hbWUiOiJub29yIiwiZW1haWwiOiJub29yd25lNkBnbWFpbC5jb20iLCJyb2xlIjoibWVtYmVyIiwiY29kZSI6InAtMSIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJqdGkiOiJhNWI2ZTkwNi1lMGNlLTQzMGUtOTNlZS0zNDAzYzQxNDFjNTIifQ.5VskCOjb54Lza_-J1krjmi-mkKAkG0CJmwmJqw8X6do"
     
-    @task
-    def see_tasks(self):
-        self.client.get(f"/member/tasks/", headers={"Authorization": self.TOKEN})
+#     @task
+#     def see_tasks(self):
+#         self.client.get(f"/member/tasks/", headers={"Authorization": self.TOKEN})
     
-    @task
-    def see_my_profile(self):
-        self.client.get(f"/member/profile/p-1/", headers={"Authorization": self.TOKEN})
+#     @task
+#     def see_my_profile(self):
+#         self.client.get(f"/member/profile/p-1/", headers={"Authorization": self.TOKEN})
     
-    
+# faker = Faker()
+
 # class OrgBoltUser(FastHttpUser):
 #     wait_time = between(2, 5)
-#     host="http://localhost:8000/api"
+#     host="https://localhost/api/"
 #     TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc2ODg1NjY4LCJpYXQiOjE3NzY4NjA0NjgsImp0aSI6ImVmODI0Y2QyMDQxYjQ1MGM4NmQ2MTc2NTYwNWE2MGM2IiwidXNlcl9pZCI6IjEwIiwicm9sZSI6Im9yZ2FuaXplciJ9._4RFUn1PNoQFdV4TighWdOn5YxjcuOJxsMNjxXQHslA"
     
 #     @task
@@ -55,17 +56,16 @@ class MemberUser(FastHttpUser):
     
     # @task
     # def do_register(self):
-    #     faker = Faker()
     #     code = f"C{random.randint(1111111, 9999999)}"
     #     body = {
     #         "name": faker.user_name(),
     #         "email": faker.email(domain="gmail.com"),
     #         "collage_code": code,
-    #         "phone_number": faker.phone_number(),
-    #         "request_track_id": random.choice((1, 2, 7, 8 ,11)),
+    #         "phone_number": faker.numerify(text="+201#########"),
+    #         "request_track_id": 1,
     #     }
     #     self.client.post(
-    #         "/api/register/", json=body, headers={"Content-Type": "application/json"}
+    #         "register/", json=body, headers={"Content-Type": "application/json"}
     #     )
 
 # class Technical(FastHttpUser):

@@ -2,7 +2,6 @@ from django_bolt.serializers import Email, Phone, PositiveInt, Serializer, field
 from phonenumber_field.validators import validate_international_phonenumber
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
 from django_bolt import UploadFile
 
 from organizer.serializers import SiteSettingsImagesMSGSerializer
@@ -27,16 +26,6 @@ class RegisterRequestMSG(Serializer):
     phone_number: Phone
     collage_code: str
     
-    @field_validator('email', 'before')
-    def validate_email(cls, v: str) -> str:
-        try:
-            validate_email(v)
-        except ValidationError as e:
-            error = e.message if hasattr(e, 'message') else e.messages[0]
-            raise ValueError(error)
-
-        return v
-    
     @field_validator('collage_code', 'before')
     def validate_collage(cls, v: str) -> str:
         try:
@@ -47,7 +36,7 @@ class RegisterRequestMSG(Serializer):
         
         return v
     
-    @field_validator('phone_number', 'before')
+    @field_validator('phone_number')
     def validate_phone(cls, v: str) -> str:
         try:
             validate_international_phonenumber(v)

@@ -297,7 +297,7 @@ def create_member_transaction(payload: api_schemas.RegisterRequestMSG) -> Member
         raise ValueError("something went wrong, Please try again.")
 
 @bolt.get("/test-auth/", tags=['Auth'], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated()])
-async def new_test_auth(request: Request) -> api_schemas.TestAuthResponseMSG: # type: ignore
+async def new_test_auth(request: Request) -> api_schemas.TestAuthResponseMSG:
     """test authentication
     
     test if the user is authenticated and return the user `credentials`
@@ -321,7 +321,7 @@ async def new_test_auth(request: Request) -> api_schemas.TestAuthResponseMSG: # 
 
 
 @bolt.get("/tracks/", tags=['Track'], response_model=list[TrackMSGSerializer], validate_response=False)
-async def get_all():
+async def get_all_tracks():
     "get all tracks"
     
     cached = await cache.aget(TRACKS_CACHE_KEY)
@@ -332,9 +332,8 @@ async def get_all():
     query_set = Track.objects.defer("prefix").values(
         "id", "name", "image", "en_description", "ar_description"
     )
-    track_list = [track async for track in query_set]
     
-    data = TrackMSGSerializer.from_queryset_values(track_list)
+    data: list[TrackMSGSerializer] = await TrackMSGSerializer.afrom_queryset_values(query_set)
 
     encoded_data = serializer_encoder.encode(data)
     await cache.aset(TRACKS_CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
@@ -342,7 +341,7 @@ async def get_all():
     return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
 
 @bolt.post('/tracks/', tags=["Track"], status_code=201, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
-async def create_track(payload: Annotated[api_schemas.TrackCreateRequestMSG, Form()]): # type: ignore
+async def create_track(payload: Annotated[api_schemas.TrackCreateRequestMSG, Form()]):
     """create a track
     
     the `name` and `prefix` must be `unique`
