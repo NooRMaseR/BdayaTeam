@@ -162,9 +162,9 @@ dependencies = [
     { name = "django-cors-headers" },
     { name = "django-imagekit" },
     { name = "django-phonenumber-field", extra = ["phonenumberslite"] },
-    { name = "django-redis" },
     { name = "django-solo" },
     { name = "django-unfold" },
+    { name = "django-vcache" },
     { name = "filetype" },
     { name = "gevent" },
     { name = "graphene-django" },
@@ -199,14 +199,14 @@ requires-dist = [
     { name = "channels-redis", specifier = ">=4.3.0" },
     { name = "daphne", specifier = ">=4.2.1" },
     { name = "django", specifier = ">=6.0.5" },
-    { name = "django-bolt", specifier = "==0.10.0" },
+    { name = "django-bolt", specifier = "==0.10.2" },
     { name = "django-cleanup", specifier = ">=9.0.0" },
     { name = "django-cors-headers", specifier = ">=4.9.0" },
     { name = "django-imagekit", specifier = ">=6.0.0" },
     { name = "django-phonenumber-field", extras = ["phonenumberslite"], specifier = ">=8.3.0" },
-    { name = "django-redis", specifier = ">=6.0.0" },
     { name = "django-solo", specifier = ">=2.5.1" },
     { name = "django-unfold", specifier = ">=0.94.0" },
+    { name = "django-vcache", specifier = ">=3.1.1" },
     { name = "filetype", specifier = ">=1.2.0" },
     { name = "gevent", specifier = ">=25.9.1" },
     { name = "graphene-django", specifier = ">=3.2.3" },
@@ -608,7 +608,7 @@ wheels = [
 
 [[package]]
 name = "django-bolt"
-version = "0.10.0"
+version = "0.10.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -620,12 +620,12 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "uvloop", marker = "sys_platform != 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/12/f1/967ff1809d594beb1e2c24f718c07952bed09018235c11cfc3c9bfb2ab49/django_bolt-0.10.0.tar.gz", hash = "sha256:486ff51dbe9f53a5261b5cda07f8f1facc33e1fe8e5609f5ded719258f8f27b4", size = 15615178, upload-time = "2026-08-08T18:34:36.866Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/70/92c613013cfb7bac7fbea8d86ba6dfe87d464b3de72476800f8176a8a895/django_bolt-0.10.2.tar.gz", hash = "sha256:71f180f556404e8ee981f60083a0b5d5c0b2bb2014bfceec1652b72ec5d1c5e3", size = 1566486, upload-time = "2026-08-16T17:33:28.724Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/91/af528edb8fd4b6e74bf55f04e3101c892cbccb74cd86897bfd8497128b75/django_bolt-0.10.0-cp312-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:dc10302e5fb3c5404bdbadb2f219cd02a25e0b748652ec05576e5358fa4d7771", size = 9805766, upload-time = "2026-08-08T18:34:27.808Z" },
-    { url = "https://files.pythonhosted.org/packages/ca/8f/e8303954ed8a12f5962708e10717798b33a97e024ba10369d102567c95ed/django_bolt-0.10.0-cp312-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8e6ae896c6982d23eef5efe57cb803bea79fe61a4b2ff47ca1c9ec426b114aff", size = 5233198, upload-time = "2026-08-08T18:34:30.43Z" },
-    { url = "https://files.pythonhosted.org/packages/e3/54/8ba06fc559321df89fe510c29bb8441f8f237913ad41005c58d216e14662/django_bolt-0.10.0-cp312-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:dcf6fcbd5610c952f624b69a46be19d31fe6a251ddb80190de543ffdf7b13e1f", size = 5510772, upload-time = "2026-08-08T18:34:32.335Z" },
-    { url = "https://files.pythonhosted.org/packages/28/4d/e768de644188a30572f8c64b6e6d5c93a1083bf50e45f0185347b32be76f/django_bolt-0.10.0-cp312-abi3-win_amd64.whl", hash = "sha256:fad8128d39e3457279427623658d84c14811f56df551c775027b04aef3557bbe", size = 4864262, upload-time = "2026-08-08T18:34:34.248Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/07/24ec71eca0d2974f226956fc5991632a8c0ec166a63a735f0954ab5e5dbe/django_bolt-0.10.2-cp312-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:2c53c0b069bd5aeb7fe3f6db02277ec7a7798c18ee0e5f1ac2107d37f0f6cacf", size = 10146696, upload-time = "2026-08-16T17:33:20.489Z" },
+    { url = "https://files.pythonhosted.org/packages/63/19/ad9ae6adc37a6a1cb1c0b7a726937097229cc287147b01e09545d4def9a4/django_bolt-0.10.2-cp312-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1413444960db245647785b7e55b6d7fd3db469981123eaee190c3cd13df6f14a", size = 5411498, upload-time = "2026-08-16T17:33:22.897Z" },
+    { url = "https://files.pythonhosted.org/packages/58/e5/5d5003946b0a24cbf8293e2e09ad4559f0314d1bf3385ad28cd85e1267d4/django_bolt-0.10.2-cp312-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:048198c78fc3c336102914f839b60dabbb2ff90a540a867b63d3144f216b808a", size = 5711714, upload-time = "2026-08-16T17:33:24.643Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/fb/383f4faecdc561704618b9dbb55113dd997b7787f6c54cddd8a14fcf8fa3/django_bolt-0.10.2-cp312-abi3-win_amd64.whl", hash = "sha256:88f9498b40541f2320d3cbd8118d24db229ed5db9e7ea7ceb5e8e7777dbdd262", size = 5025291, upload-time = "2026-08-16T17:33:26.562Z" },
 ]
 
 [[package]]
@@ -707,19 +707,6 @@ phonenumberslite = [
 ]
 
 [[package]]
-name = "django-redis"
-version = "7.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "redis" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fb/78/203a0cdc0f1c083a5407d01f77b58099a120bb8a5a04562f56a9bb341314/django_redis-7.0.0.tar.gz", hash = "sha256:e48491c862f4350b0747ceb1016700686fb93c4f4e0fb9c490fe6c6658ffd933", size = 64601, upload-time = "2026-06-02T14:17:48.819Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/9f/09cdb9a1eebe8533b02a7694ca787acfc1e4d93b5b6175ff99366d4e6d64/django_redis-7.0.0-py3-none-any.whl", hash = "sha256:4b23aa6e0cd0937bb1242e9a463809e6004de3ca2150f34e986306bb6220d688", size = 38932, upload-time = "2026-06-02T14:17:47.281Z" },
-]
-
-[[package]]
 name = "django-solo"
 version = "2.5.1"
 source = { registry = "https://pypi.org/simple" }
@@ -741,6 +728,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/12/41/0685cfdad4cf77a571e48227c78a9b8ae6d15679c2e9c9e724142a26cc3a/django_unfold-0.104.1.tar.gz", hash = "sha256:13b52e8100f2d844568cf08a2057cacd3686bc1083e0e491d05fc688025c966f", size = 1126154, upload-time = "2026-08-12T07:43:46.027Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/37/25/d9165c8b4e1deb37d0ac68bfe837c59a4ddb895f5df8b9c97b4bd433ab23/django_unfold-0.104.1-py3-none-any.whl", hash = "sha256:4eece526e1e80f5133632acae260cc53ab2f52020ff9f64bb98d9c9c738d9888", size = 1254159, upload-time = "2026-08-12T07:43:44.565Z" },
+]
+
+[[package]]
+name = "django-vcache"
+version = "3.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "ormsgpack" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/25/78/370b7da4cc55753cf9d2edd5b4807b20115f6fc6d6c89fac9629e8fea5c8/django_vcache-3.1.1.tar.gz", hash = "sha256:ab50a42edc63e0a639b9a6e2b4b9508ca98a430bd4586e7b65fca6079f334bc1", size = 57062, upload-time = "2026-07-28T19:41:52.442Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/34/94/3bbf3d21d187011c79dfb5942527fca2992e837bcc31a7add775916ab0f2/django_vcache-3.1.1-cp314-cp314-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:49dc3717f3d1c8e6566e5badfa26546c06345ea490f7d822bb63e7ea71b0206f", size = 2247201, upload-time = "2026-07-28T19:41:47.473Z" },
+    { url = "https://files.pythonhosted.org/packages/65/8b/de522efc5c059aa52b792c4bc81e59a05677ed63e47e5b934cc4c40b8c76/django_vcache-3.1.1-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5c7a827b11814bcc4a27f467c312c992c4afa6aedaca943f4c97a3bc861efb8b", size = 2362815, upload-time = "2026-07-28T19:41:48.793Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/aa/707d1407ebf41edc566fb040adb3c4bfd38ad0db299c10cec72c315ecb75/django_vcache-3.1.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:e401d026b5fb38c1fe652f75d9a00559deaa432cdfef180cd472aa8d6f5012d3", size = 2247154, upload-time = "2026-07-28T19:41:49.924Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/ed/377868094f718a35bd07d8e265f72224c7b1fd16d78da7997776b90140a9/django_vcache-3.1.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:0e2218884e60d1fa237b7bb29a47c5e76d37ee3aa8abacacffc3b77b362ba197", size = 2359818, upload-time = "2026-07-28T19:41:51.389Z" },
 ]
 
 [[package]]
@@ -1357,6 +1360,27 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0c/f7/addf1087b860ac60e6f382240f64fb99f8bfb532bb06f7c542b83c29ca61/multidict-6.7.1-cp314-cp314t-win_amd64.whl", hash = "sha256:497bde6223c212ba11d462853cfa4f0ae6ef97465033e7dc9940cdb3ab5b48e5", size = 53542, upload-time = "2026-01-26T02:46:08.809Z" },
     { url = "https://files.pythonhosted.org/packages/4c/81/4629d0aa32302ef7b2ec65c75a728cc5ff4fa410c50096174c1632e70b3e/multidict-6.7.1-cp314-cp314t-win_arm64.whl", hash = "sha256:2bbd113e0d4af5db41d5ebfe9ccaff89de2120578164f86a5d17d5a576d1e5b2", size = 44719, upload-time = "2026-01-26T02:46:11.146Z" },
     { url = "https://files.pythonhosted.org/packages/81/08/7036c080d7117f28a4af526d794aab6a84463126db031b007717c1a6676e/multidict-6.7.1-py3-none-any.whl", hash = "sha256:55d97cc6dae627efa6a6e548885712d4864b81110ac76fa4e534c03819fa4a56", size = 12319, upload-time = "2026-01-26T02:46:44.004Z" },
+]
+
+[[package]]
+name = "ormsgpack"
+version = "1.12.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/12/0c/f1761e21486942ab9bb6feaebc610fa074f7c5e496e6962dea5873348077/ormsgpack-1.12.2.tar.gz", hash = "sha256:944a2233640273bee67521795a73cf1e959538e0dfb7ac635505010455e53b33", size = 39031, upload-time = "2026-01-18T20:55:28.023Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/16/24d18851334be09c25e87f74307c84950f18c324a4d3c0b41dabdbf19c29/ormsgpack-1.12.2-cp314-cp314-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:bc68dd5915f4acf66ff2010ee47c8906dc1cf07399b16f4089f8c71733f6e36c", size = 378717, upload-time = "2026-01-18T20:55:26.164Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/a2/88b9b56f83adae8032ac6a6fa7f080c65b3baf9b6b64fd3d37bd202991d4/ormsgpack-1.12.2-cp314-cp314-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:46d084427b4132553940070ad95107266656cb646ea9da4975f85cb1a6676553", size = 203183, upload-time = "2026-01-18T20:55:18.815Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/80/43e4555963bf602e5bdc79cbc8debd8b6d5456c00d2504df9775e74b450b/ormsgpack-1.12.2-cp314-cp314-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:c010da16235806cf1d7bc4c96bf286bfa91c686853395a299b3ddb49499a3e13", size = 210814, upload-time = "2026-01-18T20:55:33.973Z" },
+    { url = "https://files.pythonhosted.org/packages/78/e1/7cfbf28de8bca6efe7e525b329c31277d1b64ce08dcba723971c241a9d60/ormsgpack-1.12.2-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:18867233df592c997154ff942a6503df274b5ac1765215bceba7a231bea2745d", size = 212634, upload-time = "2026-01-18T20:55:28.634Z" },
+    { url = "https://files.pythonhosted.org/packages/95/f8/30ae5716e88d792a4e879debee195653c26ddd3964c968594ddef0a3cc7e/ormsgpack-1.12.2-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:b009049086ddc6b8f80c76b3955df1aa22a5fbd7673c525cd63bf91f23122ede", size = 387139, upload-time = "2026-01-18T20:56:02.013Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/81/aee5b18a3e3a0e52f718b37ab4b8af6fae0d9d6a65103036a90c2a8ffb5d/ormsgpack-1.12.2-cp314-cp314-musllinux_1_2_armv7l.whl", hash = "sha256:1dcc17d92b6390d4f18f937cf0b99054824a7815818012ddca925d6e01c2e49e", size = 482578, upload-time = "2026-01-18T20:55:35.117Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/17/71c9ba472d5d45f7546317f467a5fc941929cd68fb32796ca3d13dcbaec2/ormsgpack-1.12.2-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:f04b5e896d510b07c0ad733d7fce2d44b260c5e6c402d272128f8941984e4285", size = 425539, upload-time = "2026-01-18T20:56:04.009Z" },
+    { url = "https://files.pythonhosted.org/packages/2e/a6/ac99cd7fe77e822fed5250ff4b86fa66dd4238937dd178d2299f10b69816/ormsgpack-1.12.2-cp314-cp314-win_amd64.whl", hash = "sha256:ae3aba7eed4ca7cb79fd3436eddd29140f17ea254b91604aa1eb19bfcedb990f", size = 117493, upload-time = "2026-01-18T20:56:07.343Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/67/339872846a1ae4592535385a1c1f93614138566d7af094200c9c3b45d1e5/ormsgpack-1.12.2-cp314-cp314-win_arm64.whl", hash = "sha256:118576ea6006893aea811b17429bfc561b4778fad393f5f538c84af70b01260c", size = 111579, upload-time = "2026-01-18T20:55:21.161Z" },
+    { url = "https://files.pythonhosted.org/packages/49/c2/6feb972dc87285ad381749d3882d8aecbde9f6ecf908dd717d33d66df095/ormsgpack-1.12.2-cp314-cp314t-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:7121b3d355d3858781dc40dafe25a32ff8a8242b9d80c692fd548a4b1f7fd3c8", size = 378721, upload-time = "2026-01-18T20:55:52.12Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/9a/900a6b9b413e0f8a471cf07830f9cf65939af039a362204b36bd5b581d8b/ormsgpack-1.12.2-cp314-cp314t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4ee766d2e78251b7a63daf1cddfac36a73562d3ddef68cacfb41b2af64698033", size = 203170, upload-time = "2026-01-18T20:55:44.469Z" },
+    { url = "https://files.pythonhosted.org/packages/87/4c/27a95466354606b256f24fad464d7c97ab62bce6cc529dd4673e1179b8fb/ormsgpack-1.12.2-cp314-cp314t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:292410a7d23de9b40444636b9b8f1e4e4b814af7f1ef476e44887e52a123f09d", size = 212816, upload-time = "2026-01-18T20:55:23.501Z" },
+    { url = "https://files.pythonhosted.org/packages/73/cd/29cee6007bddf7a834e6cd6f536754c0535fcb939d384f0f37a38b1cddb8/ormsgpack-1.12.2-cp314-cp314t-win_amd64.whl", hash = "sha256:837dd316584485b72ef451d08dd3e96c4a11d12e4963aedb40e08f89685d8ec2", size = 117232, upload-time = "2026-01-18T20:55:45.448Z" },
 ]
 
 [[package]]

@@ -168,12 +168,10 @@ DATABASES = {
 
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
+        "BACKEND": "django_vcache.backend.ValkeyCache",
         "LOCATION": f"redis://{os.getenv("REDIS_HOST")}:{os.getenv('REDIS_PORT')}/1",
         "TIMEOUT": 604800,
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
             "CONNECTION_POOL_KWARGS": {
                 "max_connections": 3000
             }
