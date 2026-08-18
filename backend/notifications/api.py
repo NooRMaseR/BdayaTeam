@@ -1,6 +1,6 @@
-from core.auth import JWT_COOKIES_AUTH
 from django.conf import settings
 from .models import PushSubscription
+from core.auth import JWT_COOKIES_AUTH
 from .api_schemas import SubscriptionRequestMSG, UnsubscribeRequestMSG
 from django_bolt import BoltAPI, IsAuthenticated, Request, Response, status
 

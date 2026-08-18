@@ -1,14 +1,18 @@
+from django_bolt.auth import DjangoCacheRevocation, create_token_pair
+from imagekit.models.fields.files import ProcessedImageFieldFile
 from phonenumber_field.phonenumber import PhoneNumber
-from django_bolt.auth import DjangoCacheRevocation
-from django_bolt import create_jwt_for_user
+from django.http import HttpResponse
 from core.models import BdayaUser
 from django.conf import settings
+from typing import Any, Literal
+from compression import zstd
 from enum import Enum
 from PIL import Image
 import msgspec
-import uuid
 import time
 import io
+
+type SupportedEncodings = Literal["zstd", "br", "gzip"]
 
 class GeneratedJWT(msgspec.Struct):
     access: str
@@ -17,38 +21,27 @@ class GeneratedJWT(msgspec.Struct):
     refresh_exp: int
 
 def generate_jwts_for_user(user: BdayaUser) -> GeneratedJWT:
-    ACCESS_EXP = int(settings.BOLT_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
-    REFRESH_EXP = int(settings.BOLT_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
     current_time = int(time.time())
+    ACCESS_EXP = int(settings.BOLT_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds()) + current_time
+    REFRESH_EXP = int(settings.BOLT_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()) + current_time
     
     claims = {
-        "role": user.role
+        "role": user.role,
+        "username": user.username
     }
     if user.is_member and hasattr(user, "member"):
         claims['code'] = user.member.code # type: ignore
     
-    access_token = create_jwt_for_user(
+    tokens = create_token_pair(
         user, 
-        expires_in=current_time + ACCESS_EXP,
-        extra_claims={
-            **claims,
-            "token_type": "access",
-            "jti": str(uuid.uuid4())
-        }
-    )
-    refresh_token = create_jwt_for_user(
-        user, 
-        expires_in=current_time + REFRESH_EXP,
-        extra_claims={
-            **claims,
-            "typ": "refresh",
-            "jti": str(uuid.uuid4())
-        }
+        claims=claims, 
+        access_ttl=ACCESS_EXP,
+        refresh_ttl=REFRESH_EXP,
     )
     
     return GeneratedJWT(
-        access= access_token, 
-        refresh= refresh_token,
+        access= tokens.access_token, 
+        refresh= tokens.refresh_token,
         access_exp= ACCESS_EXP,
         refresh_exp= REFRESH_EXP,
     )
@@ -60,11 +53,40 @@ def generate_dummy_image() -> bytes:
     file_obj.seek(0)
     return file_obj.read()
 
+def encode_compress(data: Any, compress_level: int = 4) -> bytes:
+    """a wrapper function to encode the data using `serializer_encoder` (`msgspec.json.Encoder`) and compressing the data using `compression.zstd`
+
+    Args:
+        data (Any): the data to process (encode then compress)
+        compress_level (int, optional): the compression level. Defaults to 4.
+
+    Returns:
+        bytes: the compressed version of the data
+    """
+    encoded_data = serializer_encoder.encode(data)
+    return zstd.compress(encoded_data, compress_level)
+
+def wrap_compressed_http_response(body: bytes, encoding: SupportedEncodings = 'zstd') -> HttpResponse:
+    """a temporary wrapper for creating an `HttpResponse` with prober `Content-Encoding` header
+
+    Args:
+        body (bytes): the body to send
+        encoding (SupportedEncodings, optional): the encoding to add to the header. Defaults to 'zstd'.
+
+    Returns:
+        HttpResponse: the final response
+    """
+    response =  HttpResponse(body, content_type=JSON_CONTENT_TYPE)
+    response['Content-Encoding'] = encoding
+    return response
+
 def _enc_hook(obj) -> str:
     if isinstance(obj, PhoneNumber):
         return obj.as_e164
     elif isinstance(obj, Enum):
         return str(obj)
+    elif isinstance(obj, ProcessedImageFieldFile):
+        return obj.url
     
     raise TypeError(f"Object of Type {type(obj)} is not a json serializer")
 

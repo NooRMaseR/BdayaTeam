@@ -1,4 +1,4 @@
 from core.permissions import JWTCookiesAuthentication
 from utils import STORE
 
-JWT_COOKIES_AUTH = JWTCookiesAuthentication(cookie="access_token", revocation_store=STORE, require_jti=True)
+JWT_COOKIES_AUTH = JWTCookiesAuthentication(cookie="access_token")

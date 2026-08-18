@@ -45,9 +45,10 @@ from technical.caches import (
 
 from utils import (
     DEFAULT_CACHE_DURATION,
-    serializer_encoder,
+    encode_compress,
     JSON_CONTENT_TYPE,
-    SAFE_MIMETYPES
+    SAFE_MIMETYPES,
+    wrap_compressed_http_response
 )
 from .caches import member_profile_cache_key, tasks_cache_key
 from channels.layers import get_channel_layer
@@ -77,7 +78,7 @@ async def get_all_tasks(request: Request):  # type: ignore
     CACHE_KEY = tasks_cache_key(TRACK.name, USER.id)  # type: ignore
 
     if data := await cache.aget(CACHE_KEY):
-        return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
+        return wrap_compressed_http_response(data)
 
     tasks = (
         Task.objects.filter(track=TRACK)
@@ -96,11 +97,10 @@ async def get_all_tasks(request: Request):  # type: ignore
         )
     )
 
-    encoded_data = serializer_encoder.encode(
-        await TaskMSGSerializer.afrom_queryset(tasks)
-    )
+    data = await TaskMSGSerializer.afrom_models(tasks)
+    encoded_data = encode_compress(data)
     await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
-    return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
+    return wrap_compressed_http_response(encoded_data)
 
 @bolt.post("/tasks/", status_code=201, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsMember])
 async def submit_task(request: Request, form: Annotated[TaskSubmitRequestMSG, Form()]):  # type: ignore
@@ -153,7 +153,7 @@ async def submit_task(request: Request, form: Annotated[TaskSubmitRequestMSG, Fo
 
     await cache.adelete_many(
         [
-            tasks_cache_key(TRACK.name, USER.id),  # type: ignore
+            tasks_cache_key(TRACK.name, USER.pk),
             task_view_cache_key(form.task_id),
             member_profile_cache_key(member.code),
             technical_tasks_cache_key(TRACK.name),
@@ -258,10 +258,9 @@ async def get_profile(request: Request, member_code: str):  # type: ignore
         raise NotFound(detail=f"Member with code {member_code} not found")
 
     data = MemberProfileMSGSerializer.from_model(member)
-    encoded_data = data.encode()
+    encoded_data = encode_compress(data)
     await cache.aset(member_profile_cache_key(data.code), encoded_data, 1800)  # 30 minutes
-
-    return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
+    return wrap_compressed_http_response(encoded_data)
 
 @bolt.get("/edit-task/{sent_task_id}/", response_model=RecivedTaskMSGSerializer, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsMember])
 async def get_editable_task(request: Request, sent_task_id: int):

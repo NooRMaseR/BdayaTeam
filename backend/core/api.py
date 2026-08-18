@@ -125,32 +125,32 @@ async def login(request: Request, body: api_schemas.LoginRequestMSG):
     
     return response
 
-@bolt.get("/logout/", status_code=204, tags=["Auth"])
+@bolt.get("/logout/", status_code=204, tags=["Auth"], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated()])
 async def logout(request: Request):
     """Logout
     A Logout endpoint that removes the cookies from the user `cookies`
     
     this endpoint is also stores the token in the `revokation store`
     """
+    print(request.context)
+    # token = request.cookies.get('access_token')
+    # if not token:
+    #     token = request.headers.get("authorization")
+    #     if token:
+    #         token = token.split(' ')[1]
     
-    token = request.cookies.get('access_token')
-    if not token:
-        token = request.headers.get("authorization")
-        if token:
-            token = token.split(' ')[1]
-    
-    if token:
-        try:
-            payload = jwt.decode(token, options={"verify_signature": False})
+    # if token:
+    #     try:
+    #         payload = jwt.decode(token, options={"verify_signature": False})
             
-            jti = payload.get("jti")
-            exp = payload.get("exp")
+    #         jti = payload.get("jti")
+    #         exp = payload.get("exp")
             
-            if jti and exp:
-                await STORE.revoke(jti=jti, exp=exp)
+    #         if jti and exp:
+    #             await STORE.revoke(jti=jti, exp=exp)
                 
-        except jwt.DecodeError:
-            pass
+    #     except jwt.DecodeError:
+    #         pass
     
     response = Response(status_code=204) \
     .delete_cookie("csrftoken") \
@@ -376,13 +376,13 @@ async def create_track(payload: Annotated[api_schemas.TrackCreateRequestMSG, For
     cache.delete(TRACKS_CACHE_KEY)
     return Response(status_code=status.HTTP_201_CREATED)
 
-@bolt.get('/tracks/{track_name}/', tags=['Track'], status_code=200, response_model=TrackMSGSerializer)
+@bolt.get('/tracks/{track_name}/', response_model=TrackMSGSerializer, tags=['Track'])
 async def get_one_track(track_name: str):
     "get one track"
     
     CACHE_KEY = track_cache_key(track_name)
     if (data:= await cache.aget(CACHE_KEY)):
-        return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
+        return data
     
     try:
         track = await Track.objects.aget(name=track_name)
@@ -392,10 +392,10 @@ async def get_one_track(track_name: str):
     track_encoded = TrackMSGSerializer.from_model(track).encode()
     await cache.aset(CACHE_KEY, track_encoded, DEFAULT_CACHE_DURATION)
     
-    return HttpResponse(track_encoded, content_type=JSON_CONTENT_TYPE)
+    return track_encoded
 
 @bolt.delete('/tracks/{track_name}/', tags=['Track'], status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsSuperUser])
-async def delete(track_name: str): # type: ignore
+async def delete(track_name: str):
     """delete a track (Very Dangerios)
 
     this endpoint deletes a track along with `all related fields`
@@ -410,7 +410,7 @@ async def delete(track_name: str): # type: ignore
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @bolt.delete('/reset-all/', status_code=202, tags=['Auth'], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsSuperUser])
-async def reset_all(): # type: ignore
+async def reset_all():
     """Reset All
     
     `Very Dangerios`, Deletes all tracks and members and tasks and technicals, every thing related to the `tracks`

@@ -1,68 +1,30 @@
-from typing import Self
 from datetime import date
-from core.models import BdayaUser
-from core.serializers import BaseMSGSerializer
-from .models import Attendance, AttendanceAllowedDay, AttendanceStatus, SiteSetting
+from .models import AttendanceStatus
+from django_bolt.serializers import Serializer
+from core.serializers import ExtraSerialization
 
-class AttendanceDayMSGSerializer(BaseMSGSerializer[AttendanceAllowedDay], frozen=True):
+class AttendanceDayMSGSerializer(Serializer, ExtraSerialization):
     id: int
     day: date
 
-    @classmethod
-    def from_model(cls, model: AttendanceAllowedDay) -> Self:
-        return cls(
-            model.pk,
-            model.day
-        )
-
-class AttendanceMSGBy(BaseMSGSerializer[BdayaUser], frozen=True):
+class AttendanceMSGBy(Serializer, ExtraSerialization):
     id: int
     username: str
-
-    @classmethod
-    def from_model(cls, model: BdayaUser) -> Self:
-        return cls(
-            model.pk,
-            model.username
-        )
     
-class AttendanceMSGSerializer(BaseMSGSerializer[Attendance], frozen=True):
+class AttendanceMSGSerializer(Serializer, ExtraSerialization):
     date: AttendanceDayMSGSerializer
     status: AttendanceStatus
     by: AttendanceMSGBy
     excuse_reason: str | None = None
+
     
-    @classmethod
-    def from_model(cls, model: Attendance) -> Self:
-        return cls(
-            date=AttendanceDayMSGSerializer.from_model(model.date),
-            status=AttendanceStatus(model.status),
-            excuse_reason=model.excuse_reason,
-            by=AttendanceMSGBy.from_model(model.by)
-        )
-    
-class SiteSettingsImagesMSGSerializer(BaseMSGSerializer[SiteSetting], frozen=True):
+class SiteSettingsImagesMSGSerializer(Serializer, ExtraSerialization):
     site_image: str | None = None
     hero_image: str | None = None
 
-    @classmethod
-    def from_model(cls, model: SiteSetting) -> Self:
-        return cls(
-            model.site_image.url if model.site_image else None,
-            model.hero_image.url if model.hero_image else None
-        )
-
     
-class SiteSettingsMSGSerializer(SiteSettingsImagesMSGSerializer, frozen=True):
+class SiteSettingsMSGSerializer(SiteSettingsImagesMSGSerializer):
     is_register_enabled: bool = False
     organizer_can_edit: list[str] = []
-    
-    @classmethod
-    def from_model(cls, model: SiteSetting) -> Self:
-        return cls(
-            site_image=model.site_image.url if model.site_image else None,
-            hero_image=model.hero_image.url if model.hero_image else None,
-            is_register_enabled=model.is_register_enabled,
-            organizer_can_edit=model.organizer_can_edit,
-        )
+
     

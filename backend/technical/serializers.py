@@ -1,23 +1,12 @@
-from core.serializers import BaseMSGSerializer, TrackNameOnlyMSGSerializer
-from member.models import AllowedTrackFileExtention
-from django_bolt.serializers import HttpsURL
+from core.serializers import ExtraSerialization, TrackNameOnlyMSGSerializer
+from django_bolt.serializers import HttpsURL, Serializer
 from datetime import datetime
-from .models import Task
-from typing import Self
 
-class TaskSmallMSGSerializer(BaseMSGSerializer[Task], frozen=True):
+class TaskSmallMSGSerializer(Serializer, ExtraSerialization):
     id: int
     task_number: int
 
-    @classmethod
-    def from_model(cls, model: Task) -> Self:
-        return cls(
-            model.pk,
-            model.task_number
-        )
-
-
-class TaskMSGSerializer(TaskSmallMSGSerializer, frozen=True):
+class TaskMSGSerializer(TaskSmallMSGSerializer):
     created_at: datetime
     expires_at: datetime
     description: str
@@ -26,29 +15,7 @@ class TaskMSGSerializer(TaskSmallMSGSerializer, frozen=True):
     links: list[HttpsURL] = []
     unsigned_tasks_count: int = 0
     can_recive_tasks_after_expiration: bool = False
-    
-    @classmethod
-    def from_model(cls, model: Task) -> Self:
-        return cls(
-            id=model.pk,
-            task_number=model.task_number,
-            created_at=model.created_at,
-            expires_at=model.expires_at,
-            description=model.description,
-            expired=model.is_expired,
-            links=model.links if model.links else [],
-            images=[image.image.url for image in model.images.all()], # type: ignore
-            can_recive_tasks_after_expiration=model.can_recive_tasks_after_expiration
-        )
 
-
-class TrackExtenstionsSerializer(BaseMSGSerializer[AllowedTrackFileExtention], frozen=True):
+class TrackExtenstionsSerializer(Serializer, ExtraSerialization):
     track: TrackNameOnlyMSGSerializer
     extensions: list[str] = []
-
-    @classmethod
-    def from_model(cls, model: AllowedTrackFileExtention) -> Self:
-        return cls(
-            track=TrackNameOnlyMSGSerializer.from_model(model.track),
-            extensions=model.extensions
-        )

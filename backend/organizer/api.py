@@ -3,7 +3,6 @@ from core.permissions import (
     IsOrganizer,
     IsTechnicalOrOrganizer,
 )
-from core.serializers import TrackNameOnlyMSGSerializer
 from core.api_schemas import RegisterRequestMSG
 from core.models import BdayaUser, Track
 
@@ -11,7 +10,6 @@ from member.serializers import MemberORGMSGSerializer
 from member.models import Member, MemberStatus
 
 from .api_schemas import (
-    AttendanceDayResponseMSG,
     DayRequestMSG,
     DayUpdateRequestMSG,
     MemberEditGridRequestMSG,
@@ -35,12 +33,11 @@ from .serializers import AttendanceDayMSGSerializer, SiteSettingsMSGSerializer
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
-from django.http import HttpResponse
 from django.core.cache import cache
 from django.db import transaction
 from django.conf import settings
 
-from utils import DEFAULT_CACHE_DURATION, JSON_CONTENT_TYPE, serializer_encoder
+from utils import DEFAULT_CACHE_DURATION, encode_compress, wrap_compressed_http_response
 from asgiref.sync import sync_to_async
 from typing import Annotated
 from datetime import date
@@ -84,9 +81,10 @@ def move_member_to_another_track(code: str, current_track: str, move_to_track: s
     )
 
 
-@bolt.get("/members/{track_name}/", tags=["Organizer"], response_model=MemberORGMSGSerializer, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnicalOrOrganizer])
-async def get_unfireed_track_members(request: Request, track_name: str):  # type: ignore
+@bolt.get("/members/{track_name}/", tags=["Organizer"], response_model=list[MemberORGMSGSerializer], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnicalOrOrganizer])
+async def get_unfireed_track_members(request: Request, track_name: str):
     "get track members who's not fired with attendances"
+    
     USER: BdayaUser = request.user
     TRACK = track_name.replace("%20", " ")
     track: Track = USER.track  # type: ignore
@@ -96,15 +94,13 @@ async def get_unfireed_track_members(request: Request, track_name: str):  # type
 
     CACHE_KEY = members_by_organizer_cache_key(track_name)
     if cached_data := await cache.aget(CACHE_KEY):
-        return HttpResponse(cached_data, content_type=JSON_CONTENT_TYPE)
+        return wrap_compressed_http_response(cached_data)
 
     try:
         target_track = await Track.objects.only("id", "name").aget(name=TRACK)
     except Track.DoesNotExist:
         raise NotFound(detail=f"Track {track_name} does not exists")
     
-    track_serialized = TrackNameOnlyMSGSerializer.from_model(target_track)
-
     members = (
         Member.objects.prefetch_related(
             Prefetch(
@@ -114,21 +110,18 @@ async def get_unfireed_track_members(request: Request, track_name: str):  # type
         )
         .select_related("bdaya_user")
         .defer("joined_at")
-        .filter(track=target_track)
         .exclude(status=MemberStatus.FIRED)
         .order_by("joined_at")
+        .filter(track=target_track)
     )
-    data = await MemberORGMSGSerializer.afrom_queryset_with_track(
-        members, track_serialized
-    )
-    data = serializer_encoder.encode(data)
-
-    await cache.aset(CACHE_KEY, data, DEFAULT_CACHE_DURATION)
-    return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
+    data = await MemberORGMSGSerializer.afrom_models(members)
+    encoded_data = encode_compress(data)
+    await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
+    return wrap_compressed_http_response(encoded_data)
 
 
-@bolt.get("/members/{track_name}/fired/", tags=["Organizer"], response_model=MemberORGMSGSerializer, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnicalOrOrganizer])
-async def get_fireed_track_members(request: Request, track_name: str):  # type: ignore
+@bolt.get("/members/{track_name}/fired/", tags=["Organizer"], response_model=list[MemberORGMSGSerializer], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnicalOrOrganizer])
+async def get_fired_track_members(request: Request, track_name: str):
     "get track fired members with attendances"
     
     USER: BdayaUser = request.user
@@ -140,14 +133,13 @@ async def get_fireed_track_members(request: Request, track_name: str):  # type: 
 
     CACHE_KEY = fired_members_by_organizer_cache_key(track_name)
     if cached_data := await cache.aget(CACHE_KEY):
-        return HttpResponse(cached_data, content_type=JSON_CONTENT_TYPE)
+        return wrap_compressed_http_response(cached_data)
 
     try:
         target_track = await Track.objects.only("id", "name").aget(name=TRACK)
     except Track.DoesNotExist:
         raise NotFound(detail=f"Track {track_name} does not exists")
     
-    track_serialized = TrackNameOnlyMSGSerializer.from_model(target_track)
 
     members = (
         Member.objects.prefetch_related(
@@ -161,13 +153,10 @@ async def get_fireed_track_members(request: Request, track_name: str):  # type: 
         .filter(track=target_track, status=MemberStatus.FIRED)
         .order_by("joined_at")
     )
-    data = await MemberORGMSGSerializer.afrom_queryset_with_track(
-        members, track_serialized
-    )
-    data = serializer_encoder.encode(data)
-
-    await cache.aset(CACHE_KEY, data, DEFAULT_CACHE_DURATION)
-    return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
+    data = await MemberORGMSGSerializer.afrom_queryset_values(members)
+    encoded_data = encode_compress(data)
+    await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
+    return wrap_compressed_http_response(encoded_data)
 
 
 @bolt.post("/members/{track_name}/", status_code=204, tags=["Organizer"], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
@@ -253,7 +242,7 @@ async def edit_member_grid(request: Request, track_name: str, payload: MemberEdi
 
     return await safe_transaction()
 
-@bolt.get("/attendance/{track_name}/days/", response_model=list[AttendanceDayResponseMSG], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnicalOrOrganizer])
+@bolt.get("/attendance/{track_name}/days/", response_model=list[AttendanceDayMSGSerializer], auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsTechnicalOrOrganizer])
 async def get_attendance_days(track_name: str):
     "get track days for the attendace"
     
@@ -261,17 +250,16 @@ async def get_attendance_days(track_name: str):
     CACHE_KEY = attendance_cache_key(TRACK)
 
     if data := await cache.aget(CACHE_KEY):
-        return HttpResponse(data, content_type=JSON_CONTENT_TYPE)
+        return wrap_compressed_http_response(data)
 
     days = AttendanceAllowedDay.objects.filter(track__name=TRACK).values("id", "day")
 
-    encoded_data = serializer_encoder.encode(
-        await AttendanceDayMSGSerializer.afrom_queryset_values(days)
-    )
+    data = await AttendanceDayMSGSerializer.afrom_queryset_values(days)
+    encoded_data = encode_compress(data)
     await cache.aset(CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
-    return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
+    return wrap_compressed_http_response(encoded_data)
 
-@bolt.post("/attendance/{track_name}/days/", status_code=201, response_model=AttendanceDayResponseMSG, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
+@bolt.post("/attendance/{track_name}/days/", status_code=201, response_model=AttendanceDayMSGSerializer, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
 async def create_day(track_name: str, payload: DayRequestMSG):
     "create day"
     
@@ -291,19 +279,14 @@ async def create_day(track_name: str, payload: DayRequestMSG):
         attendance = await AttendanceAllowedDay.objects.acreate(
             day=payload.day, track=track
         )
-        encoded_data = serializer_encoder.encode(
-            AttendanceDayMSGSerializer(id=attendance.pk, day=attendance.day)
-        )
+        encoded_data = AttendanceDayMSGSerializer(id=attendance.pk, day=attendance.day).encode()
 
         cache.delete(attendance_cache_key(TRACK))
-        return HttpResponse(
-            encoded_data, status=status.HTTP_201_CREATED, content_type=JSON_CONTENT_TYPE
-        )
+        return Response(encoded_data, status_code=status.HTTP_201_CREATED)
     except ValidationError as e:
-        return HttpResponse(
+        return Response(
             e.messages,
-            status=status.HTTP_400_BAD_REQUEST,
-            content_type=JSON_CONTENT_TYPE,
+            status_code=status.HTTP_400_BAD_REQUEST
         )
 
 @bolt.delete("/attendance/{track_name}/days/", status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
@@ -351,12 +334,13 @@ async def get_settings():
     "get the site settings"
     
     if cached := await cache.aget(SETTINGS_CACHE_KEY):
-        return HttpResponse(cached, content_type=JSON_CONTENT_TYPE)
+        return cached
 
     site = await sync_to_async(SiteSetting.get_solo)()
-    encoded_data = SiteSettingsMSGSerializer.from_model(site).encode()
-    await cache.aset(SETTINGS_CACHE_KEY, encoded_data, DEFAULT_CACHE_DURATION)
-    return HttpResponse(encoded_data, content_type=JSON_CONTENT_TYPE)
+    data = SiteSettingsMSGSerializer.from_model(site).encode()
+    
+    await cache.aset(SETTINGS_CACHE_KEY, data, DEFAULT_CACHE_DURATION)
+    return data
 
 @bolt.put("/settings/", status_code=204, auth=[JWT_COOKIES_AUTH], guards=[IsAuthenticated(), IsOrganizer])
 async def update_settings(request: Request, payload: Annotated[UpdateSettingsRequestMSG, Form()]): # type: ignore

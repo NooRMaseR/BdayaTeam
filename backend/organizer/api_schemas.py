@@ -14,10 +14,6 @@ class DayUpdateRequestMSG(msgspec.Struct):
     oldDay: date
     newDay: date
 
-class AttendanceDayResponseMSG(msgspec.Struct):
-    id: PositiveInt
-    day: date
-
 class MemberEditGridRequestMSG(msgspec.Struct):
     type: models.MemberEditType
     code: str

@@ -327,6 +327,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # security settings
 BOLT_MAX_UPLOAD_SIZE = 300 * 1024 * 1024 # 300MB
+BOLT_COMPRESSION = False
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = (
     "https://localhost",
